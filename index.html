@@ -1,54 +1,696 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <title>Cameron Beebe, Ph.D.</title>
-    <meta
-      name="description"
-      content="Cameron Beebe's personal website."
-    />
-    <meta name="author" content="Cameron Beebe" />
-    <style>
-      body {
-        margin: 15px auto;
-        max-width: 650px;
-        line-height: 1.2;
-        font-family: sans-serif;
-        font-size: 1.5em;
-        color: #A19067;
-        background: #012201;
+<head>
+  <meta charset="utf-8" />
+  <title>Cameron Beebe, Ph.D.</title>
+  <meta name="description" content="Cameron Beebe — agent & harness engineer; philosopher of science. Interactive: brain-in-a-vat vs harness." />
+  <meta name="author" content="Cameron Beebe" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --bg: #012201;
+      --ink: #a19067;
+      --neon: #39ff14;
+      --muted: #6e6348;
+      --link: #c4b48a;
+      --panel: #0a2e0a;
+      --danger: #c45c4a;
+      --ok: #39ff14;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0 auto;
+      padding: 2rem 1.25rem 4rem;
+      max-width: 920px;
+      line-height: 1.45;
+      font-family: "Latin Modern Roman", "Computer Modern Serif", "Times New Roman", Times, serif;
+      font-size: 1.15em;
+      color: var(--ink);
+      background: var(--bg);
+    }
+    h1 { font-weight: 600; font-size: 1.55em; margin: 0 0 0.35rem; }
+    h2 {
+      font-family: ui-monospace, Menlo, Consolas, monospace;
+      font-size: 0.95em;
+      font-weight: 500;
+      color: var(--neon);
+      margin: 2.2rem 0 0.6rem;
+      letter-spacing: 0.02em;
+    }
+    .tag {
+      font-family: ui-monospace, Menlo, Consolas, monospace;
+      font-size: 0.72em;
+      color: var(--muted);
+      margin: 0 0 1rem;
+    }
+    .icons a { color: var(--ink); margin-right: 0.65rem; text-decoration: none; vertical-align: middle; }
+    .icons a:hover { color: var(--neon); }
+    .icons a.icon-x svg {
+      display: inline-block;
+      width: 1.05em;
+      height: 1.05em;
+      vertical-align: -0.12em;
+    }
+    a { color: var(--link); }
+    a:hover { color: var(--neon); }
+    p { margin: 0.75rem 0; }
+    ul { margin: 0.4rem 0 1rem; padding-left: 1.2rem; }
+    .ket { margin: 1.5rem 0 0.25rem; font-size: 1.25em; color: var(--neon); }
+    .foot {
+      margin-top: 2rem;
+      font-size: 0.72em;
+      color: var(--muted);
+      font-family: ui-monospace, Menlo, Consolas, monospace;
+    }
+    .demo {
+      border: 1px solid var(--muted);
+      background: var(--panel);
+      padding: 0.9rem;
+      margin: 0.8rem 0 1.4rem;
+    }
+    .demo-note {
+      font-size: 0.85em;
+      color: var(--muted);
+      margin: 0 0 0.8rem;
+      font-family: ui-monospace, Menlo, Consolas, monospace;
+    }
+    .split {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+    @media (max-width: 700px) {
+      .split { grid-template-columns: 1fr; }
+      body { font-size: 1.05em; }
+    }
+    .pane {
+      border: 1px solid var(--muted);
+      padding: 0.5rem;
+      background: #021a02;
+    }
+    .pane h3 {
+      margin: 0 0 0.4rem;
+      font-size: 0.82em;
+      font-family: ui-monospace, Menlo, Consolas, monospace;
+      font-weight: 500;
+    }
+    .pane.vat h3 { color: var(--danger); }
+    .pane.harness h3 { color: var(--ok); }
+    canvas {
+      width: 100%;
+      height: auto;
+      display: block;
+      background: #011401;
+      image-rendering: pixelated;
+      cursor: crosshair;
+    }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.55rem 1rem;
+      align-items: center;
+      margin: 0.6rem 0;
+      font-family: ui-monospace, Menlo, Consolas, monospace;
+      font-size: 0.78em;
+    }
+    .controls label {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      cursor: pointer;
+      user-select: none;
+    }
+    .controls button, .router-ui button {
+      font-family: ui-monospace, Menlo, Consolas, monospace;
+      font-size: 0.85em;
+      background: transparent;
+      color: var(--ink);
+      border: 1px solid var(--ink);
+      padding: 0.3rem 0.65rem;
+      cursor: pointer;
+    }
+    .controls button:hover, .router-ui button:hover {
+      color: var(--neon);
+      border-color: var(--neon);
+    }
+    .scores {
+      display: flex;
+      gap: 1.2rem;
+      font-family: ui-monospace, Menlo, Consolas, monospace;
+      font-size: 0.8em;
+      margin-top: 0.4rem;
+    }
+    .scores span b { color: var(--neon); font-weight: 500; }
+    .log {
+      margin-top: 0.5rem;
+      max-height: 5.5rem;
+      overflow-y: auto;
+      font-family: ui-monospace, Menlo, Consolas, monospace;
+      font-size: 0.7em;
+      color: var(--muted);
+      border-top: 1px solid #1a3a1a;
+      padding-top: 0.4rem;
+    }
+    .router-ui {
+      display: grid;
+      grid-template-columns: 1.1fr 1fr;
+      gap: 0.75rem;
+    }
+    @media (max-width: 700px) { .router-ui { grid-template-columns: 1fr; } }
+    .task-list, .agent-box {
+      border: 1px solid var(--muted);
+      padding: 0.5rem;
+      min-height: 8rem;
+      background: #021a02;
+      font-family: ui-monospace, Menlo, Consolas, monospace;
+      font-size: 0.75em;
+    }
+    .task {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.4rem;
+      padding: 0.35rem 0.4rem;
+      margin: 0.25rem 0;
+      border: 1px dashed var(--muted);
+      cursor: grab;
+    }
+    .task.wrong { border-color: var(--danger); color: var(--danger); }
+    .task.right { border-color: var(--ok); color: var(--ok); }
+    .agent-box h4 {
+      margin: 0 0 0.4rem;
+      font-size: 0.85em;
+      color: var(--neon);
+      font-weight: 500;
+    }
+    .agent-box .ctx {
+      color: var(--muted);
+      font-size: 0.9em;
+      margin-bottom: 0.4rem;
+    }
+    .dropzone {
+      min-height: 3.2rem;
+      border: 1px dotted var(--muted);
+      padding: 0.3rem;
+    }
+    .rule {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      margin: 1.75rem 0 0.45rem;
+      border: 0;
+      user-select: none;
+    }
+    .rule::before,
+    .rule::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(
+        90deg,
+        transparent,
+        var(--muted) 12%,
+        var(--neon) 50%,
+        var(--muted) 88%,
+        transparent
+      );
+      opacity: 0.6;
+    }
+    .rule .ket {
+      margin: 0;
+      flex: 0 0 auto;
+      font-size: 1.25em;
+      color: var(--neon);
+      line-height: 1;
+    }
+    .rule .ket mjx-container,
+    .rule .ket .MathJax {
+      margin: 0 !important;
+    }
+    .credit {
+      text-align: center;
+      margin: 0 0 1.25rem;
+      font-family: ui-monospace, Menlo, Consolas, monospace;
+      font-size: 0.72em;
+      color: var(--muted);
+      letter-spacing: 0.04em;
+    }
+    .formula {
+      font-size: 0.9em;
+      color: var(--muted);
+      font-family: ui-monospace, Menlo, Consolas, monospace;
+    }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/tex-chtml.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+</head>
+<body>
+  <h1>Cameron Beebe, Ph.D.</h1>
+  <p class="icons">
+    <a href="https://github.com/CameronBeebe" target="_blank" rel="noopener" aria-label="GitHub"><i class="fa-brands fa-github"></i></a>
+    <a href="https://www.linkedin.com/in/cameronbeebe/" target="_blank" rel="noopener" aria-label="LinkedIn"><i class="fa-brands fa-linkedin"></i></a>
+    <a href="https://x.com/BeebsMemes" target="_blank" rel="noopener" aria-label="X" class="icon-x" title="X"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a>
+    <a href="https://www.researchgate.net/profile/Cameron-Beebe" target="_blank" rel="noopener" aria-label="ResearchGate"><i class="fa-brands fa-researchgate"></i></a>
+    <a href="Beebe_Resume_SciPhi.pdf" target="_blank" rel="noopener" aria-label="Resume"><i class="fa-solid fa-file-lines"></i></a>
+  </p>
+
+  <p>
+    Currently at <a href="https://appy.ai/about">Appy.AI</a> working on a multi-agent harness for
+    <em>Violet</em> — an AI Chief of Staff that routes specialist agents with
+    scoped context for real workflows. Prompts, context, orchestration, steering.
+  </p>
+  <p>
+    Daily use and experimentation of a variety of other agentic tools:
+    Devin, Claude Code, Cursor.
+  </p>
+  <p>
+    Philosopher of science by training. Ph.D., GSN / LMU Munich;
+    Masters from the Munich Center for Mathematical Philosophy. Dissertation:
+    <a href="https://edoc.ub.uni-muenchen.de/28655/1/Beebe_Cameron.pdf"><em>Knowledge Transfer in Cognitive Systems Theory</em></a>
+    — knowledge as control via structure mapping; using cybernetics to explain
+    neural networks as error-controlled regulators. Cray deep-learning internship.
+  </p>
+
+  <p>
+    Also:
+    <a href="https://github.com/CameronBeebe/Structural_Idealism">Structural Idealism</a>,
+    <a href="https://github.com/CameronBeebe/scipfs">scipfs</a>,
+    SciPhi Initiative, Nederland Philosophy Club.
+  </p>
+
+  <div class="rule" role="separator" aria-label="section break">
+    <div class="ket">\( {\langle\texttt{sci}|\texttt{phi}\rangle}_i \)</div>
+  </div>
+  <p class="credit">co-vibed with Grok Bot for fun · math &amp; concepts not fully validated</p>
+
+  <h2>// demo · brain-in-a-vat vs harness</h2>
+  <p class="demo-note">
+    Same "model" both sides. Left: no world access (vat). Right: tools, memory, verifier, stop —
+    ecological / embodied / embedded control. Click a pane to drop a goal. Toggle harness parts.
+  </p>
+  <div class="demo">
+    <div class="controls">
+      <label><input type="checkbox" id="optTools" checked /> tools</label>
+      <label><input type="checkbox" id="optMemory" checked /> memory</label>
+      <label><input type="checkbox" id="optVerifier" checked /> verifier</label>
+      <label><input type="checkbox" id="optStop" checked /> stop condition</label>
+      <button type="button" id="btnReset">reset</button>
+      <button type="button" id="btnPulse">spawn goals</button>
+    </div>
+    <div class="split">
+      <div class="pane vat">
+        <h3>vat · bare model</h3>
+        <canvas id="cVat" width="400" height="260"></canvas>
+      </div>
+      <div class="pane harness">
+        <h3>harness · model + world</h3>
+        <canvas id="cHarness" width="400" height="260"></canvas>
+      </div>
+    </div>
+    <div class="scores">
+      <span>vat done: <b id="sVat">0</b> · drift: <b id="dVat">0</b></span>
+      <span>harness done: <b id="sHarness">0</b> · drift: <b id="dHarness">0</b></span>
+    </div>
+    <div class="log" id="simLog"></div>
+  </div>
+
+  <h2>// demo · director · specialists</h2>
+  <p class="demo-note">
+    Toy model of multi-agent orchestration (not structure mapping): one director
+    assigns each task to one specialist. Specialists do not share write context.
+    Matching type → task lands; mismatch → negative transfer (wrong tools / context).
+    Drag, or press "route by type."
+  </p>
+  <div class="demo">
+    <div class="controls">
+      <button type="button" id="btnNewTask">new task</button>
+      <button type="button" id="btnAutoRoute">route by type</button>
+      <button type="button" id="btnClearRoute">clear</button>
+      <span>route score: <b id="routeScore" style="color:var(--neon)">0</b></span>
+    </div>
+    <div class="router-ui">
+      <div>
+        <div class="task-list" id="inbox"></div>
+      </div>
+      <div>
+        <div class="agent-box" data-agent="map" style="margin-bottom:0.5rem">
+          <h4>Σ · mapper</h4>
+          <div class="ctx">context: structures, analogies — not actuators</div>
+          <div class="dropzone" data-accept="map"></div>
+        </div>
+        <div class="agent-box" data-agent="ctrl" style="margin-bottom:0.5rem">
+          <h4>Γ · regulator</h4>
+          <div class="ctx">context: error loops, setpoints — not proofs</div>
+          <div class="dropzone" data-accept="ctrl"></div>
+        </div>
+        <div class="agent-box" data-agent="crit">
+          <h4>Κ · critic</h4>
+          <div class="ctx">context: verify, stop — fresh from writers</div>
+          <div class="dropzone" data-accept="crit"></div>
+        </div>
+      </div>
+    </div>
+    <div class="log" id="routeLog"></div>
+  </div>
+
+  <div class="ket">\[ {\langle\texttt{sci}|\texttt{phi}\rangle}_i \]</div>
+
+<script>
+(function () {
+  const logEl = document.getElementById('simLog');
+  function log(msg) {
+    const t = new Date().toLocaleTimeString();
+    logEl.innerHTML = `<div>[${t}] ${msg}</div>` + logEl.innerHTML;
+  }
+
+  function opts() {
+    return {
+      tools: document.getElementById('optTools').checked,
+      memory: document.getElementById('optMemory').checked,
+      verifier: document.getElementById('optVerifier').checked,
+      stop: document.getElementById('optStop').checked,
+    };
+  }
+
+  function makeWorld(canvas, kind) {
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+    const state = {
+      kind,
+      brain: { x: W * 0.5, y: H * 0.45, vx: 0, vy: 0, conf: 0.5 },
+      goals: [],
+      memory: [],
+      done: 0,
+      drift: 0,
+      tick: 0,
+      trail: [],
+    };
+
+    function spawnGoal(x, y) {
+      state.goals.push({
+        x: x ?? 40 + Math.random() * (W - 80),
+        y: y ?? 40 + Math.random() * (H - 80),
+        life: 400 + Math.random() * 200,
+        id: Math.random().toString(36).slice(2, 6),
+      });
+    }
+
+    function step() {
+      state.tick++;
+      const o = opts();
+      const b = state.brain;
+      const harnessed = kind === 'harness';
+
+      // sense
+      let nearest = null, best = Infinity;
+      for (const g of state.goals) {
+        const d = Math.hypot(g.x - b.x, g.y - b.y);
+        if (d < best) { best = d; nearest = g; }
       }
-    </style>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/tex-chtml.min.js" integrity="sha512-93xLZnNMlYI6xaQPf/cSdXoBZ23DThX7VehiGJJXB76HTTalQKPC5CIHuFX8dlQ5yzt6baBQRJ4sDXhzpojRJA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js" integrity="sha512-yFjZbTYRCJodnuyGlsKamNE/LlEaEAxSUDe5+u61mV8zzqJVFOH7TnULE2/PP/l5vKWpUNnF4VGVkXh3MjgLsg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    <script async="" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-MML-AM_CHTML" type="text/javascript">
+
+      if (harnessed && o.tools && nearest) {
+        // move toward goal with tool-afforded control
+        const ang = Math.atan2(nearest.y - b.y, nearest.x - b.x);
+        const speed = 1.6;
+        b.vx = Math.cos(ang) * speed;
+        b.vy = Math.sin(ang) * speed;
+        b.conf = Math.min(1, b.conf + 0.01);
+      } else if (!harnessed || !o.tools) {
+        // vat: hallucinated Brownian "reasoning"
+        b.vx += (Math.random() - 0.5) * 0.9;
+        b.vy += (Math.random() - 0.5) * 0.9;
+        b.vx *= 0.92;
+        b.vy *= 0.92;
+        b.conf = Math.max(0.05, b.conf - 0.004);
+        if (state.tick % 40 === 0) state.drift++;
+      }
+
+      if (harnessed && o.memory && nearest && state.tick % 30 === 0) {
+        state.memory.push({ x: nearest.x, y: nearest.y });
+        if (state.memory.length > 8) state.memory.shift();
+      }
+
+      // memory bias
+      if (harnessed && o.memory && state.memory.length && (!nearest || best > 80)) {
+        const m = state.memory[state.memory.length - 1];
+        const ang = Math.atan2(m.y - b.y, m.x - b.x);
+        b.vx += Math.cos(ang) * 0.3;
+        b.vy += Math.sin(ang) * 0.3;
+      }
+
+      b.x += b.vx;
+      b.y += b.vy;
+      b.x = Math.max(12, Math.min(W - 12, b.x));
+      b.y = Math.max(12, Math.min(H - 12, b.y));
+      state.trail.push({ x: b.x, y: b.y });
+      if (state.trail.length > 50) state.trail.shift();
+
+      for (let i = state.goals.length - 1; i >= 0; i--) {
+        const g = state.goals[i];
+        g.life--;
+        const d = Math.hypot(g.x - b.x, g.y - b.y);
+        let success = false;
+        if (d < 14) {
+          if (harnessed && o.verifier) {
+            // verifier in "fresh context": accept only if confidence + tools
+            success = o.tools && b.conf > 0.35;
+            if (!success) {
+              state.drift++;
+              log(`harness verifier rejected false completion @${g.id}`);
+            }
+          } else if (harnessed && !o.verifier) {
+            success = Math.random() > 0.35; // unverified: often wrong
+            if (!success) state.drift++;
+          } else {
+            // vat touches a goal by chance: usually false belief
+            success = Math.random() > 0.85;
+            if (!success) state.drift++;
+            else log(`vat claimed goal ${g.id} (lucky hallucination)`);
+          }
+          if (success) {
+            if (harnessed && o.stop) {
+              state.done++;
+              log(`harness completed ${g.id} · stop fired`);
+              state.goals.splice(i, 1);
+              b.vx *= 0.2; b.vy *= 0.2;
+              continue;
+            } else if (harnessed && !o.stop) {
+              state.done++;
+              // no stop: overshoots / loops
+              b.vx *= 1.4; b.vy *= 1.4;
+              state.goals.splice(i, 1);
+              if (Math.random() > 0.5) state.drift++;
+              log(`harness hit ${g.id} but no stop · overshoot`);
+              continue;
+            } else if (!harnessed) {
+              state.done++;
+              state.goals.splice(i, 1);
+              continue;
+            }
+          }
+        }
+        if (g.life <= 0) {
+          state.goals.splice(i, 1);
+          if (!harnessed) state.drift++;
+        }
+      }
+    }
+
+    function draw() {
+      ctx.fillStyle = '#011401';
+      ctx.fillRect(0, 0, W, H);
+      // grid
+      ctx.strokeStyle = '#123012';
+      ctx.lineWidth = 1;
+      for (let x = 0; x < W; x += 20) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+      }
+      for (let y = 0; y < H; y += 20) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+      }
+
+      // memory traces
+      if (kind === 'harness' && opts().memory) {
+        ctx.fillStyle = 'rgba(57,255,20,0.25)';
+        for (const m of state.memory) {
+          ctx.beginPath();
+          ctx.arc(m.x, m.y, 5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      // trail
+      ctx.strokeStyle = kind === 'harness' ? 'rgba(57,255,20,0.35)' : 'rgba(196,92,74,0.35)';
+      ctx.beginPath();
+      state.trail.forEach((p, i) => {
+        if (i === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y);
+      });
+      ctx.stroke();
+
+      // goals
+      for (const g of state.goals) {
+        ctx.strokeStyle = '#a19067';
+        ctx.strokeRect(g.x - 7, g.y - 7, 14, 14);
+        ctx.fillStyle = '#a19067';
+        ctx.font = '10px monospace';
+        ctx.fillText(g.id, g.x - 10, g.y - 10);
+      }
+
+      // brain
+      const b = state.brain;
+      ctx.fillStyle = kind === 'harness' ? '#39ff14' : '#c45c4a';
+      ctx.beginPath();
+      ctx.arc(b.x, b.y, 8, 0, Math.PI * 2);
+      ctx.fill();
+      // vat jar
+      if (kind === 'vat') {
+        ctx.strokeStyle = 'rgba(196,92,74,0.6)';
+        ctx.strokeRect(b.x - 22, b.y - 22, 44, 44);
+        ctx.font = '9px monospace';
+        ctx.fillStyle = '#c45c4a';
+        ctx.fillText('vat', b.x - 10, b.y + 34);
+      } else {
+        // harness ring: tools
+        if (opts().tools) {
+          ctx.strokeStyle = '#39ff14';
+          ctx.beginPath();
+          ctx.arc(b.x, b.y, 16, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+        if (opts().verifier) {
+          ctx.strokeStyle = '#c4b48a';
+          ctx.strokeRect(b.x + 18, b.y - 18, 12, 12);
+          ctx.font = '8px monospace';
+          ctx.fillStyle = '#c4b48a';
+          ctx.fillText('V', b.x + 21, b.y - 9);
+        }
+      }
+    }
+
+    canvas.addEventListener('click', (e) => {
+      const r = canvas.getBoundingClientRect();
+      const x = (e.clientX - r.left) * (W / r.width);
+      const y = (e.clientY - r.top) * (H / r.height);
+      spawnGoal(x, y);
+      log(`${kind}: goal planted`);
+    });
+
+    return { state, step, draw, spawnGoal };
+  }
+
+  const vat = makeWorld(document.getElementById('cVat'), 'vat');
+  const harness = makeWorld(document.getElementById('cHarness'), 'harness');
+
+  function syncScores() {
+    document.getElementById('sVat').textContent = vat.state.done;
+    document.getElementById('dVat').textContent = vat.state.drift;
+    document.getElementById('sHarness').textContent = harness.state.done;
+    document.getElementById('dHarness').textContent = harness.state.drift;
+  }
+
+  function loop() {
+    vat.step(); harness.step();
+    vat.draw(); harness.draw();
+    syncScores();
+    requestAnimationFrame(loop);
+  }
+  loop();
+
+  document.getElementById('btnReset').onclick = () => {
+    [vat, harness].forEach(w => {
+      w.state.goals = [];
+      w.state.memory = [];
+      w.state.done = 0;
+      w.state.drift = 0;
+      w.state.trail = [];
+      w.state.brain.x = w.state.kind === 'vat' ? 200 : 200;
+      w.state.brain.y = 130;
+      w.state.brain.vx = 0;
+      w.state.brain.vy = 0;
+      w.state.brain.conf = 0.5;
+    });
+    logEl.innerHTML = '';
+    log('reset');
+  };
+  document.getElementById('btnPulse').onclick = () => {
+    for (let i = 0; i < 3; i++) { vat.spawnGoal(); harness.spawnGoal(); }
+    log('spawned goals on both sides');
+  };
+
+  // --- director / specialist routing (general) ---
+  const TASKS = [
+    { type: 'map', label: 'align domain A ≅ domain B' },
+    { type: 'map', label: 'lift local model to shared schema' },
+    { type: 'ctrl', label: 'close error loop on setpoint' },
+    { type: 'ctrl', label: 'dampen actuator overshoot' },
+    { type: 'crit', label: 'fresh-context verify claim' },
+    { type: 'crit', label: 'halt on drift threshold' },
+  ];
+  const inbox = document.getElementById('inbox');
+  const routeLog = document.getElementById('routeLog');
+  let routeScore = 0;
+  let dragTask = null;
+
+  function rlog(msg) {
+    const t = new Date().toLocaleTimeString();
+    routeLog.innerHTML = `<div>[${t}] ${msg}</div>` + routeLog.innerHTML;
+  }
+
+  function addTask(spec) {
+    const t = spec || TASKS[Math.floor(Math.random() * TASKS.length)];
+    const el = document.createElement('div');
+    el.className = 'task';
+    el.draggable = true;
+    el.dataset.type = t.type;
+    el.innerHTML = `<span>${t.label}</span><span>${t.type}</span>`;
+    el.addEventListener('dragstart', () => { dragTask = el; });
+    el.addEventListener('dragend', () => { dragTask = null; });
+    inbox.prepend(el);
+  }
+
+  function grade(el, zone) {
+    const ok = el.dataset.type === zone.dataset.accept;
+    el.classList.remove('wrong', 'right');
+    el.classList.add(ok ? 'right' : 'wrong');
+    if (ok) {
+      routeScore += 1;
+      rlog(`matched type → ${zone.dataset.accept} · +1`);
+    } else {
+      routeScore -= 1;
+      rlog(`negative transfer: ${el.dataset.type} into ${zone.dataset.accept} · −1`);
+    }
+    document.getElementById('routeScore').textContent = routeScore;
+    zone.appendChild(el);
+  }
+
+  document.querySelectorAll('.dropzone').forEach(zone => {
+    zone.addEventListener('dragover', e => e.preventDefault());
+    zone.addEventListener('drop', e => {
+      e.preventDefault();
+      if (dragTask) grade(dragTask, zone);
+    });
+  });
+
+  document.getElementById('btnNewTask').onclick = () => addTask();
+  document.getElementById('btnClearRoute').onclick = () => {
+    inbox.innerHTML = '';
+    document.querySelectorAll('.dropzone').forEach(z => { z.innerHTML = ''; });
+    routeScore = 0;
+    document.getElementById('routeScore').textContent = '0';
+    routeLog.innerHTML = '';
+  };
+  document.getElementById('btnAutoRoute').onclick = () => {
+    if (!inbox.children.length) addTask();
+    const el = inbox.querySelector('.task');
+    if (!el) return;
+    const zone = document.querySelector(`.dropzone[data-accept="${el.dataset.type}"]`);
+    rlog('director matched task type → specialist context');
+    grade(el, zone);
+  };
+
+  addTask(TASKS[0]);
+  addTask(TASKS[2]);
+  log('vat = brain without world · harness = model + tools/memory/verifier/stop');
+})();
 </script>
-  </head>
-  <body onload="main()">
-    <h1>Cameron Beebe, Ph.D.</h1>
-    <a href="https://github.com/CameronBeebe" target="_blank"> <i class="fa-brands fa-github"></i></a>
-    <a href="https://www.linkedin.com/in/cameronbeebe/" target="_blank"> <i class="fa-brands fa-linkedin"></i></a>
-    <a href="https://www.researchgate.net/profile/Cameron-Beebe" target="_blank"> <i class="fa-brands fa-researchgate"></i></a>
-    <a href="https://cameronbeebe.github.io/Beebe_Resume_SciPhi.pdf" target="_blank"> <i class="fa-solid fa-file-lines"></i></a>
-
-   <p>I am a philosopher of science interested in the foundations of physics and artificial intelligence.  I obtained a Ph.D. from the Graduate School of Systemic Neurosciences, LMU Munich, and I have a Masters in Logic and Philosophy of Science from the Munich Center for Mathematical Philosophy. I completed an internship on deep learning at Cray, Inc. I am also the founder of The SciPhi Initiative, which exists in a superposition of doing everything and nothing at the same time.  Currently working at a gardening start up.</p>
-
-   <p>Currently, I'm concerned that the widespread proliferation of generative language models may have introduced a systemic confound for philosophical research going forward. In response, I believe philosophers should consider adapting their methodology. For example, by prioritizing synthesis of historical literature, transparently evidencing note taking and writing, submitting human authenticity affidavits, and being wary of generative AI confounds in philosophical research.</p> 
-
-   <p>My current project <a href="https://github.com/CameronBeebe/Structural_Idealism">Structural Idealism</a> uses github updates to transparently show the raw formative and creative process, and provides an affidavit that none of the text was generated by a language model. There is a lot of room to innovate on a better methodology and responsible use of new tools for making philosophical progress over the long term.</p>
-
-<p>Previously, my Ph.D. focused on knowledge transfer and model-based reasoning, including aspects of machine learning and artificial intelligence. I have some experience with various deep learning tools including Keras, Pytorch, Anaconda, and have experimented with DL models using Slurm on HPC machines.</p>
-
-<p>There is significant overlap between the kinds of problems and solutions that data scientists and machine learning researchers work on, and the methods employed by formal philosophers of science. Increasingly, I believe that responsible AI development will need to merge these viewpoints.</p> 
-
-<p>Previously, I have also worked extensively on problems in the philosophy and foundations of quantum mechanics in my undergraduate and MA research projects, and have maintained an interest in quantum foundations and quantum information theory.</p>
-
-<p style="color:black; size:10;">
-
-\[ {\langle\texttt{sci}|\texttt{phi}\rangle}_i \]
-
-</p>
-
-
-  </body>
+</body>
 </html>
