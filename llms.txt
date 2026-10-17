@@ -1,0 +1,16 @@
+# Cameron Beebe, Ph.D.
+
+> Dec. 2025–Oct. 2026 Appy.AI. AI Product Engineer on a multi-agent harness for Violet: a Chief of Staff that routes to specialist agents with scoped context for real workflows.
+> Shipped a harness eval dashboard comparing batches of executions across configurations.
+> 2021– The SciPhi Initiative. My LLC for AI research, consulting, and community outreach.
+> 2021 Ph.D. from Graduate School of Systemic Neurosciences, LMU Munich.
+> 2015 Masters in Logic and Philosophy of Science from MCMP, LMU Munich.
+
+## Links
+
+- [cv.md](https://cameronbeebe.github.io/cv.md)
+- [Beebe_Resume_SciPhi.pdf](https://cameronbeebe.github.io/Beebe_Resume_SciPhi.pdf)
+- [GitHub](https://github.com/CameronBeebe)
+- [LinkedIn](https://www.linkedin.com/in/cameronbeebe/)
+- [ResearchGate](https://www.researchgate.net/profile/Cameron_Beebe)
+- [X](https://x.com/BeebsMemes)
