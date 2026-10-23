@@ -4,7 +4,7 @@ Agent-friendly: [cameronbeebe.github.io/cv.md](https://cameronbeebe.github.io/cv
 
 Agent-readable version of the CV PDF: [https://cameronbeebe.github.io/Beebe_Resume_SciPhi.pdf](https://cameronbeebe.github.io/Beebe_Resume_SciPhi.pdf)
 
-Last updated: 2026-10-17
+Last updated: 2026-10-22
 
 [GitHub](https://github.com/CameronBeebe) · [LinkedIn](https://www.linkedin.com/in/cameronbeebe/) · [ResearchGate](https://www.researchgate.net/profile/Cameron_Beebe) · [Email](mailto:cameron@sciphi.info) · [X](https://x.com/BeebsMemes)
 
@@ -22,13 +22,11 @@ Shipped a harness eval dashboard comparing batches of executions across configur
 
 ### 2021– The SciPhi Initiative.
 
-My LLC for AI research, consulting, and community outreach.
+My LLC for AI research, consulting, and community outreach. Researching capabilities and limitations of LLM harnesses and agents; projects below.
 
-Pair coding and API integration with LLMs in projects like [`scipfs`](https://github.com/CameronBeebe/scipfs) and [`fungi_fortress`](https://github.com/CameronBeebe/fungi_fortress). Researching capabilities, responsible utilization, and limitations of LLMs.
+Current consulting Oct. 2026: Setting up a harness for High Performance Earthworks.
 
 Leading discussion sessions on AI and society at Nederland Philosophy Club (co-organizer).
-
-Interpreting wave mechanics and quantum probabilities as ideal structural objects: [⟨sci|phi⟩i](https://github.com/CameronBeebe/Structural_Idealism)
 
 ### 2023–2025 Colorado Outdoors.
 
@@ -66,19 +64,21 @@ Worked for Cray’s Distributed Deep Learning Plugin team. Applied, tested, and 
 - Thesis: *Uncertainty in Quantum Theory*
 - Advisor: [Prasanta Bandyopadhyay](https://www.montana.edu/history/directory/1523887/prasanta-bandyopadhyay)
 
-## Projects (selected)
+## Selected Projects (more on [GitHub](https://github.com/CameronBeebe))
 
-- **2026 Latest** See latest updates and current projects on [GitHub](https://github.com/CameronBeebe) & [ResearchGate](https://www.researchgate.net/profile/Cameron_Beebe)
-- **2018 Project/Talk** *Black Boxes or Rube Goldberg Machines? ANNs as Ashby Regulators.* [Epistemic Opacity in Computer Simulation and Machine Learning](https://www.hlrs.de/events/archive/detail-view/2018-11-28-sas/), HLRS. [(Related Repo)](https://github.com/CameronBeebe/Cybernetics)
-- **2018 Project/Talk** Transfer Learning in Artificial Neural Networks: [Introductory Tutorial to Transfer Learning with **Keras**](https://github.com/CameronBeebe/transfer_keras) (**Jupyter** Notebook for PyData Meet-up)
-- **2014 Project** [Modeling Memory in Signaling Games](https://www.researchgate.net/publication/321228909_Modeling_Memory_in_Signaling_Games_Deep_and_Surface_Forgetting) (Reinforcement learning in **Netlogo** w/ Dropout)
+- **2025–26** [`fungi_fortress`](https://github.com/CameronBeebe/fungi_fortress) / [`fungi_chromatic`](https://github.com/CameronBeebe/fungi_chromatic): generative game harness experiments. LLMs act through typed interfaces, **Jev** classification, flashing ROMs to cartridge.
+- **2025–26** [`scipfs`](https://github.com/CameronBeebe/scipfs): agentic IPFS sharing.
+- **Ongoing** *Structural Idealism*: interpreting wave mechanics and quantum probabilities as ideal structural objects. [⟨sci|phi⟩i](https://github.com/CameronBeebe/Structural_Idealism)
+- **2018** *Black Boxes or Rube Goldberg Machines? ANNs as Ashby Regulators.* [Epistemic Opacity in Computer Simulation and Machine Learning](https://www.hlrs.de/events/archive/detail-view/2018-11-28-sas/), HLRS.
+- **2018** [Introductory Tutorial to Transfer Learning with **Keras**](https://github.com/CameronBeebe/transfer_keras)
+- **2014** [Modeling Memory in Signaling Games](https://www.researchgate.net/publication/321228909_Modeling_Memory_in_Signaling_Games_Deep_and_Surface_Forgetting) (Reinforcement learning w/ Dropout)
 
 ## Publications
 
 - [Model-Based Computation](https://link.springer.com/article/10.1007/s11047-017-9643-0). Natural Computing, Volume 17, Issue 2, p. 271-281. 2018.
 - [Sequent Calculus Representations for Quantum Circuits](https://arxiv.org/abs/1606.06799). Electronic Proceedings in Theoretical Computer Science, volume 214, p. 3-15. 2016.
 
-### WIP Manuscripts (More on my [ResearchGate Profile.](https://www.researchgate.net/profile/Cameron_Beebe))
+### WIP Manuscripts (More on my [ResearchGate.](https://www.researchgate.net/profile/Cameron_Beebe))
 
 - [Artificial Neural Networks as Cybernetic Regulators](https://www.researchgate.net/publication/337915649_Artificial_Neural_Networks_as_Cybernetic_Regulators). (Forthcoming)
 - [Transfer Learning: The Logic of Discovery for Artificial General Intelligence](https://www.researchgate.net/publication/324330770_Transfer_Learning_The_Logic_of_Discovery_for_General_Artificial_Intelligence)
