@@ -35,39 +35,25 @@
       background: var(--bg);
     }
     h1 {
-      margin: 0.65rem 0 1rem;
-      font-size: clamp(3rem, 8vw, 6.25rem);
+      margin: 0.6rem 0 1rem;
+      font-size: clamp(2rem, 5vw, 3.75rem);
       font-weight: 400;
-      letter-spacing: -0.065em;
-      line-height: 0.91;
+      letter-spacing: -0.045em;
+      line-height: 1.08;
+      color: #dceccf;
     }
     h1 span {
-      display: block;
       color: var(--muted);
-      font: 0.85rem/1.3 var(--mono);
-      letter-spacing: 0.08em;
-      margin-top: 1rem;
+      font-size: 0.52em;
+      letter-spacing: 0;
+      white-space: nowrap;
     }
-    .masthead, .eyebrow, .section-label {
+    .eyebrow {
       font-family: var(--mono);
       font-size: 0.72rem;
       letter-spacing: 0.11em;
       text-transform: uppercase;
     }
-    .masthead {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 0.65rem 1rem;
-      padding: 1rem 0;
-      border-bottom: 1px solid var(--line);
-    }
-    .masthead a { color: inherit; text-decoration: none; }
-    .masthead a:hover { color: var(--accent); text-decoration: underline; }
-    .masthead-links { display: flex; flex-wrap: wrap; gap: 0.65rem 1.5rem; }
-    .wordmark { display: inline-flex; align-items: center; gap: 0.65rem; font-weight: 700; }
-    .wordmark svg { width: 1.75rem; height: 1.5rem; color: var(--phosphor); }
     .hero {
       display: grid;
       grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
@@ -120,7 +106,7 @@
     .portrait-actions button:disabled { opacity: 0.55; cursor: default; }
     #trace-tolerance, #flow-threshold { width: 5rem; }
     #portrait-status { min-height: 2.9em; color: var(--ink); }
-    .eyebrow { color: var(--danger); margin: 0; }
+    .eyebrow { color: var(--link); margin: 0; }
     .hero .icons { display: flex; flex-wrap: wrap; gap: 0.45rem; margin-top: 1.5rem; }
     .hero .icons a {
       display: inline-grid;
@@ -133,20 +119,6 @@
     }
     .hero .icons a:hover { border-color: var(--accent); }
     .about { padding: clamp(1.75rem, 5vw, 3rem) 0 0.5rem; }
-    .section-label {
-      display: flex;
-      align-items: center;
-      gap: 0.6rem;
-      margin: 0 0 0.65rem;
-      color: var(--accent);
-    }
-    .section-label::before {
-      content: "";
-      width: 0.85rem;
-      height: 0.85rem;
-      background: var(--phosphor);
-      clip-path: polygon(25% 0, 75% 0, 75% 25%, 100% 25%, 100% 75%, 75% 75%, 75% 100%, 25% 100%, 25% 75%, 0 75%, 0 25%, 25% 25%);
-    }
     .bio {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -322,47 +294,15 @@
       border: 1px dotted var(--line);
       padding: 0.3rem;
     }
-    .rule {
-      display: flex;
-      align-items: center;
-      gap: 0.85rem;
-      margin: 1.75rem 0 0.45rem;
-      border: 0;
-      user-select: none;
+    .playground-intro {
+      margin: clamp(1.75rem, 5vw, 3rem) 0 0;
+      padding-top: 1.25rem;
+      border-top: 1px solid var(--line);
     }
-    .rule::before,
-    .rule::after {
-      content: "";
-      flex: 1;
-      height: 1px;
-      background: linear-gradient(
-        90deg,
-        transparent,
-        var(--muted) 12%,
-        var(--accent) 50%,
-        var(--muted) 88%,
-        transparent
-      );
-      opacity: 0.6;
-    }
-    .rule .ket {
-      margin: 0;
-      flex: 0 0 auto;
-      font-size: 1.25em;
-      color: var(--accent);
-      line-height: 1;
-    }
-    .rule .ket mjx-container,
-    .rule .ket .MathJax {
-      margin: 0 !important;
-    }
-    .credit {
-      text-align: center;
-      margin: 0 0 1.25rem;
-      font-family: var(--mono);
-      font-size: 0.72em;
+    .playground-intro p {
+      margin: 0.4rem 0 0;
       color: var(--muted);
-      letter-spacing: 0.04em;
+      font-size: 0.95rem;
     }
     .formula {
       font-size: 0.9em;
@@ -370,9 +310,10 @@
       font-family: var(--mono);
     }
     .playground-title {
-      font: 500 clamp(2rem, 5vw, 3rem)/1.1 Georgia, serif;
+      margin: 0;
+      font: 400 clamp(1.7rem, 4vw, 2.35rem)/1.15 Georgia, serif;
       color: var(--ink);
-      margin-top: 1.5rem;
+      letter-spacing: -0.025em;
     }
     .bot-playground .experiment-title { font-size: 1rem; }
     .bot-playground .scores { flex-wrap: wrap; }
@@ -388,24 +329,11 @@
   <script type="module" src="assets/portrait.js"></script>
 </head>
 <body>
-  <nav class="masthead" aria-label="Site">
-    <span class="wordmark">
-      <svg aria-hidden="true" viewBox="0 0 14 12" shape-rendering="crispEdges">
-        <path fill="currentColor" d="M2 2h2V0h3v2h1V0h3v2h2v3h1v4h-2v2H2V9H0V5h2z"/>
-        <path fill="var(--bg)" d="M4 3h2v2H4zm5 0h2v2H9zM3 7h8v1H3z"/>
-      </svg>
-      SciPhi
-    </span>
-    <div class="masthead-links">
-      <a href="#about">About</a>
-      <a href="#playground">Bot playground ↓</a>
-    </div>
-  </nav>
   <main>
   <header class="hero">
   <div class="hero-copy">
   <p class="eyebrow">Philosophy of science · Agent engineering</p>
-  <h1>Cameron<br />Beebe<span>Ph.D.</span></h1>
+  <h1>Cameron Beebe,<span> Ph.D.</span></h1>
   <p class="icons">
     <a href="https://github.com/CameronBeebe" target="_blank" rel="noopener" aria-label="GitHub"><i class="fa-brands fa-github"></i></a>
     <a href="https://www.linkedin.com/in/cameronbeebe/" target="_blank" rel="noopener" aria-label="LinkedIn"><i class="fa-brands fa-linkedin"></i></a>
@@ -476,8 +404,7 @@
   </figure>
   </header>
 
-  <section class="about" id="about" aria-labelledby="about-title">
-  <h2 class="section-label" id="about-title">About</h2>
+  <section class="about" id="about" aria-label="Biography">
   <div class="bio">
   <p>
     Interdisciplinary philosopher of science. Ph.D., GSN / LMU Munich; Masters from the Munich Center for Mathematical Philosophy. Dissertation: <a href="https://edoc.ub.uni-muenchen.de/28655/1/Beebe_Cameron.pdf"><em>Knowledge Transfer in Cognitive Systems Theory</em></a> — knowledge as control via structure mapping; using cybernetics to explain neural networks as error-controlled regulators. Cray deep-learning internship.
@@ -496,12 +423,11 @@
   </div>
   </section>
 
-  <div class="rule" role="separator" aria-label="section break">
-    <div class="ket">\( {\langle\texttt{sci}|\texttt{phi}\rangle}_i \)</div>
-  </div>
   <section class="bot-playground" id="playground" aria-labelledby="playground-title">
-  <h2 class="playground-title" id="playground-title">Bot playground</h2>
-  <p class="credit">below the line: co-vibed with bots · playful experiments, not research results</p>
+  <header class="playground-intro">
+    <h2 class="playground-title" id="playground-title">Bot playground</h2>
+    <p>Interactive demos on feedback and task routing, built with bots.</p>
+  </header>
 
   <h3 class="experiment-title">01 · A plan needs a way into the world</h3>
   <p class="demo-note">Same starting point. Same goal. Same planner. The hollow dot is the imagined position;
