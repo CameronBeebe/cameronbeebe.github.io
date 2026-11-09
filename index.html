@@ -301,6 +301,28 @@
     .shared-world[hidden] { display: none; }
     .vat-key, .scores #sVat, .scores #dVat { color: var(--vat-ink); }
     .harness-key, .scores #sHarness, .scores #dHarness { color: var(--harness-ink); }
+    .agent-metrics {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.5rem;
+      max-width: 680px;
+      margin: 0.6rem auto;
+    }
+    .agent-metrics figure {
+      min-width: 0;
+      margin: 0;
+      padding: 0.4rem 0.55rem;
+      border: 1px solid var(--line);
+      background: var(--well);
+      color: var(--muted);
+      font-size: 0.78em;
+    }
+    .agent-metrics figcaption { color: var(--link); }
+    .agent-metrics small { display: block; font-size: 0.9em; }
+    .agent-meter { display: grid; grid-template-columns: 1ch max-content 5ch; gap: 0.6ch; align-items: baseline; }
+    .agent-meter code { color: var(--line); font: inherit; white-space: nowrap; }
+    .agent-meter .reading { text-align: right; }
+    @media (max-width: 620px) { .agent-metrics { grid-template-columns: minmax(0, 1fr); } }
     .agent-legend {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -450,6 +472,18 @@
     </div>
     <img class="shared-world" id="agent-print" src="assets/pine-river.webp" width="900" height="600" alt="A Japanese woodblock-style landscape of a pine overlooking a river and mountain." />
     <canvas class="shared-world" id="agent-world" width="400" height="260" aria-label="ASCII mountain and river landscape with shared targets for the vat and harness agents" hidden></canvas>
+    <div class="agent-metrics">
+      <figure id="position-error" aria-labelledby="position-error-label">
+        <figcaption id="position-error-label">Position error <small>Actual to estimate · ~5 units per #</small></figcaption>
+        <div class="agent-meter" data-meter="vat"><span class="vat-key" aria-label="Vat">V</span><code aria-hidden="true">[<span class="vat-key"></span><span>....................</span>]</code><span class="reading">0.0</span></div>
+        <div class="agent-meter" data-meter="harness"><span class="harness-key" aria-label="Harness">H</span><code aria-hidden="true">[<span class="harness-key"></span><span>....................</span>]</code><span class="reading">0.0</span></div>
+      </figure>
+      <figure id="target-distance" aria-labelledby="target-distance-label">
+        <figcaption id="target-distance-label">Distance to latest target <small>Actual to [*] · ~25 units per #</small></figcaption>
+        <div class="agent-meter" data-meter="vat"><span class="vat-key" aria-label="Vat">V</span><code aria-hidden="true">[<span class="vat-key"></span><span>....................</span>]</code><span class="reading">—</span></div>
+        <div class="agent-meter" data-meter="harness"><span class="harness-key" aria-label="Harness">H</span><code aria-hidden="true">[<span class="harness-key"></span><span>....................</span>]</code><span class="reading">—</span></div>
+      </figure>
+    </div>
     <div class="scores">
       <span><strong class="vat-key">V Vat</strong> · hits: <b id="sVat">0</b> · misses: <b id="dVat">0</b></span>
       <span><strong class="harness-key">H Harness</strong> · hits: <b id="sHarness">0</b> · misses: <b id="dHarness">0</b></span>
@@ -457,12 +491,13 @@
     <dl class="agent-legend" aria-label="ASCII marker legend">
       <div><dt><code class="legend-vat">&lt;V&gt;</code></dt><dd>Vat position</dd></div>
       <div><dt><code class="legend-harness">&lt;H&gt;</code></dt><dd>Harness position</dd></div>
-      <div><dt><code class="legend-overlap">&lt;&amp;&gt;</code></dt><dd>Same cell</dd></div>
+      <div><dt><code class="legend-overlap">&lt;&amp;&gt;</code></dt><dd>Shared position</dd></div>
       <div><dt><code class="legend-vat-estimate">&lt;v&gt;</code></dt><dd>Vat estimate</dd></div>
       <div><dt><code class="legend-harness-estimate">&lt;h&gt;</code></dt><dd>Harness estimate</dd></div>
-      <div><dt><code class="legend-target">[+]</code></dt><dd>Shared target</dd></div>
+      <div><dt><code>&lt;~&gt;</code></dt><dd>Shared estimate</dd></div>
     </dl>
-    <p class="demo-note">Shaded trails show actual paths. Dots show estimated paths. The first physical arrival clears the target.</p>
+    <p class="demo-note">Shaded trails show actual paths. Dots trace estimates. A separate estimate appears when its cell differs from the actual position.</p>
+    <p class="demo-note"><code class="legend-target">[+]</code> marks a target. <code class="legend-target">[*]</code> is the latest target and stays in the distance readout after the first physical arrival clears its marker.</p>
   </div>
 
   <h3 class="experiment-title">02 · Send a task to the right specialist</h3>
@@ -547,6 +582,31 @@ import { createAgent } from './assets/playground-agent.js';
   const harness = createAgent('harness', W, H);
   const agents = [vat, harness];
   const targets = new Map();
+  let latestTarget;
+  const barLength = 20;
+
+  function meterRows(id) {
+    return agents.map(({ state }) => {
+      const row = document.querySelector(`#${id} [data-meter="${state.kind}"]`);
+      const [filled, empty] = row.querySelectorAll('code span');
+      return { state, filled, empty, reading: row.querySelector('.reading') };
+    });
+  }
+  const errorRows = meterRows('position-error');
+  const distanceRows = meterRows('target-distance');
+
+  function syncMeter(rows, units, reference) {
+    for (const { state, filled, empty, reading } of rows) {
+      const point = reference(state);
+      const distance = point ? Math.hypot(state.position.x - point.x, state.position.y - point.y) : null;
+      const text = distance === null ? '—' : distance.toFixed(1);
+      if (reading.textContent === text) continue;
+      const count = Math.min(barLength, Math.round((distance ?? 0) / units));
+      filled.textContent = distance > barLength * units ? '#'.repeat(barLength - 1) + '>' : '#'.repeat(count);
+      empty.textContent = '.'.repeat(barLength - count);
+      reading.textContent = text;
+    }
+  }
 
   function plantGoal(x, y) {
     x = Math.max(12, Math.min(W - 12, x));
@@ -559,6 +619,7 @@ import { createAgent } from './assets/playground-agent.js';
     };
     const life = 1000 + Math.random() * 500;
     targets.set(cell, target);
+    latestTarget = target;
     for (const { state } of agents) {
       state.goals = state.goals.filter(goal => goal.target.cell !== cell);
       state.goals.push({ target, life });
@@ -580,11 +641,6 @@ import { createAgent } from './assets/playground-agent.js';
   function drawWorld() {
     const frame = landscape.cells.slice();
     function mark(cell, glyph, ink, backdrop) { frame[cell] = { glyph, ink, backdrop }; }
-    function cursor(cell, glyph, ink, backdrop) {
-      mark(cell - 1, '<', ink, backdrop);
-      mark(cell, glyph, ink, backdrop);
-      mark(cell + 1, '>', ink, backdrop);
-    }
     for (const { state } of agents) {
       for (const { actual, estimated } of state.trail) {
         if (actual !== estimated) mark(estimated, '.', colors[state.kind].estimate);
@@ -610,7 +666,7 @@ import { createAgent } from './assets/playground-agent.js';
         for (let i = 0; i < pattern.length; i++) mark(cell + offset + i - 1, pattern[i], '#ffdf76');
       }
       mark(cell - 1, '[', assigned?.has('vat') ? colors.vat.ink : '#ffdf76');
-      mark(cell, '+', '#fff6a0');
+      mark(cell, cell === latestTarget?.cell ? '*' : '+', '#fff6a0');
       mark(cell + 1, ']', assigned?.has('harness') ? colors.harness.ink : '#ffdf76');
     }
 
@@ -618,13 +674,28 @@ import { createAgent } from './assets/playground-agent.js';
     const harnessCell = cellFor(harness.state.position);
     const vatEstimate = cellFor(vat.state.estimate);
     const harnessEstimate = cellFor(harness.state.estimate);
-    if (vatEstimate !== vatCell) cursor(vatEstimate, 'v', colors.vat.estimate);
-    if (harnessEstimate !== harnessCell) cursor(harnessEstimate, 'h', colors.harness.estimate);
+    const markers = new Map();
+    function cursor(cell, glyph, ink, backdrop) { markers.set(cell, { glyph, ink, backdrop }); }
     if (vatCell === harnessCell) {
       cursor(vatCell, '&', colors.overlap.ink, colors.overlap.backdrop);
     } else {
       cursor(vatCell, 'V', colors.vat.ink, colors.vat.backdrop);
       cursor(harnessCell, 'H', colors.harness.ink, colors.harness.backdrop);
+    }
+    function estimateCursor(cell, glyph, ink) {
+      while (markers.has(cell)) cell -= columns;
+      cursor(cell, glyph, ink);
+    }
+    if (vatEstimate === harnessEstimate && (vatEstimate !== vatCell || harnessEstimate !== harnessCell)) {
+      estimateCursor(vatEstimate, '~', colors.overlap.ink);
+    } else {
+      if (vatEstimate !== vatCell) estimateCursor(vatEstimate, 'v', colors.vat.estimate);
+      if (harnessEstimate !== harnessCell) estimateCursor(harnessEstimate, 'h', colors.harness.estimate);
+    }
+    for (const [cell, { glyph, ink, backdrop }] of markers) {
+      if (!markers.has(cell - 1)) mark(cell - 1, '<', ink, backdrop);
+      mark(cell, glyph, ink, backdrop);
+      if (!markers.has(cell + 1)) mark(cell + 1, '>', ink, backdrop);
     }
     landscape.draw(frame);
   }
@@ -659,12 +730,15 @@ import { createAgent } from './assets/playground-agent.js';
       }
       drawWorld();
       syncScores();
+      syncMeter(errorRows, 5, state => state.estimate);
+      syncMeter(distanceRows, 25, () => latestTarget);
     }
     requestAnimationFrame(loop);
   }
   resetButton.onclick = () => {
     for (const agent of agents) agent.reset();
     targets.clear();
+    latestTarget = undefined;
   };
   image.decode().then(() => {
     canvas.hidden = false;
