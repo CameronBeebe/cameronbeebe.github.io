@@ -304,6 +304,7 @@
     .agent-metrics {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
+      align-items: start;
       gap: 0.5rem;
       max-width: 680px;
       margin: 0.6rem auto;
@@ -322,6 +323,11 @@
     .agent-meter { display: grid; grid-template-columns: 1ch max-content 5ch; gap: 0.6ch; align-items: baseline; }
     .agent-meter code { color: var(--line); font: inherit; white-space: nowrap; }
     .agent-meter .reading { text-align: right; }
+    .goal-meter .agent-meter { grid-template-columns: 1ch 6ch max-content 5ch; }
+    .goal-meter + .goal-meter { margin-top: 0.25rem; padding-top: 0.25rem; border-top: 1px dotted var(--line); }
+    .goal-gap { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 0.7ch; padding-inline-start: 1.6ch; }
+    .goal-gap .reading { color: var(--link); }
+    .false-arrival { padding: 0 0.4ch; color: var(--danger); background: var(--vat-backdrop); }
     @media (max-width: 620px) { .agent-metrics { grid-template-columns: minmax(0, 1fr); } }
     .agent-legend {
       display: grid;
@@ -479,9 +485,17 @@
         <div class="agent-meter" data-meter="harness"><span class="harness-key" aria-label="Harness">H</span><code aria-hidden="true">[<span class="harness-key"></span><span>....................</span>]</code><span class="reading">0.0</span></div>
       </figure>
       <figure id="target-distance" aria-labelledby="target-distance-label">
-        <figcaption id="target-distance-label">Distance to latest target <small>Actual to [*] · ~25 units per #</small></figcaption>
-        <div class="agent-meter" data-meter="vat"><span class="vat-key" aria-label="Vat">V</span><code aria-hidden="true">[<span class="vat-key"></span><span>....................</span>]</code><span class="reading">—</span></div>
-        <div class="agent-meter" data-meter="harness"><span class="harness-key" aria-label="Harness">H</span><code aria-hidden="true">[<span class="harness-key"></span><span>....................</span>]</code><span class="reading">—</span></div>
+        <figcaption id="target-distance-label">Distance to latest target [*] <small>~15 units per # · arrival within <span id="arrival-radius"></span> units</small></figcaption>
+        <div class="goal-meter" data-meter="vat" role="group" aria-label="Vat goal distances">
+          <div class="agent-meter" data-distance="actual"><span class="vat-key" aria-hidden="true">V</span><span>actual</span><code aria-hidden="true">[<span class="vat-key"></span><span>..............</span>]</code><span class="reading">—</span></div>
+          <div class="agent-meter" data-distance="estimated"><span></span><span>est.</span><code aria-hidden="true">[<span class="legend-vat-estimate"></span><span>..............</span>]</code><span class="reading">—</span></div>
+          <div class="goal-gap"><span>abs. gap</span><span class="reading">—</span><span class="false-arrival" hidden>! False arrival</span></div>
+        </div>
+        <div class="goal-meter" data-meter="harness" role="group" aria-label="Harness goal distances">
+          <div class="agent-meter" data-distance="actual"><span class="harness-key" aria-hidden="true">H</span><span>actual</span><code aria-hidden="true">[<span class="harness-key"></span><span>..............</span>]</code><span class="reading">—</span></div>
+          <div class="agent-meter" data-distance="estimated"><span></span><span>est.</span><code aria-hidden="true">[<span class="legend-harness-estimate"></span><span>..............</span>]</code><span class="reading">—</span></div>
+          <div class="goal-gap"><span>abs. gap</span><span class="reading">—</span><span class="false-arrival" hidden>! False arrival</span></div>
+        </div>
       </figure>
     </div>
     <div class="scores">
@@ -544,7 +558,7 @@
 
 <script type="module">
 import { columns, rows, createLandscape } from './assets/playground-landscape.js';
-import { createAgent } from './assets/playground-agent.js';
+import { arrivalRadius, createAgent, distanceBetween } from './assets/playground-agent.js';
 
 (function () {
   function opts() {
@@ -583,28 +597,45 @@ import { createAgent } from './assets/playground-agent.js';
   const agents = [vat, harness];
   const targets = new Map();
   let latestTarget;
-  const barLength = 20;
+  document.getElementById('arrival-radius').textContent = arrivalRadius;
 
-  function meterRows(id) {
-    return agents.map(({ state }) => {
-      const row = document.querySelector(`#${id} [data-meter="${state.kind}"]`);
-      const [filled, empty] = row.querySelectorAll('code span');
-      return { state, filled, empty, reading: row.querySelector('.reading') };
-    });
+  function meterParts(row) {
+    const [filled, empty] = row.querySelectorAll('code span');
+    return { filled, empty, reading: row.querySelector('.reading'), length: empty.textContent.length };
   }
-  const errorRows = meterRows('position-error');
-  const distanceRows = meterRows('target-distance');
+  const readouts = agents.map(({ state }) => {
+    const selector = `[data-meter="${state.kind}"]`;
+    const goal = document.querySelector(`#target-distance ${selector}`);
+    return {
+      state,
+      errorBar: meterParts(document.querySelector(`#position-error ${selector}`)),
+      actualBar: meterParts(goal.querySelector('[data-distance="actual"]')),
+      estimatedBar: meterParts(goal.querySelector('[data-distance="estimated"]')),
+      gap: goal.querySelector('.goal-gap .reading'),
+      warning: goal.querySelector('.false-arrival'),
+    };
+  });
 
-  function syncMeter(rows, units, reference) {
-    for (const { state, filled, empty, reading } of rows) {
-      const point = reference(state);
-      const distance = point ? Math.hypot(state.position.x - point.x, state.position.y - point.y) : null;
-      const text = distance === null ? '—' : distance.toFixed(1);
-      if (reading.textContent === text) continue;
-      const count = Math.min(barLength, Math.round((distance ?? 0) / units));
-      filled.textContent = distance > barLength * units ? '#'.repeat(barLength - 1) + '>' : '#'.repeat(count);
-      empty.textContent = '.'.repeat(barLength - count);
-      reading.textContent = text;
+  function syncMeter({ filled, empty, reading, length }, distance, units) {
+    const text = distance === null ? '—' : distance.toFixed(1);
+    if (reading.textContent === text) return;
+    const count = Math.min(length, Math.round((distance ?? 0) / units));
+    filled.textContent = distance > length * units ? '#'.repeat(length - 1) + '>' : '#'.repeat(count);
+    empty.textContent = '.'.repeat(length - count);
+    reading.textContent = text;
+  }
+
+  function syncReadouts() {
+    for (const { state, errorBar, actualBar, estimatedBar, gap, warning } of readouts) {
+      const { position, estimate } = state;
+      syncMeter(errorBar, distanceBetween(position, estimate), 5);
+      const actual = latestTarget ? distanceBetween(position, latestTarget) : null;
+      const estimated = latestTarget ? distanceBetween(estimate, latestTarget) : null;
+      syncMeter(actualBar, actual, 15);
+      syncMeter(estimatedBar, estimated, 15);
+      const gapText = latestTarget ? Math.abs(actual - estimated).toFixed(1) : '—';
+      if (gap.textContent !== gapText) gap.textContent = gapText;
+      warning.hidden = !latestTarget || estimated > arrivalRadius || actual <= arrivalRadius;
     }
   }
 
@@ -730,8 +761,7 @@ import { createAgent } from './assets/playground-agent.js';
       }
       drawWorld();
       syncScores();
-      syncMeter(errorRows, 5, state => state.estimate);
-      syncMeter(distanceRows, 25, () => latestTarget);
+      syncReadouts();
     }
     requestAnimationFrame(loop);
   }

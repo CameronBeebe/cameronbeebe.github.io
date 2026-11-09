@@ -1,8 +1,13 @@
 const maxSpeed = 1.5;
 const spring = 0.0024;
 const damping = 0.978;
-const reach = 8;
 const still = { x: 0, y: 0 };
+
+export const arrivalRadius = 8;
+
+export function distanceBetween(first, second) {
+  return Math.hypot(first.x - second.x, first.y - second.y);
+}
 
 export function createAgent(kind, width, height) {
   const harnessed = kind === 'harness';
@@ -50,7 +55,7 @@ export function createAgent(kind, width, height) {
   }
 
   function recordArrival(target) {
-    if (target.hits.has(kind) || Math.hypot(target.x - state.position.x, target.y - state.position.y) > reach) return;
+    if (target.hits.has(kind) || distanceBetween(target, state.position) > arrivalRadius) return;
     target.hits.add(kind);
     state.done++;
   }
@@ -68,8 +73,7 @@ export function createAgent(kind, width, height) {
     let pending;
     let distance = Infinity;
     for (const goal of state.goals) {
-      const { x, y } = goal.target;
-      const gap = Math.hypot(x - state.estimate.x, y - state.estimate.y);
+      const gap = distanceBetween(goal.target, state.estimate);
       if (gap < distance) {
         pending = goal;
         distance = gap;
@@ -85,7 +89,7 @@ export function createAgent(kind, width, height) {
     const dx = target.x - state.estimate.x;
     const dy = target.y - state.estimate.y;
 
-    if (pending && distance <= reach) {
+    if (pending && distance <= arrivalRadius) {
       if (!target.hits.has(kind)) {
         state.misses++;
         if (harnessed && options.verifier) {
