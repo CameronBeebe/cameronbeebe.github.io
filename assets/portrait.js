@@ -1,5 +1,6 @@
 import { createSimulations, simulationDescriptions } from './portrait-simulations.js';
 import { swapCells, sortPass, neighbors, repairPass, quantizeRow } from './portrait-grid.js';
+import { glyphs, sampleImageTones } from './ascii-image.js';
 
 const portrait = document.querySelector('.portrait-print');
 const terminal = document.querySelector('.portrait-terminal');
@@ -8,30 +9,12 @@ const phosphor = getComputedStyle(document.documentElement).getPropertyValue('--
 
 const columns = 75;
 const rows = 50;
-const glyphs = ' .,:;*oxO%#@';
 const inks = ['#246321', '#389b2d', '#59cf48', phosphor];
 
 function makeCell(tone) {
   const glyph = Math.round(tone * (glyphs.length - 1));
   const ink = Math.round(tone * (inks.length - 1));
   return { glyph: glyphs[glyph], ink: inks[ink], rank: glyph * inks.length + ink, tone };
-}
-
-function samplePortrait() {
-  const sample = document.createElement('canvas');
-  sample.width = columns;
-  sample.height = rows;
-
-  const sampler = sample.getContext('2d', { willReadFrequently: true });
-  sampler.drawImage(portrait, 0, 0, columns, rows);
-  const pixels = sampler.getImageData(0, 0, columns, rows).data;
-
-  return Array.from({ length: columns * rows }, (_, index) => {
-    const i = index * 4;
-    const luminance = 0.2126 * pixels[i] + 0.7152 * pixels[i + 1] + 0.0722 * pixels[i + 2];
-    const tone = Math.min(1, Math.max(0, (luminance - 12) / 183));
-    return makeCell(tone);
-  });
 }
 
 function drawTerminal(ctx, cells) {
@@ -62,7 +45,7 @@ function enablePortraitExperiments() {
   const ctx = terminal.getContext('2d');
   if (!ctx) return;
 
-  const original = samplePortrait();
+  const original = sampleImageTones(portrait, columns, rows).map(makeCell);
   const modeButtons = [...controls.querySelectorAll('[data-experiment]')];
   const panels = [...controls.querySelectorAll('[data-controls]')];
   const sortColumns = document.getElementById('sort-columns');

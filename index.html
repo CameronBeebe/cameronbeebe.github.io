@@ -284,7 +284,8 @@
     }
     .bot-playground .experiment-title { font-size: 1rem; }
     .bot-playground .scores { flex-wrap: wrap; }
-    .shared-world { max-width: 680px; margin: 0 auto; aspect-ratio: 400 / 260; }
+    .shared-world { display: block; width: 100%; height: auto; max-width: 680px; margin: 0 auto; aspect-ratio: 400 / 260; object-fit: cover; }
+    .shared-world[hidden] { display: none; }
     .vat-key, .scores #sVat, .scores #dVat { color: var(--danger); }
     .harness-key { color: var(--phosphor); }
     .bot-playground .task { flex-wrap: wrap; cursor: grab; }
@@ -398,8 +399,8 @@
 
   <h3 class="experiment-title">01 · Brain in a vat vs harness</h3>
   <p class="demo-note">
-    Click the landscape to give both agents the same goal. The vat wanders, while the harness can steer toward
-    the goal with tools. Turn off the harness stop condition to see it overshoot.
+    Click the print to scratch out a patch and give both agents the same repair goal. The vat wanders,
+    while the harness can steer with tools. Turn off the harness stop condition to see it overshoot.
   </p>
   <div class="demo">
     <div class="controls" role="group" aria-label="Harness settings and simulation controls">
@@ -408,15 +409,16 @@
       <label><input type="checkbox" id="optMemory" checked /> memory</label>
       <label><input type="checkbox" id="optVerifier" checked /> verifier</label>
       <label><input type="checkbox" id="optStop" checked /> stop condition</label>
-      <button type="button" id="btnReset">reset</button>
-      <button type="button" id="btnPulse">spawn goals</button>
+      <button type="button" id="btnReset" disabled>reset</button>
+      <button type="button" id="btnPulse" disabled>spawn goals</button>
     </div>
-    <canvas class="shared-world" id="agent-world" width="400" height="260" aria-label="ASCII mountain and river landscape showing the vat and harness agents"></canvas>
+    <img class="shared-world" id="agent-print" src="assets/pine-river.webp" width="900" height="600" alt="A Japanese woodblock-style landscape of a pine overlooking a river and mountain." />
+    <canvas class="shared-world" id="agent-world" width="400" height="260" aria-label="ASCII mountain and river landscape that the vat and harness agents repair" hidden></canvas>
     <div class="scores">
       <span><strong class="vat-key">V Vat</strong> · done: <b id="sVat">0</b> · drift: <b id="dVat">0</b></span>
       <span><strong class="harness-key">H Harness</strong> · done: <b id="sHarness">0</b> · drift: <b id="dHarness">0</b></span>
     </div>
-    <p class="demo-note">A gold + marks a goal. Its colored brackets show which agents still have it pending. &amp; means the agents overlap.</p>
+    <p class="demo-note">Gold + marks a repair, and colored brackets show who still has it pending. The first agent to finish restores the missing glyphs in its color.</p>
   </div>
 
   <h3 class="experiment-title">02 · Send a task to the right specialist</h3>
@@ -462,7 +464,7 @@
   </main>
 
 <script type="module">
-import { drawLandscape } from './assets/playground-landscape.js';
+import { columns, rows, createLandscape } from './assets/playground-landscape.js';
 
 (function () {
   function opts() {
@@ -475,28 +477,16 @@ import { drawLandscape } from './assets/playground-landscape.js';
   }
 
   const canvas = document.getElementById('agent-world');
-  const ctx = canvas.getContext('2d', { alpha: false });
-  const background = document.createElement('canvas');
+  const image = document.getElementById('agent-print');
+  const resetButton = document.getElementById('btnReset');
+  const spawnButton = document.getElementById('btnPulse');
   const W = canvas.width, H = canvas.height;
   const font = getComputedStyle(canvas).getPropertyValue('--mono').trim();
   const colors = { vat: '#f0ae88', harness: '#39ff14' };
+  const trailColors = { vat: '#cc9d7e', harness: '#81e45f' };
+  let landscape;
   let goalNumber = 0;
-  const cellWidth = 8, cellHeight = 10;
-  const gridColumns = W / cellWidth, gridRows = H / cellHeight;
-
-  function resizeWorld() {
-    const bounds = canvas.getBoundingClientRect();
-    const ratio = window.devicePixelRatio || 1;
-    const width = Math.max(1, Math.round(bounds.width * ratio));
-    const height = Math.max(1, Math.round(bounds.height * ratio));
-    if (width === canvas.width && height === canvas.height && width === background.width && height === background.height) return;
-    canvas.width = background.width = width;
-    canvas.height = background.height = height;
-    drawLandscape(background, W, H, font);
-    ctx.setTransform(canvas.width / W, 0, 0, canvas.height / H, 0, 0);
-  }
-  new ResizeObserver(resizeWorld).observe(canvas);
-  resizeWorld();
+  const cellWidth = W / columns, cellHeight = H / rows;
 
   function makeAgent(kind) {
     const state = {
@@ -556,7 +546,7 @@ import { drawLandscape } from './assets/playground-landscape.js';
       b.y += b.vy;
       b.x = Math.max(12, Math.min(W - 12, b.x));
       b.y = Math.max(12, Math.min(H - 12, b.y));
-      state.trail.push({ x: b.x, y: b.y });
+      state.trail.push(cellFor(b));
       if (state.trail.length > 50) state.trail.shift();
 
       for (let i = state.goals.length - 1; i >= 0; i--) {
@@ -578,6 +568,7 @@ import { drawLandscape } from './assets/playground-landscape.js';
             if (!success) state.drift++;
           }
           if (success) {
+            landscape.repair(g, colors[kind]);
             if (harnessed && o.stop) {
               state.done++;
               state.goals.splice(i, 1);
@@ -612,7 +603,17 @@ import { drawLandscape } from './assets/playground-landscape.js';
   const agents = [vat, harness];
 
   function plantGoal(x, y) {
-    const goal = { x, y, id: ++goalNumber, life: 400 + Math.random() * 200 };
+    x = Math.max(12, Math.min(W - 12, x));
+    y = Math.max(12, Math.min(H - 12, y));
+    const cell = cellFor({ x, y });
+    const id = ++goalNumber;
+    const goal = {
+      x: (cell % columns + 0.5) * cellWidth,
+      y: (Math.floor(cell / columns) + 0.5) * cellHeight,
+      id, cell,
+      patch: landscape.cut(cell, id),
+      life: 400 + Math.random() * 200,
+    };
     for (const agent of agents) agent.state.goals.push({ ...goal });
   }
 
@@ -620,59 +621,54 @@ import { drawLandscape } from './assets/playground-landscape.js';
     const bounds = canvas.getBoundingClientRect();
     const x = (event.clientX - bounds.left) * W / bounds.width;
     const y = (event.clientY - bounds.top) * H / bounds.height;
-    plantGoal(Math.max(cellWidth, Math.min(W - cellWidth - 1, x)), y);
+    plantGoal(x, y);
   });
 
   function cellFor({ x, y }) {
-    return [Math.min(gridColumns - 1, Math.floor(x / cellWidth)), Math.min(gridRows - 1, Math.floor(y / cellHeight))];
-  }
-
-  function glyphAt([column, row], glyph, color, backdrop = false) {
-    if (backdrop) {
-      ctx.fillStyle = '#071906';
-      ctx.fillRect(column * cellWidth, row * cellHeight, cellWidth, cellHeight);
-    }
-    ctx.fillStyle = color;
-    ctx.fillText(glyph, (column + 0.5) * cellWidth, (row + 0.5) * cellHeight);
+    return Math.min(rows - 1, Math.floor(y / cellHeight)) * columns
+      + Math.min(columns - 1, Math.floor(x / cellWidth));
   }
 
   function drawWorld(options) {
-    ctx.drawImage(background, 0, 0, W, H);
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.font = `10px ${font}`;
-
-    if (options.memory) {
-      for (const memory of harness.state.memory) glyphAt(cellFor(memory), ':', '#54794a');
+    const frame = landscape.cells.slice();
+    function mark(cell, glyph, ink) { frame[cell] = { glyph, ink }; }
+    function cursor(cell, glyph, ink) {
+      mark(cell - 1, '<', ink);
+      mark(cell, glyph, ink);
+      mark(cell + 1, '>', ink);
     }
     for (const { state } of agents) {
-      const color = state.kind === 'vat' ? '#b1816a' : '#68aa50';
-      for (const point of state.trail) glyphAt(cellFor(point), '·', color);
+      for (const cell of state.trail) {
+        const { glyph } = landscape.cells[cell];
+        mark(cell, glyph === ' ' ? ':' : glyph, trailColors[state.kind]);
+      }
+    }
+    if (options.memory) {
+      for (const memory of harness.state.memory) mark(cellFor(memory), ':', '#8aad70');
     }
 
     const goals = new Map();
     for (const { state } of agents) {
-      for (const goal of state.goals) {
-        if (!goals.has(goal.id)) goals.set(goal.id, { goal, pending: new Set() });
-        goals.get(goal.id).pending.add(state.kind);
+      for (const { cell } of state.goals) {
+        if (!goals.has(cell)) goals.set(cell, new Set());
+        goals.get(cell).add(state.kind);
       }
     }
-    ctx.font = `bold 11px ${font}`;
-    for (const { goal, pending } of goals.values()) {
-      const [x, y] = cellFor(goal);
-      glyphAt([x, y], '+', '#f0ce87', true);
-      if (pending.has('vat')) glyphAt([x - 1, y], '[', colors.vat, true);
-      if (pending.has('harness')) glyphAt([x + 1, y], ']', colors.harness, true);
+    for (const [cell, pending] of goals) {
+      if (pending.has('vat')) mark(cell - 1, '[', colors.vat);
+      mark(cell, '+', '#f0ce87');
+      if (pending.has('harness')) mark(cell + 1, ']', colors.harness);
     }
 
     const vatCell = cellFor(vat.state.brain);
     const harnessCell = cellFor(harness.state.brain);
-    if (vatCell[0] === harnessCell[0] && vatCell[1] === harnessCell[1]) {
-      glyphAt(vatCell, '&', '#f0ce87', true);
+    if (vatCell === harnessCell) {
+      cursor(vatCell, '&', '#f0ce87');
     } else {
-      glyphAt(vatCell, 'V', colors.vat, true);
-      glyphAt(harnessCell, 'H', colors.harness, true);
+      cursor(vatCell, 'V', colors.vat);
+      cursor(harnessCell, 'H', colors.harness);
     }
+    landscape.draw(frame);
   }
 
   function syncScores() {
@@ -689,26 +685,35 @@ import { drawLandscape } from './assets/playground-landscape.js';
     syncScores();
     requestAnimationFrame(loop);
   }
-  loop();
-
-  document.getElementById('btnReset').onclick = () => {
+  resetButton.onclick = () => {
     agents.forEach(w => {
       w.state.goals = [];
       w.state.memory = [];
       w.state.done = 0;
       w.state.drift = 0;
+      w.state.tick = 0;
       w.state.trail = [];
-      w.state.brain.x = 200;
-      w.state.brain.y = 130;
+      w.state.brain.x = W / 2;
+      w.state.brain.y = H / 2;
       w.state.brain.vx = 0;
       w.state.brain.vy = 0;
       w.state.brain.conf = 0.5;
     });
+    landscape.reset();
     goalNumber = 0;
   };
-  document.getElementById('btnPulse').onclick = () => {
+  spawnButton.onclick = () => {
     for (let i = 0; i < 3; i++) plantGoal(40 + Math.random() * (W - 80), 40 + Math.random() * (H - 80));
   };
+
+  image.decode().then(() => {
+    canvas.hidden = false;
+    landscape = createLandscape(canvas, image, font);
+    image.hidden = true;
+    resetButton.disabled = false;
+    spawnButton.disabled = false;
+    loop();
+  }).catch(() => { canvas.hidden = true; });
 
   // --- director / specialist routing (general) ---
   const TASKS = [

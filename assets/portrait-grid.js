@@ -23,6 +23,45 @@ export function neighbors(index, columns, rows) {
   return result;
 }
 
+function plateauExit(surface, start, columns, rows) {
+  const queue = [start];
+  const previous = new Map([[start, null]]);
+  const level = surface[start];
+  for (let i = 0; i < queue.length; i++) {
+    for (const next of neighbors(queue[i], columns, rows)) {
+      if (surface[next] < level) {
+        const path = [next];
+        for (let cell = queue[i]; cell !== start; cell = previous.get(cell)) path.push(cell);
+        return path.reverse();
+      }
+      if (surface[next] === level && !previous.has(next)) {
+        previous.set(next, queue[i]);
+        queue.push(next);
+      }
+    }
+  }
+  return [];
+}
+
+export function descentPath(surface, start, columns, rows) {
+  const path = [start];
+  let index = start;
+  while (true) {
+    const lowest = neighbors(index, columns, rows).reduce(
+      (best, candidate) => surface[candidate] < surface[best] ? candidate : best, index,
+    );
+    if (lowest !== index) {
+      path.push(lowest);
+      index = lowest;
+      continue;
+    }
+    const exit = plateauExit(surface, index, columns, rows);
+    if (!exit.length) return path;
+    path.push(...exit);
+    index = exit.at(-1);
+  }
+}
+
 export function repairPass(grid, columns, rows, makeCell) {
   const next = grid.slice();
   let remaining = 0;
