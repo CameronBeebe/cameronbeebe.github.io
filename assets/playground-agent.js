@@ -9,9 +9,8 @@ export function distanceBetween(first, second) {
   return Math.hypot(first.x - second.x, first.y - second.y);
 }
 
-export function createAgent(kind, width, height) {
-  const harnessed = kind === 'harness';
-  const state = { kind };
+export function createAgent(width, height) {
+  const state = {};
   let velocity;
   let rememberedCurrent;
 
@@ -29,15 +28,23 @@ export function createAgent(kind, width, height) {
     };
   }
 
-  function move(feedback, memory) {
-    const { x, y } = state.position;
-    // Alternating currents bend trajectories in different directions across the print.
-    const current = {
-      x: 1.02 * Math.sin((y - height / 2) / 18 + (x - width / 2) / 57),
-      y: 1.02 * Math.cos((x - width / 2) / 19 - (y - height / 2) / 52),
+  function currentAt({ x, y }, scale = 1) {
+    return {
+      x: scale * 1.02 * Math.sin((y - height / 2) / 18 + (x - width / 2) / 57),
+      y: scale * 1.02 * Math.cos((x - width / 2) / 19 - (y - height / 2) / 52),
     };
-    const predicted = memory ? rememberedCurrent : still;
-    const slip = { x: current.x - predicted.x, y: current.y - predicted.y };
+  }
+
+  function move(feedback, memory, plan) {
+    const current = currentAt(state.position);
+    const remembered = memory ? rememberedCurrent : still;
+    // The plan forecasts a weaker current at the estimated position.
+    const forecast = plan ? currentAt(state.estimate, 0.75) : still;
+    const correction = plan ? {
+      x: 0.65 * forecast.x + 0.35 * remembered.x,
+      y: 0.65 * forecast.y + 0.35 * remembered.y,
+    } : remembered;
+    const slip = { x: current.x - correction.x, y: current.y - correction.y };
     const strength = Math.min(1, Math.hypot(velocity.x, velocity.y) / 2);
     state.position = advance(state.position, slip, strength);
     if (feedback) {
@@ -50,23 +57,19 @@ export function createAgent(kind, width, height) {
         };
       }
     } else {
-      state.estimate = advance(state.estimate, still, 0);
+      const expectedSlip = plan ? { x: forecast.x - correction.x, y: forecast.y - correction.y } : still;
+      state.estimate = advance(state.estimate, expectedSlip, strength);
     }
   }
 
-  function recordArrival(target) {
-    if (target.hits.has(kind) || distanceBetween(target, state.position) > arrivalRadius) return;
-    target.hits.add(kind);
-    state.done++;
-  }
-
   function step(options, visibleTargets) {
-    for (const target of visibleTargets) recordArrival(target);
-    // The other agent may still reach a target after its crosshair has cleared.
-    for (const { target } of state.goals) recordArrival(target);
+    for (const target of visibleTargets) {
+      if (target.reached || distanceBetween(target, state.position) > arrivalRadius) continue;
+      target.reached = true;
+      state.done++;
+    }
 
-    const feedback = harnessed && options.tools;
-    const memory = harnessed && options.memory;
+    const { tools: feedback, memory, plan } = options;
     if (feedback) state.estimate = state.position;
 
     state.goals = state.goals.filter(goal => --goal.life > 0);
@@ -90,9 +93,9 @@ export function createAgent(kind, width, height) {
     const dy = target.y - state.estimate.y;
 
     if (pending && distance <= arrivalRadius) {
-      if (!target.hits.has(kind)) {
+      if (!target.reached) {
         state.misses++;
-        if (harnessed && options.verifier) {
+        if (options.verifier) {
           // Check the actual position on arrival and retry from that reading.
           state.estimate = state.position;
           velocity = still;
@@ -114,9 +117,9 @@ export function createAgent(kind, width, height) {
     }
 
     if (!feedback) {
-      // Execute the imagined movement once, without correcting for the real drift.
+      // Steer from the estimate when live position readings are unavailable.
       velocity = { x: dx * maxSpeed / distance, y: dy * maxSpeed / distance };
-      move(false, memory);
+      move(false, memory, plan);
       return;
     }
 
@@ -126,7 +129,7 @@ export function createAgent(kind, width, height) {
     const vy = velocity.y * retention + dy * spring;
     const scale = Math.min(1, maxSpeed / Math.hypot(vx, vy));
     velocity = { x: vx * scale, y: vy * scale };
-    move(true, memory);
+    move(true, memory, plan);
   }
 
   reset();
