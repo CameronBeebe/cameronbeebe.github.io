@@ -49,7 +49,17 @@ export function createAgent(kind, width, height) {
     }
   }
 
-  function step(options) {
+  function recordArrival(target) {
+    if (target.hits.has(kind) || Math.hypot(target.x - state.position.x, target.y - state.position.y) > reach) return;
+    target.hits.add(kind);
+    state.done++;
+  }
+
+  function step(options, visibleTargets) {
+    for (const target of visibleTargets) recordArrival(target);
+    // The other agent may still reach a target after its crosshair has cleared.
+    for (const { target } of state.goals) recordArrival(target);
+
     const feedback = harnessed && options.tools;
     const memory = harnessed && options.memory;
     if (feedback) state.estimate = state.position;
@@ -58,7 +68,8 @@ export function createAgent(kind, width, height) {
     let pending;
     let distance = Infinity;
     for (const goal of state.goals) {
-      const gap = Math.hypot(goal.x - state.estimate.x, goal.y - state.estimate.y);
+      const { x, y } = goal.target;
+      const gap = Math.hypot(x - state.estimate.x, y - state.estimate.y);
       if (gap < distance) {
         pending = goal;
         distance = gap;
@@ -66,7 +77,7 @@ export function createAgent(kind, width, height) {
     }
 
     if (pending || !feedback) state.attractor = null;
-    const target = pending ?? state.attractor;
+    const target = pending?.target ?? state.attractor;
     if (!target) {
       velocity = still;
       return;
@@ -75,9 +86,7 @@ export function createAgent(kind, width, height) {
     const dy = target.y - state.estimate.y;
 
     if (pending && distance <= reach) {
-      const reached = Math.hypot(target.x - state.position.x, target.y - state.position.y) <= reach;
-      if (reached) state.done++;
-      else {
+      if (!target.hits.has(kind)) {
         state.misses++;
         if (harnessed && options.verifier) {
           // Check the actual position on arrival and retry from that reading.

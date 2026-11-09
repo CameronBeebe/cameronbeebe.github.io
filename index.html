@@ -424,7 +424,7 @@
       <span><strong class="vat-key">V Vat</strong> · hits: <b id="sVat">0</b> · misses: <b id="dVat">0</b></span>
       <span><strong class="harness-key">H Harness</strong> · hits: <b id="sHarness">0</b> · misses: <b id="dHarness">0</b></span>
     </div>
-    <p class="demo-note">V and H mark actual positions. Lowercase markers and faint dotted trails show imagined routes. Switch off damping to see the harness oscillate.</p>
+    <p class="demo-note">V and H mark actual positions. Lowercase markers and dots show estimates. The first physical arrival clears the target. Switch off damping to see oscillation.</p>
   </div>
 
   <h3 class="experiment-title">02 · Send a task to the right specialist</h3>
@@ -501,18 +501,23 @@ import { createAgent } from './assets/playground-agent.js';
   const vat = createAgent('vat', W, H);
   const harness = createAgent('harness', W, H);
   const agents = [vat, harness];
+  const targets = new Map();
 
   function plantGoal(x, y) {
     x = Math.max(12, Math.min(W - 12, x));
     y = Math.max(12, Math.min(H - 12, y));
     const cell = cellFor({ x, y });
-    const goal = {
+    const target = {
       x: (cell % columns + 0.5) * cellWidth,
       y: (Math.floor(cell / columns) + 0.5) * cellHeight,
-      cell,
-      life: 1000 + Math.random() * 500,
+      cell, hits: new Set(),
     };
-    for (const agent of agents) agent.state.goals.push({ ...goal });
+    const life = 1000 + Math.random() * 500;
+    targets.set(cell, target);
+    for (const { state } of agents) {
+      state.goals = state.goals.filter(goal => goal.target.cell !== cell);
+      state.goals.push({ target, life });
+    }
   }
 
   canvas.addEventListener('click', event => {
@@ -547,21 +552,21 @@ import { createAgent } from './assets/playground-agent.js';
         mark(cell, glyph === ' ' ? ':' : glyph, trailColors[state.kind]);
       }
     }
-    const goals = new Map();
+    const assignments = new Map();
     for (const { state } of agents) {
-      const active = !state.goals.length && state.attractor ? [state.attractor] : state.goals;
-      for (const { cell } of active) {
-        if (!goals.has(cell)) goals.set(cell, new Set());
-        goals.get(cell).add(state.kind);
+      for (const { target: { cell } } of state.goals) {
+        if (!assignments.has(cell)) assignments.set(cell, new Set());
+        assignments.get(cell).add(state.kind);
       }
     }
-    for (const [cell, assigned] of goals) {
+    for (const cell of targets.keys()) {
+      const assigned = assignments.get(cell);
       for (const [offset, pattern] of [[-columns, '\\v/'], [columns, '/^\\']]) {
         for (let i = 0; i < pattern.length; i++) mark(cell + offset + i - 1, pattern[i], '#ffdf76');
       }
-      mark(cell - 1, '[', assigned.has('vat') ? colors.vat : '#ffdf76');
+      mark(cell - 1, '[', assigned?.has('vat') ? colors.vat : '#ffdf76');
       mark(cell, '+', '#fff6a0');
-      mark(cell + 1, ']', assigned.has('harness') ? colors.harness : '#ffdf76');
+      mark(cell + 1, ']', assigned?.has('harness') ? colors.harness : '#ffdf76');
     }
 
     const vatCell = cellFor(vat.state.position);
@@ -589,10 +594,13 @@ import { createAgent } from './assets/playground-agent.js';
   function tick() {
     const options = opts();
     for (const agent of agents) {
-      agent.step(options);
+      agent.step(options, targets.values());
       const { trail, position, estimate } = agent.state;
       trail.push({ actual: cellFor(position), estimated: cellFor(estimate) });
       if (trail.length > 150) trail.shift();
+    }
+    for (const [cell, target] of targets) {
+      if (target.hits.size) targets.delete(cell);
     }
   }
 
@@ -611,6 +619,7 @@ import { createAgent } from './assets/playground-agent.js';
   }
   resetButton.onclick = () => {
     for (const agent of agents) agent.reset();
+    targets.clear();
   };
   spawnButton.onclick = () => {
     for (let i = 0; i < 3; i++) plantGoal(40 + Math.random() * (W - 80), 40 + Math.random() * (H - 80));
