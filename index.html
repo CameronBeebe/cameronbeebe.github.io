@@ -399,26 +399,26 @@
 
   <h3 class="experiment-title">01 · Brain in a vat vs harness</h3>
   <p class="demo-note">
-    Click the print to scratch out a patch and give both agents the same repair goal. The vat wanders,
-    while the harness can steer with tools. Turn off the harness stop condition to see it overshoot.
+    Click the print to give both agents the same patch to repair. A current pushes them off course.
+    The vat steers from its imagined position. The harness reads where it actually is and corrects course.
   </p>
   <div class="demo">
     <div class="controls" role="group" aria-label="Harness settings and simulation controls">
       <span>Harness:</span>
-      <label><input type="checkbox" id="optTools" checked /> tools</label>
-      <label><input type="checkbox" id="optMemory" checked /> memory</label>
-      <label><input type="checkbox" id="optVerifier" checked /> verifier</label>
-      <label><input type="checkbox" id="optStop" checked /> stop condition</label>
+      <label title="Read the agent’s actual position while moving"><input type="checkbox" id="optTools" checked /> tools</label>
+      <label title="Predict the current from the last reading"><input type="checkbox" id="optMemory" checked /> memory</label>
+      <label title="Check the actual position when the agent thinks it has arrived and retry after a miss"><input type="checkbox" id="optVerifier" checked /> verifier</label>
+      <label title="Brake on arrival to prevent overshoot"><input type="checkbox" id="optStop" checked /> stop condition</label>
       <button type="button" id="btnReset" disabled>reset</button>
       <button type="button" id="btnPulse" disabled>spawn goals</button>
     </div>
     <img class="shared-world" id="agent-print" src="assets/pine-river.webp" width="900" height="600" alt="A Japanese woodblock-style landscape of a pine overlooking a river and mountain." />
     <canvas class="shared-world" id="agent-world" width="400" height="260" aria-label="ASCII mountain and river landscape that the vat and harness agents repair" hidden></canvas>
     <div class="scores">
-      <span><strong class="vat-key">V Vat</strong> · done: <b id="sVat">0</b> · drift: <b id="dVat">0</b></span>
-      <span><strong class="harness-key">H Harness</strong> · done: <b id="sHarness">0</b> · drift: <b id="dHarness">0</b></span>
+      <span><strong class="vat-key">V Vat</strong> · done: <b id="sVat">0</b> · misses: <b id="dVat">0</b></span>
+      <span><strong class="harness-key">H Harness</strong> · done: <b id="sHarness">0</b> · misses: <b id="dHarness">0</b></span>
     </div>
-    <p class="demo-note">Gold + marks a repair, and colored brackets show who still has it pending. The first agent to finish restores the missing glyphs in its color.</p>
+    <p class="demo-note">Gold + marks a repair, and brackets show who still has it pending. V and H mark actual positions. Lowercase v and h show where an agent thinks it is when those positions differ.</p>
   </div>
 
   <h3 class="experiment-title">02 · Send a task to the right specialist</h3>
@@ -465,6 +465,7 @@
 
 <script type="module">
 import { columns, rows, createLandscape } from './assets/playground-landscape.js';
+import { createAgent } from './assets/playground-agent.js';
 
 (function () {
   function opts() {
@@ -488,118 +489,8 @@ import { columns, rows, createLandscape } from './assets/playground-landscape.js
   let goalNumber = 0;
   const cellWidth = W / columns, cellHeight = H / rows;
 
-  function makeAgent(kind) {
-    const state = {
-      kind,
-      brain: { x: W * 0.5, y: H * 0.5, vx: 0, vy: 0, conf: 0.5 },
-      goals: [],
-      memory: [],
-      done: 0,
-      drift: 0,
-      tick: 0,
-      trail: [],
-    };
-
-    function step(o) {
-      state.tick++;
-      const b = state.brain;
-      const harnessed = kind === 'harness';
-
-      // sense
-      let nearest = null, best = Infinity;
-      for (const g of state.goals) {
-        const d = Math.hypot(g.x - b.x, g.y - b.y);
-        if (d < best) { best = d; nearest = g; }
-      }
-
-      if (harnessed && o.tools && nearest) {
-        // move toward goal with tool-afforded control
-        const ang = Math.atan2(nearest.y - b.y, nearest.x - b.x);
-        const speed = 1.6;
-        b.vx = Math.cos(ang) * speed;
-        b.vy = Math.sin(ang) * speed;
-        b.conf = Math.min(1, b.conf + 0.01);
-      } else if (!harnessed || !o.tools) {
-        // vat: hallucinated Brownian "reasoning"
-        b.vx += (Math.random() - 0.5) * 0.9;
-        b.vy += (Math.random() - 0.5) * 0.9;
-        b.vx *= 0.92;
-        b.vy *= 0.92;
-        b.conf = Math.max(0.05, b.conf - 0.004);
-        if (state.tick % 40 === 0) state.drift++;
-      }
-
-      if (harnessed && o.memory && nearest && state.tick % 30 === 0) {
-        state.memory.push({ x: nearest.x, y: nearest.y });
-        if (state.memory.length > 8) state.memory.shift();
-      }
-
-      // memory bias
-      if (harnessed && o.memory && state.memory.length && (!nearest || best > 80)) {
-        const m = state.memory[state.memory.length - 1];
-        const ang = Math.atan2(m.y - b.y, m.x - b.x);
-        b.vx += Math.cos(ang) * 0.3;
-        b.vy += Math.sin(ang) * 0.3;
-      }
-
-      b.x += b.vx;
-      b.y += b.vy;
-      b.x = Math.max(12, Math.min(W - 12, b.x));
-      b.y = Math.max(12, Math.min(H - 12, b.y));
-      state.trail.push(cellFor(b));
-      if (state.trail.length > 50) state.trail.shift();
-
-      for (let i = state.goals.length - 1; i >= 0; i--) {
-        const g = state.goals[i];
-        g.life--;
-        const d = Math.hypot(g.x - b.x, g.y - b.y);
-        let success = false;
-        if (d < 14) {
-          if (harnessed && o.verifier) {
-            // verifier in "fresh context": accept only if confidence + tools
-            success = o.tools && b.conf > 0.35;
-            if (!success) state.drift++;
-          } else if (harnessed && !o.verifier) {
-            success = Math.random() > 0.35; // unverified: often wrong
-            if (!success) state.drift++;
-          } else {
-            // vat touches a goal by chance: usually false belief
-            success = Math.random() > 0.85;
-            if (!success) state.drift++;
-          }
-          if (success) {
-            landscape.repair(g, colors[kind]);
-            if (harnessed && o.stop) {
-              state.done++;
-              state.goals.splice(i, 1);
-              b.vx *= 0.2; b.vy *= 0.2;
-              continue;
-            } else if (harnessed && !o.stop) {
-              state.done++;
-              // no stop: overshoots / loops
-              b.vx *= 1.4; b.vy *= 1.4;
-              state.goals.splice(i, 1);
-              if (Math.random() > 0.5) state.drift++;
-              continue;
-            } else if (!harnessed) {
-              state.done++;
-              state.goals.splice(i, 1);
-              continue;
-            }
-          }
-        }
-        if (g.life <= 0) {
-          state.goals.splice(i, 1);
-          if (!harnessed) state.drift++;
-        }
-      }
-    }
-
-    return { state, step };
-  }
-
-  const vat = makeAgent('vat');
-  const harness = makeAgent('harness');
+  const vat = createAgent('vat', W, H);
+  const harness = createAgent('harness', W, H);
   const agents = [vat, harness];
 
   function plantGoal(x, y) {
@@ -629,7 +520,7 @@ import { columns, rows, createLandscape } from './assets/playground-landscape.js
       + Math.min(columns - 1, Math.floor(x / cellWidth));
   }
 
-  function drawWorld(options) {
+  function drawWorld() {
     const frame = landscape.cells.slice();
     function mark(cell, glyph, ink) { frame[cell] = { glyph, ink }; }
     function cursor(cell, glyph, ink) {
@@ -643,10 +534,6 @@ import { columns, rows, createLandscape } from './assets/playground-landscape.js
         mark(cell, glyph === ' ' ? ':' : glyph, trailColors[state.kind]);
       }
     }
-    if (options.memory) {
-      for (const memory of harness.state.memory) mark(cellFor(memory), ':', '#8aad70');
-    }
-
     const goals = new Map();
     for (const { state } of agents) {
       for (const { cell } of state.goals) {
@@ -660,8 +547,12 @@ import { columns, rows, createLandscape } from './assets/playground-landscape.js
       if (pending.has('harness')) mark(cell + 1, ']', colors.harness);
     }
 
-    const vatCell = cellFor(vat.state.brain);
-    const harnessCell = cellFor(harness.state.brain);
+    const vatCell = cellFor(vat.state.position);
+    const harnessCell = cellFor(harness.state.position);
+    const vatEstimate = cellFor(vat.state.estimate);
+    const harnessEstimate = cellFor(harness.state.estimate);
+    if (vatEstimate !== vatCell) cursor(vatEstimate, 'v', trailColors.vat);
+    if (harnessEstimate !== harnessCell) cursor(harnessEstimate, 'h', trailColors.harness);
     if (vatCell === harnessCell) {
       cursor(vatCell, '&', '#f0ce87');
     } else {
@@ -673,32 +564,26 @@ import { columns, rows, createLandscape } from './assets/playground-landscape.js
 
   function syncScores() {
     document.getElementById('sVat').textContent = vat.state.done;
-    document.getElementById('dVat').textContent = vat.state.drift;
+    document.getElementById('dVat').textContent = vat.state.misses;
     document.getElementById('sHarness').textContent = harness.state.done;
-    document.getElementById('dHarness').textContent = harness.state.drift;
+    document.getElementById('dHarness').textContent = harness.state.misses;
   }
 
   function loop() {
     const options = opts();
-    for (const agent of agents) agent.step(options);
-    drawWorld(options);
+    for (const agent of agents) {
+      const completed = agent.step(options);
+      if (completed) landscape.repair(completed);
+      const { trail, position } = agent.state;
+      trail.push(cellFor(position));
+      if (trail.length > 50) trail.shift();
+    }
+    drawWorld();
     syncScores();
     requestAnimationFrame(loop);
   }
   resetButton.onclick = () => {
-    agents.forEach(w => {
-      w.state.goals = [];
-      w.state.memory = [];
-      w.state.done = 0;
-      w.state.drift = 0;
-      w.state.tick = 0;
-      w.state.trail = [];
-      w.state.brain.x = W / 2;
-      w.state.brain.y = H / 2;
-      w.state.brain.vx = 0;
-      w.state.brain.vy = 0;
-      w.state.brain.conf = 0.5;
-    });
+    for (const agent of agents) agent.reset();
     landscape.reset();
     goalNumber = 0;
   };

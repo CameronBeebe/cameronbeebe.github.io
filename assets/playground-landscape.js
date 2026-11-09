@@ -34,10 +34,10 @@ export function createLandscape(canvas, image, font) {
     return patch;
   }
 
-  function repair(goal, ink) {
+  function repair(goal) {
     for (const index of goal.patch) {
       if (scars[index] !== goal.id) continue;
-      cells[index] = { ...original[index], ink };
+      cells[index] = original[index];
       scars[index] = 0;
     }
   }
@@ -74,15 +74,23 @@ export function createLandscape(canvas, image, font) {
       if (old?.glyph === glyph && old.ink === ink) return;
       const column = index % columns;
       const row = Math.floor(index / columns);
+      const x = Math.round(column * cellWidth);
+      const y = Math.round(row * cellHeight);
+      const width = Math.round((column + 1) * cellWidth) - x;
+      const height = Math.round((row + 1) * cellHeight) - y;
       if (old && old.glyph !== ' ') {
-        const x = Math.round(column * cellWidth);
-        const y = Math.round(row * cellHeight);
         ctx.fillStyle = '#031803';
-        ctx.fillRect(x, y, Math.round((column + 1) * cellWidth) - x, Math.round((row + 1) * cellHeight) - y);
+        ctx.fillRect(x, y, width, height);
       }
       if (glyph === ' ') return;
+      // Clip to the same pixel bounds used for erasure so moving glyphs leave no fragments.
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(x, y, width, height);
+      ctx.clip();
       ctx.fillStyle = ink;
       ctx.fillText(glyph, (column + 0.5) * cellWidth, (row + 0.5) * cellHeight, cellWidth);
+      ctx.restore();
     });
     previous = frame;
   }
