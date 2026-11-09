@@ -45,9 +45,15 @@ function drawTerminal(ctx, cells) {
 
   cells.forEach((cell, index) => {
     if (!cell || cell.glyph === ' ') return;
-    const { glyph, ink } = cell;
+    const { glyph, ink, backdrop } = cell;
+    const x = (index % columns) * cellWidth;
+    const y = Math.floor(index / columns) * cellHeight;
+    if (backdrop) {
+      ctx.fillStyle = backdrop;
+      ctx.fillRect(x, y, cellWidth, cellHeight);
+    }
     ctx.fillStyle = ink;
-    ctx.fillText(glyph, (index % columns) * cellWidth, Math.floor(index / columns) * cellHeight);
+    ctx.fillText(glyph, x, y);
   });
 }
 
@@ -288,7 +294,7 @@ function enablePortraitExperiments() {
     stop();
     alphabet = size;
     const source = beginPreview(true);
-    const reducedGlyphs = size === 2 ? ' @' : ' :o@';
+    const reducedGlyphs = { 2: ' @', 4: ' :o@', 8: ' .:;ox#@' }[size];
     const errors = dither.checked ? new Float64Array(source.length) : null;
     let row = 0;
     const reducedCell = (tone, glyph) => ({
@@ -313,7 +319,7 @@ function enablePortraitExperiments() {
     sort: ['Sort the ASCII portrait', 'Drag across rows or columns to sort them together by ink density. Restore rewinds the edits across tools.'],
     repair: ['Damage & repair', 'Drag to erase characters. Repair estimates each missing cell from its neighbors, one pass at a time.'],
     trace: ['Trace the ink', 'Click a character to rewrite connected cells of similar tone. Change tolerance to see where the fill stops.'],
-    alphabet: ['Shrink the alphabet', 'Redraw the portrait with four glyphs or two. Dither spreads rounding error to nearby cells to preserve shading.'],
+    alphabet: ['Shrink the alphabet', 'Redraw the current grid with 2, 4, or 8 glyphs. More glyphs recover detail from the grid you started with in this tool. Dither spreads rounding error to nearby cells.'],
   };
 
   for (const button of modeButtons) {
@@ -394,22 +400,14 @@ function enablePortraitExperiments() {
     report(`Drag to sort ${sortColumns.checked ? 'columns' : 'rows'} from the current arrangement.`);
   });
   restoreButton.addEventListener('click', restore);
-  document.getElementById('repair-sample').addEventListener('click', () => {
-    stop();
-    const next = working.slice();
-    erase(next, [38, 17], 8);
-    applyGrid(next);
-    draw();
-    report('Sample patch erased. Choose Repair patch to rebuild it.');
-  });
   document.getElementById('repair-run').addEventListener('click', repair);
-  document.getElementById('trace-sample').addEventListener('click', () => trace(11 * columns + 45));
   tolerance.addEventListener('input', () => {
     document.getElementById('trace-level').value = tolerance.value;
     if (seed !== null) trace(seed, true);
   });
   document.getElementById('alphabet-four').addEventListener('click', () => shrink(4));
   document.getElementById('alphabet-two').addEventListener('click', () => shrink(2));
+  document.getElementById('alphabet-eight').addEventListener('click', () => shrink(8));
   dither.addEventListener('change', () => shrink(alphabet));
 
   selectMode('sort');

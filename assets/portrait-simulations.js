@@ -3,7 +3,7 @@ import { gravityStep, lifeStep, neighbors, sobelTone } from './portrait-grid.js'
 export const simulationDescriptions = {
   life: ['Conway’s Game of Life', 'Dense characters seed living cells. A cell is born with three live neighbors and survives with two or three. Drag to plant or erase cells.'],
   gravity: ['Glyph gravity', 'Dense glyphs fall and slide past lighter ones. Draw a wall to catch them, or erase a wall and run gravity again.'],
-  descent: ['Gradient descent', 'Click a starting point. Each arrow moves to the steepest downhill neighbor on a smoothed ink-density map. The path stops at a local minimum.'],
+  descent: ['Gradient descent', 'Click a starting point. Ink density is the height, from 0 (light) to 1 (dense). Gold arrows follow the lowest of four neighbors on a smoothed grid. A star marks where no neighbor is lower.'],
   edges: ['Sobel edge detection', 'Replace each glyph with the strength of the contrast around it. Sharp outlines become bright, and even shading fades.'],
   flow: ['Ink percolation', 'Can ink get from left to right? Release it at the left edge or click a starting cell. It spreads through connected glyphs at or below the maximum density.'],
 };
@@ -91,17 +91,19 @@ export function createSimulations(ui) {
         (lowest, candidate) => surface[candidate] < surface[lowest] - 1e-6 ? candidate : lowest, index,
       );
       const grid = ui.current().slice();
-      grid[index] = marked(0.85, next === index ? '*' : arrows[next - index]);
+      grid[index] = marked(0.85, next === index ? '*' : arrows[next - index], {
+        ink: '#f0ce87', backdrop: '#3d2d12',
+      });
       ui.apply(grid);
-      const height = surface[index].toFixed(2);
+      const height = surface[index].toFixed(3);
       if (next === index) {
-        ui.report(`Local minimum · ${steps} steps · Density ${startTone.toFixed(2)} → ${height}.`);
+        ui.report(`Local minimum · ${steps} steps · Density ${startTone.toFixed(3)} → ${height}.`);
         return;
       }
-      index = next;
       steps++;
-      ui.report(`Descending · Step ${steps} · Density ${height}.`);
-      ui.later(step, 105);
+      ui.report(`Step ${steps} · Density ${height} → ${surface[next].toFixed(3)}.`);
+      index = next;
+      ui.later(step, 180);
     }
     step();
   }
@@ -202,16 +204,6 @@ export function createSimulations(ui) {
     lifeButton.textContent = 'Run Life';
     lifeTick();
   });
-  document.getElementById('life-glider').addEventListener('click', () => {
-    const grid = ui.current().slice();
-    // Give the glider a clear launch area in the upper left.
-    for (let y = 1; y < 10; y++) {
-      for (let x = 1; x < 10; x++) grid[indexAt([x, y])] = lifeCells[0];
-    }
-    for (const point of [[4, 3], [5, 4], [3, 5], [4, 5], [5, 5]]) grid[indexAt(point)] = lifeCells[4];
-    ui.apply(grid);
-    ui.report('Glider planted in the upper left.');
-  });
   gravityButton.addEventListener('click', () => {
     ui.stop();
     if (running === 'gravity') {
@@ -224,7 +216,7 @@ export function createSimulations(ui) {
     gravityButton.textContent = 'Pause gravity';
     gravityTick();
   });
-  document.getElementById('descent-run').addEventListener('click', () => descent(indexAt([38, 13])));
+  document.getElementById('descent-run').addEventListener('click', () => descent(indexAt([43, 18])));
   document.getElementById('edges-run').addEventListener('click', edges);
   document.getElementById('flow-run').addEventListener('click', () => flow(indexAt([0, 11])));
   threshold.addEventListener('input', () => {
