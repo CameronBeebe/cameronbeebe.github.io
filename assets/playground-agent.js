@@ -1,6 +1,6 @@
-const maxSpeed = 4;
-const spring = 0.007;
-const damping = 0.96;
+const maxSpeed = 1.5;
+const spring = 0.0024;
+const damping = 0.978;
 const reach = 8;
 const still = { x: 0, y: 0 };
 
@@ -56,7 +56,7 @@ export function createAgent(kind, width, height) {
       }
     }
 
-    if (pending) state.attractor = null;
+    if (pending || !feedback) state.attractor = null;
     const target = pending ?? state.attractor;
     if (!target) {
       velocity = still;
@@ -79,21 +79,32 @@ export function createAgent(kind, width, height) {
       }
 
       state.goals.splice(state.goals.indexOf(pending), 1);
+      if (!feedback) {
+        velocity = still;
+        return;
+      }
       state.attractor = target;
-    } else if (!pending && (!harnessed || options.stop) && Math.hypot(dx, dy) < 2
-      && Math.hypot(velocity.x, velocity.y) < 0.15) {
+    } else if (!pending && options.stop && Math.hypot(dx, dy) < 2
+      && Math.hypot(velocity.x, velocity.y) < 0.08) {
       state.attractor = null;
       velocity = still;
       return;
     }
 
-    // Attraction accelerates toward the target. Damping removes momentum each tick.
+    if (!feedback) {
+      // Execute the imagined movement once, without correcting for the real drift.
+      velocity = { x: dx * maxSpeed / distance, y: dy * maxSpeed / distance };
+      move(false, memory);
+      return;
+    }
+
+    // Live position feedback drives a spring controller. Damping removes momentum each tick.
     const retention = options.damp ? damping : 1;
     const vx = velocity.x * retention + dx * spring;
     const vy = velocity.y * retention + dy * spring;
     const scale = Math.min(1, maxSpeed / Math.hypot(vx, vy));
     velocity = { x: vx * scale, y: vy * scale };
-    move(feedback, memory);
+    move(true, memory);
   }
 
   reset();

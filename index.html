@@ -400,8 +400,8 @@
 
   <h3 class="experiment-title">01 · Brain in a vat vs harness</h3>
   <p class="demo-note">
-    Click the print to set a shared target. Both agents face a current. The vat steers from its
-    imagined position. The harness reads its position and corrects course.
+    Click the print to set a shared target. The vat imagines a straight approach and drifts with the
+    current. The harness reads its actual position and corrects course.
   </p>
   <div class="demo">
     <div class="controls" role="group" aria-label="Agent settings and simulation controls">
@@ -411,9 +411,9 @@
         <label title="Predict the current from the last reading"><input type="checkbox" id="optMemory" checked /> memory</label>
         <label title="Check the actual position when the agent thinks it has arrived and retry after a miss"><input type="checkbox" id="optVerifier" checked /> verifier</label>
         <label title="Release the last target once the harness settles near it"><input type="checkbox" id="optStop" checked /> stop condition</label>
+        <label title="Reduce momentum during feedback corrections so oscillations shrink"><input type="checkbox" id="optDamp" checked /> damp</label>
       </div>
       <div class="sim-controls">
-        <label title="Reduce momentum each step so oscillations shrink"><input type="checkbox" id="optDamp" checked /> damp both</label>
         <button type="button" id="btnReset" disabled>reset</button>
         <button type="button" id="btnPulse" disabled>spawn goals</button>
       </div>
@@ -424,7 +424,7 @@
       <span><strong class="vat-key">V Vat</strong> · hits: <b id="sVat">0</b> · misses: <b id="dVat">0</b></span>
       <span><strong class="harness-key">H Harness</strong> · hits: <b id="sHarness">0</b> · misses: <b id="dHarness">0</b></span>
     </div>
-    <p class="demo-note">Gold crosshairs mark targets. Switch off damping to compare oscillations. V and H show actual positions. Lowercase v and h show estimated positions.</p>
+    <p class="demo-note">Gold crosshairs mark targets. Switch off damping to see the harness oscillate. V and H show actual positions. Lowercase v and h show estimated positions.</p>
   </div>
 
   <h3 class="experiment-title">02 · Send a task to the right specialist</h3>
@@ -510,7 +510,7 @@ import { createAgent } from './assets/playground-agent.js';
       x: (cell % columns + 0.5) * cellWidth,
       y: (Math.floor(cell / columns) + 0.5) * cellHeight,
       cell,
-      life: 400 + Math.random() * 200,
+      life: 1000 + Math.random() * 500,
     };
     for (const agent of agents) agent.state.goals.push({ ...goal });
   }
