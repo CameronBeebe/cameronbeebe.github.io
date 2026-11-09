@@ -400,15 +400,15 @@
 
   <h3 class="experiment-title">01 · Brain in a vat vs harness</h3>
   <p class="demo-note">
-    Click the print to set a shared target. The vat imagines a straight approach and drifts with the
-    current. The harness reads its actual position and corrects course.
+    Click the print to set a shared target. Shifting currents bend both paths. The vat plans a
+    straight route. The harness reads its actual position and corrects course.
   </p>
   <div class="demo">
     <div class="controls" role="group" aria-label="Agent settings and simulation controls">
       <div class="sim-controls">
         <span>Harness:</span>
         <label title="Read the agent’s actual position while moving"><input type="checkbox" id="optTools" checked /> tools</label>
-        <label title="Predict the current from the last reading"><input type="checkbox" id="optMemory" checked /> memory</label>
+        <label title="Use recent readings to predict the current"><input type="checkbox" id="optMemory" checked /> memory</label>
         <label title="Check the actual position when the agent thinks it has arrived and retry after a miss"><input type="checkbox" id="optVerifier" checked /> verifier</label>
         <label title="Release the last target once the harness settles near it"><input type="checkbox" id="optStop" checked /> stop condition</label>
         <label title="Reduce momentum during feedback corrections so oscillations shrink"><input type="checkbox" id="optDamp" checked /> damp</label>
@@ -424,7 +424,7 @@
       <span><strong class="vat-key">V Vat</strong> · hits: <b id="sVat">0</b> · misses: <b id="dVat">0</b></span>
       <span><strong class="harness-key">H Harness</strong> · hits: <b id="sHarness">0</b> · misses: <b id="dHarness">0</b></span>
     </div>
-    <p class="demo-note">Gold crosshairs mark targets. Switch off damping to see the harness oscillate. V and H show actual positions. Lowercase v and h show estimated positions.</p>
+    <p class="demo-note">V and H mark actual positions. Lowercase markers and faint dotted trails show imagined routes. Switch off damping to see the harness oscillate.</p>
   </div>
 
   <h3 class="experiment-title">02 · Send a task to the right specialist</h3>
@@ -536,7 +536,13 @@ import { createAgent } from './assets/playground-agent.js';
       mark(cell + 1, '>', ink);
     }
     for (const { state } of agents) {
-      for (const cell of state.trail) {
+      const ink = state.kind === 'vat' ? '#b88b68' : '#70a45e';
+      for (const { actual, estimated } of state.trail) {
+        if (actual !== estimated) mark(estimated, '.', ink);
+      }
+    }
+    for (const { state } of agents) {
+      for (const { actual: cell } of state.trail) {
         const { glyph } = landscape.cells[cell];
         mark(cell, glyph === ' ' ? ':' : glyph, trailColors[state.kind]);
       }
@@ -584,9 +590,9 @@ import { createAgent } from './assets/playground-agent.js';
     const options = opts();
     for (const agent of agents) {
       agent.step(options);
-      const { trail, position } = agent.state;
-      trail.push(cellFor(position));
-      if (trail.length > 50) trail.shift();
+      const { trail, position, estimate } = agent.state;
+      trail.push({ actual: cellFor(position), estimated: cellFor(estimate) });
+      if (trail.length > 150) trail.shift();
     }
   }
 

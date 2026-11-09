@@ -26,15 +26,24 @@ export function createAgent(kind, width, height) {
 
   function move(feedback, memory) {
     const { x, y } = state.position;
-    // Both agents move in the same position-dependent cross-current.
-    const current = { x: 0.5 + 0.16 * Math.cos(y / 50), y: 0.4 * Math.sin(x / 75) };
+    // Alternating currents bend trajectories in different directions across the print.
+    const current = {
+      x: 1.02 * Math.sin((y - height / 2) / 18 + (x - width / 2) / 57),
+      y: 1.02 * Math.cos((x - width / 2) / 19 - (y - height / 2) / 52),
+    };
     const predicted = memory ? rememberedCurrent : still;
     const slip = { x: current.x - predicted.x, y: current.y - predicted.y };
     const strength = Math.min(1, Math.hypot(velocity.x, velocity.y) / 2);
     state.position = advance(state.position, slip, strength);
     if (feedback) {
       state.estimate = state.position;
-      if (memory) rememberedCurrent = current;
+      if (memory) {
+        // Use recent readings to anticipate the current as it changes across the print.
+        rememberedCurrent = {
+          x: rememberedCurrent.x + 0.07 * (current.x - rememberedCurrent.x),
+          y: rememberedCurrent.y + 0.07 * (current.y - rememberedCurrent.y),
+        };
+      }
     } else {
       state.estimate = advance(state.estimate, still, 0);
     }
