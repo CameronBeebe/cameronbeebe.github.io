@@ -220,16 +220,6 @@
       margin-top: 0.4rem;
     }
     .scores span b { color: var(--accent); font-weight: 500; }
-    .log {
-      margin-top: 0.5rem;
-      max-height: 5.5rem;
-      overflow-y: auto;
-      font-family: var(--mono);
-      font-size: 0.7em;
-      color: var(--muted);
-      border-top: 1px solid var(--line);
-      padding-top: 0.4rem;
-    }
     .router-ui {
       display: grid;
       grid-template-columns: 1.1fr 1fr;
@@ -408,7 +398,7 @@
 
   <h3 class="experiment-title">01 · Brain in a vat vs harness</h3>
   <p class="demo-note">
-    Click the grid to give both agents the same goal. The vat wanders, while the harness can steer toward
+    Click the landscape to give both agents the same goal. The vat wanders, while the harness can steer toward
     the goal with tools. Turn off the harness stop condition to see it overshoot.
   </p>
   <div class="demo">
@@ -421,13 +411,12 @@
       <button type="button" id="btnReset">reset</button>
       <button type="button" id="btnPulse">spawn goals</button>
     </div>
-    <canvas class="shared-world" id="agent-world" width="400" height="260" aria-label="Shared goal grid showing the vat and harness agents"></canvas>
+    <canvas class="shared-world" id="agent-world" width="400" height="260" aria-label="ASCII mountain and river landscape showing the vat and harness agents"></canvas>
     <div class="scores">
       <span><strong class="vat-key">V Vat</strong> · done: <b id="sVat">0</b> · drift: <b id="dVat">0</b></span>
       <span><strong class="harness-key">H Harness</strong> · done: <b id="sHarness">0</b> · drift: <b id="dHarness">0</b></span>
     </div>
     <p class="demo-note">A gold + marks a goal. Its colored brackets show which agents still have it pending. &amp; means the agents overlap.</p>
-    <div class="log" id="simLog"></div>
   </div>
 
   <h3 class="experiment-title">02 · Send a task to the right specialist</h3>
@@ -465,7 +454,6 @@
         </div>
       </div>
     </div>
-    <div class="log" id="routeLog"></div>
   </div>
 
   </section>
@@ -473,14 +461,10 @@
 
   </main>
 
-<script>
-(function () {
-  const logEl = document.getElementById('simLog');
-  function log(msg) {
-    const t = new Date().toLocaleTimeString();
-    logEl.innerHTML = `<div>[${t}] ${msg}</div>` + logEl.innerHTML;
-  }
+<script type="module">
+import { drawLandscape } from './assets/playground-landscape.js';
 
+(function () {
   function opts() {
     return {
       tools: document.getElementById('optTools').checked,
@@ -491,8 +475,10 @@
   }
 
   const canvas = document.getElementById('agent-world');
-  const ctx = canvas.getContext('2d');
+  const ctx = canvas.getContext('2d', { alpha: false });
+  const background = document.createElement('canvas');
   const W = canvas.width, H = canvas.height;
+  const font = getComputedStyle(canvas).getPropertyValue('--mono').trim();
   const colors = { vat: '#f0ae88', harness: '#39ff14' };
   let goalNumber = 0;
   const cellWidth = 8, cellHeight = 10;
@@ -501,8 +487,12 @@
   function resizeWorld() {
     const bounds = canvas.getBoundingClientRect();
     const ratio = window.devicePixelRatio || 1;
-    canvas.width = Math.max(1, Math.round(bounds.width * ratio));
-    canvas.height = Math.max(1, Math.round(bounds.height * ratio));
+    const width = Math.max(1, Math.round(bounds.width * ratio));
+    const height = Math.max(1, Math.round(bounds.height * ratio));
+    if (width === canvas.width && height === canvas.height && width === background.width && height === background.height) return;
+    canvas.width = background.width = width;
+    canvas.height = background.height = height;
+    drawLandscape(background, W, H, font);
     ctx.setTransform(canvas.width / W, 0, 0, canvas.height / H, 0, 0);
   }
   new ResizeObserver(resizeWorld).observe(canvas);
@@ -578,10 +568,7 @@
           if (harnessed && o.verifier) {
             // verifier in "fresh context": accept only if confidence + tools
             success = o.tools && b.conf > 0.35;
-            if (!success) {
-              state.drift++;
-              log(`harness verifier rejected false completion @${g.id}`);
-            }
+            if (!success) state.drift++;
           } else if (harnessed && !o.verifier) {
             success = Math.random() > 0.35; // unverified: often wrong
             if (!success) state.drift++;
@@ -589,12 +576,10 @@
             // vat touches a goal by chance: usually false belief
             success = Math.random() > 0.85;
             if (!success) state.drift++;
-            else log(`vat claimed goal ${g.id} (lucky hallucination)`);
           }
           if (success) {
             if (harnessed && o.stop) {
               state.done++;
-              log(`harness completed ${g.id} · stop fired`);
               state.goals.splice(i, 1);
               b.vx *= 0.2; b.vy *= 0.2;
               continue;
@@ -604,7 +589,6 @@
               b.vx *= 1.4; b.vy *= 1.4;
               state.goals.splice(i, 1);
               if (Math.random() > 0.5) state.drift++;
-              log(`harness hit ${g.id} but no stop · overshoot`);
               continue;
             } else if (!harnessed) {
               state.done++;
@@ -637,34 +621,33 @@
     const x = (event.clientX - bounds.left) * W / bounds.width;
     const y = (event.clientY - bounds.top) * H / bounds.height;
     plantGoal(Math.max(cellWidth, Math.min(W - cellWidth - 1, x)), y);
-    log(`Goal ${goalNumber} planted for both agents`);
   });
 
   function cellFor({ x, y }) {
     return [Math.min(gridColumns - 1, Math.floor(x / cellWidth)), Math.min(gridRows - 1, Math.floor(y / cellHeight))];
   }
 
-  function glyphAt([column, row], glyph, color) {
+  function glyphAt([column, row], glyph, color, backdrop = false) {
+    if (backdrop) {
+      ctx.fillStyle = '#071906';
+      ctx.fillRect(column * cellWidth, row * cellHeight, cellWidth, cellHeight);
+    }
     ctx.fillStyle = color;
     ctx.fillText(glyph, (column + 0.5) * cellWidth, (row + 0.5) * cellHeight);
   }
 
   function drawWorld(options) {
-    ctx.fillStyle = '#011401';
-    ctx.fillRect(0, 0, W, H);
+    ctx.drawImage(background, 0, 0, W, H);
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.font = '10px monospace';
-    for (let row = 1; row < gridRows; row += 2) {
-      for (let column = 1; column < gridColumns; column += 2) glyphAt([column, row], '.', '#31502a');
-    }
+    ctx.font = `10px ${font}`;
 
     if (options.memory) {
       for (const memory of harness.state.memory) glyphAt(cellFor(memory), ':', '#54794a');
     }
     for (const { state } of agents) {
-      const color = state.kind === 'vat' ? '#a36e59' : '#328926';
-      for (const point of state.trail) glyphAt(cellFor(point), '.', color);
+      const color = state.kind === 'vat' ? '#b1816a' : '#68aa50';
+      for (const point of state.trail) glyphAt(cellFor(point), '·', color);
     }
 
     const goals = new Map();
@@ -674,21 +657,21 @@
         goals.get(goal.id).pending.add(state.kind);
       }
     }
+    ctx.font = `bold 11px ${font}`;
     for (const { goal, pending } of goals.values()) {
       const [x, y] = cellFor(goal);
-      glyphAt([x, y], '+', '#c4b48a');
-      if (pending.has('vat')) glyphAt([Math.max(0, x - 1), y], '[', colors.vat);
-      if (pending.has('harness')) glyphAt([Math.min(gridColumns - 1, x + 1), y], ']', colors.harness);
+      glyphAt([x, y], '+', '#f0ce87', true);
+      if (pending.has('vat')) glyphAt([x - 1, y], '[', colors.vat, true);
+      if (pending.has('harness')) glyphAt([x + 1, y], ']', colors.harness, true);
     }
 
-    ctx.font = 'bold 12px monospace';
     const vatCell = cellFor(vat.state.brain);
     const harnessCell = cellFor(harness.state.brain);
     if (vatCell[0] === harnessCell[0] && vatCell[1] === harnessCell[1]) {
-      glyphAt(vatCell, '&', '#f0ce87');
+      glyphAt(vatCell, '&', '#f0ce87', true);
     } else {
-      glyphAt(vatCell, 'V', colors.vat);
-      glyphAt(harnessCell, 'H', colors.harness);
+      glyphAt(vatCell, 'V', colors.vat, true);
+      glyphAt(harnessCell, 'H', colors.harness, true);
     }
   }
 
@@ -722,12 +705,9 @@
       w.state.brain.conf = 0.5;
     });
     goalNumber = 0;
-    logEl.innerHTML = '';
-    log('reset');
   };
   document.getElementById('btnPulse').onclick = () => {
     for (let i = 0; i < 3; i++) plantGoal(40 + Math.random() * (W - 80), 40 + Math.random() * (H - 80));
-    log('Spawned three shared goals');
   };
 
   // --- director / specialist routing (general) ---
@@ -740,15 +720,9 @@
     { type: 'crit', label: 'Stop a run when its error exceeds a limit' },
   ];
   const inbox = document.getElementById('inbox');
-  const routeLog = document.getElementById('routeLog');
   let routeScore = 0;
   let dragTask = null;
   const roles = { map: 'Analogy finder', ctrl: 'Feedback controller', crit: 'Independent reviewer' };
-
-  function rlog(msg) {
-    const t = new Date().toLocaleTimeString();
-    routeLog.innerHTML = `<div>[${t}] ${msg}</div>` + routeLog.innerHTML;
-  }
 
   function addTask(spec) {
     const t = spec || TASKS[Math.floor(Math.random() * TASKS.length)];
@@ -775,15 +749,10 @@
     el.classList.remove('wrong', 'right');
     el.classList.add(ok ? 'right' : 'wrong');
     routeScore -= Number(el.dataset.score || 0);
-    el.dataset.score = ok ? '1' : '-1';
+    const points = ok ? 1 : -1;
+    el.dataset.score = points;
     el.querySelector('select').value = zone.dataset.accept;
-    if (ok) {
-      routeScore += 1;
-      rlog(`Matched: ${roles[zone.dataset.accept]} · +1`);
-    } else {
-      routeScore -= 1;
-      rlog(`Role mismatch: try ${roles[el.dataset.type]} · −1`);
-    }
+    routeScore += points;
     document.getElementById('routeScore').textContent = routeScore;
     zone.appendChild(el);
   }
@@ -802,20 +771,17 @@
     document.querySelectorAll('.dropzone').forEach(z => { z.innerHTML = ''; });
     routeScore = 0;
     document.getElementById('routeScore').textContent = '0';
-    routeLog.innerHTML = '';
   };
   document.getElementById('btnAutoRoute').onclick = () => {
     if (!inbox.children.length) addTask();
     const el = inbox.querySelector('.task');
     if (!el) return;
     const zone = document.querySelector(`.dropzone[data-accept="${el.dataset.type}"]`);
-    rlog('coordinator matched the next task to a role');
     grade(el, zone);
   };
 
   addTask(TASKS[0]);
   addTask(TASKS[2]);
-  log('Click the grid to plant a goal for both agents.');
 })();
 </script>
 </body>
