@@ -109,10 +109,10 @@ function enablePortraitExperiments() {
     working = next;
   }
 
-  function beginPreview(reuse) {
+  function beginPreview(reuse, keepCurrent = false) {
     if (!reuse || !preview) {
       preview = { source: working.slice(), historyStart: history.length };
-    } else {
+    } else if (!keepCurrent) {
       working = preview.source.slice();
       history.length = preview.historyStart;
     }
@@ -293,7 +293,7 @@ function enablePortraitExperiments() {
   function shrink(size) {
     stop();
     alphabet = size;
-    const source = beginPreview(true);
+    const source = beginPreview(true, true);
     const reducedGlyphs = { 2: ' @', 4: ' :o@', 8: ' .:;ox#@' }[size];
     const errors = dither.checked ? new Float64Array(source.length) : null;
     let row = 0;

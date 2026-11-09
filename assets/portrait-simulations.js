@@ -2,7 +2,7 @@ import { gravityStep, lifeStep, neighbors, sobelTone } from './portrait-grid.js'
 
 export const simulationDescriptions = {
   life: ['Conway’s Game of Life', 'Dense characters seed living cells. A cell is born with three live neighbors and survives with two or three. Drag to plant or erase cells.'],
-  gravity: ['Glyph gravity', 'Dense glyphs fall and slide past lighter ones. Draw a wall to catch them, or erase a wall and run gravity again.'],
+  gravity: ['Glyph gravity', 'Dense glyphs fall and slide past lighter ones. Draw a blue wall to catch them, or erase a wall and run gravity again.'],
   descent: ['Gradient descent', 'Click a starting point. Ink density is the height, from 0 (light) to 1 (dense). Gold arrows follow the lowest of four neighbors on a smoothed grid. A star marks where no neighbor is lower.'],
   edges: ['Sobel edge detection', 'Replace each glyph with the strength of the contrast around it. Sharp outlines become bright, and even shading fades.'],
   flow: ['Ink percolation', 'Can ink get from left to right? Release it at the left edge or click a starting cell. It spreads through connected glyphs at or below the maximum density.'],
@@ -25,7 +25,7 @@ export function createSimulations(ui) {
     return { ...ui.makeCell(tone), glyph, ink: ui.phosphor, ...extra };
   }
   const lifeCells = [' ', '.', ':', '+', '#'].map((glyph, lifeAge) => marked(lifeAge / 4, glyph, { lifeAge }));
-  const wall = marked(1, '=', { wall: true });
+  const wall = marked(1, '=', { wall: true, ink: '#9dbac9', backdrop: '#19323b' });
   const dryInk = marked(0.62, '~');
   const indexAt = ([x, y]) => y * columns + x;
 
