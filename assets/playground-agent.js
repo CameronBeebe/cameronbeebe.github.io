@@ -1,4 +1,6 @@
-const speed = 1.6;
+const maxSpeed = 4;
+const spring = 0.007;
+const damping = 0.96;
 const reach = 8;
 const still = { x: 0, y: 0 };
 
@@ -10,7 +12,7 @@ export function createAgent(kind, width, height) {
 
   function reset() {
     const center = { x: width / 2, y: height / 2 };
-    Object.assign(state, { position: center, estimate: center, goals: [], done: 0, misses: 0, trail: [] });
+    Object.assign(state, { position: center, estimate: center, goals: [], attractor: null, done: 0, misses: 0, trail: [] });
     velocity = still;
     rememberedCurrent = still;
   }
@@ -22,16 +24,19 @@ export function createAgent(kind, width, height) {
     };
   }
 
-  function move(feedback, memory, strength = 1) {
+  function move(feedback, memory) {
     const { x, y } = state.position;
     // Both agents move in the same position-dependent cross-current.
     const current = { x: 0.5 + 0.16 * Math.cos(y / 50), y: 0.4 * Math.sin(x / 75) };
-    state.position = advance(state.position, current, strength);
+    const predicted = memory ? rememberedCurrent : still;
+    const slip = { x: current.x - predicted.x, y: current.y - predicted.y };
+    const strength = Math.min(1, Math.hypot(velocity.x, velocity.y) / 2);
+    state.position = advance(state.position, slip, strength);
     if (feedback) {
       state.estimate = state.position;
       if (memory) rememberedCurrent = current;
     } else {
-      state.estimate = advance(state.estimate, memory ? rememberedCurrent : still, strength);
+      state.estimate = advance(state.estimate, still, 0);
     }
   }
 
@@ -41,54 +46,54 @@ export function createAgent(kind, width, height) {
     if (feedback) state.estimate = state.position;
 
     state.goals = state.goals.filter(goal => --goal.life > 0);
-    let target;
+    let pending;
     let distance = Infinity;
     for (const goal of state.goals) {
       const gap = Math.hypot(goal.x - state.estimate.x, goal.y - state.estimate.y);
       if (gap < distance) {
-        target = goal;
+        pending = goal;
         distance = gap;
       }
     }
 
+    if (pending) state.attractor = null;
+    const target = pending ?? state.attractor;
     if (!target) {
-      const strength = Math.hypot(velocity.x, velocity.y) / speed;
-      if (harnessed && !options.stop && strength > 0.02) {
-        move(feedback, memory, strength);
-        velocity = { x: velocity.x * 0.95, y: velocity.y * 0.95 };
-      } else {
-        velocity = still;
-      }
-      return;
-    }
-
-    if (distance > reach) {
-      const predicted = memory ? rememberedCurrent : still;
-      velocity = {
-        x: (target.x - state.estimate.x) * speed / distance - predicted.x,
-        y: (target.y - state.estimate.y) * speed / distance - predicted.y,
-      };
-      move(feedback, memory);
-      return;
-    }
-
-    const reached = Math.hypot(target.x - state.position.x, target.y - state.position.y) <= reach;
-    if (!reached) {
-      state.misses++;
       velocity = still;
-      if (harnessed && options.verifier) {
-        // The arrival check supplies a fresh position even if live feedback is off.
-        state.estimate = state.position;
-        return;
+      return;
+    }
+    const dx = target.x - state.estimate.x;
+    const dy = target.y - state.estimate.y;
+
+    if (pending && distance <= reach) {
+      const reached = Math.hypot(target.x - state.position.x, target.y - state.position.y) <= reach;
+      if (reached) state.done++;
+      else {
+        state.misses++;
+        if (harnessed && options.verifier) {
+          // Check the actual position on arrival and retry from that reading.
+          state.estimate = state.position;
+          velocity = still;
+          return;
+        }
       }
+
+      state.goals.splice(state.goals.indexOf(pending), 1);
+      state.attractor = target;
+    } else if (!pending && (!harnessed || options.stop) && Math.hypot(dx, dy) < 2
+      && Math.hypot(velocity.x, velocity.y) < 0.15) {
+      state.attractor = null;
+      velocity = still;
+      return;
     }
 
-    state.goals.splice(state.goals.indexOf(target), 1);
-    if (!harnessed || options.stop) velocity = still;
-    if (reached) {
-      state.done++;
-      return target;
-    }
+    // Attraction accelerates toward the target. Damping removes momentum each tick.
+    const retention = options.damp ? damping : 1;
+    const vx = velocity.x * retention + dx * spring;
+    const vy = velocity.y * retention + dy * spring;
+    const scale = Math.min(1, maxSpeed / Math.hypot(vx, vy));
+    velocity = { x: vx * scale, y: vy * scale };
+    move(feedback, memory);
   }
 
   reset();

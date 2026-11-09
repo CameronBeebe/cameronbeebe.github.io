@@ -6,7 +6,7 @@ export const rows = 65;
 export function createLandscape(canvas, image, font) {
   const ctx = canvas.getContext('2d', { alpha: false });
   const inks = ['#214d20', '#397532', '#559846', '#7eb565'];
-  const original = sampleImageTones(image, columns, rows).map(tone => {
+  const cells = sampleImageTones(image, columns, rows).map(tone => {
     // Treat the carved dark lines as ink and the pale paper as open space.
     const density = 1 - tone;
     return {
@@ -14,38 +14,7 @@ export function createLandscape(canvas, image, font) {
       ink: inks[Math.round(density * (inks.length - 1))],
     };
   });
-  const cells = original.slice();
-  const scars = new Uint32Array(cells.length);
   let previous;
-
-  function cut(center, id) {
-    const x = center % columns;
-    const y = Math.floor(center / columns);
-    const patch = [];
-    for (let row = Math.max(0, y - 3); row <= Math.min(rows - 1, y + 3); row++) {
-      for (let col = Math.max(0, x - 5); col <= Math.min(columns - 1, x + 5); col++) {
-        if (((col - x) / 5) ** 2 + ((row - y) / 3) ** 2 > 1) continue;
-        const index = row * columns + col;
-        patch.push(index);
-        scars[index] = id;
-        cells[index] = { glyph: (col + row) % 3 ? '.' : ':', ink: '#987d4e' };
-      }
-    }
-    return patch;
-  }
-
-  function repair(goal) {
-    for (const index of goal.patch) {
-      if (scars[index] !== goal.id) continue;
-      cells[index] = original[index];
-      scars[index] = 0;
-    }
-  }
-
-  function reset() {
-    original.forEach((cell, index) => { cells[index] = cell; });
-    scars.fill(0);
-  }
 
   function resize() {
     const { width, height } = canvas.getBoundingClientRect();
@@ -97,5 +66,5 @@ export function createLandscape(canvas, image, font) {
 
   new ResizeObserver(resize).observe(canvas);
   resize();
-  return { cells, cut, repair, reset, draw };
+  return { cells, draw };
 }

@@ -284,6 +284,7 @@
     }
     .bot-playground .experiment-title { font-size: 1rem; }
     .bot-playground .scores { flex-wrap: wrap; }
+    .sim-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.8rem; }
     .shared-world { display: block; width: 100%; height: auto; max-width: 680px; margin: 0 auto; aspect-ratio: 400 / 260; object-fit: cover; }
     .shared-world[hidden] { display: none; }
     .vat-key, .scores #sVat, .scores #dVat { color: var(--danger); }
@@ -399,26 +400,31 @@
 
   <h3 class="experiment-title">01 · Brain in a vat vs harness</h3>
   <p class="demo-note">
-    Click the print to give both agents the same patch to repair. A current pushes them off course.
-    The vat steers from its imagined position. The harness reads where it actually is and corrects course.
+    Click the print to set a shared target. Both agents face a current. The vat steers from its
+    imagined position. The harness reads its position and corrects course.
   </p>
   <div class="demo">
-    <div class="controls" role="group" aria-label="Harness settings and simulation controls">
-      <span>Harness:</span>
-      <label title="Read the agent’s actual position while moving"><input type="checkbox" id="optTools" checked /> tools</label>
-      <label title="Predict the current from the last reading"><input type="checkbox" id="optMemory" checked /> memory</label>
-      <label title="Check the actual position when the agent thinks it has arrived and retry after a miss"><input type="checkbox" id="optVerifier" checked /> verifier</label>
-      <label title="Brake on arrival to prevent overshoot"><input type="checkbox" id="optStop" checked /> stop condition</label>
-      <button type="button" id="btnReset" disabled>reset</button>
-      <button type="button" id="btnPulse" disabled>spawn goals</button>
+    <div class="controls" role="group" aria-label="Agent settings and simulation controls">
+      <div class="sim-controls">
+        <span>Harness:</span>
+        <label title="Read the agent’s actual position while moving"><input type="checkbox" id="optTools" checked /> tools</label>
+        <label title="Predict the current from the last reading"><input type="checkbox" id="optMemory" checked /> memory</label>
+        <label title="Check the actual position when the agent thinks it has arrived and retry after a miss"><input type="checkbox" id="optVerifier" checked /> verifier</label>
+        <label title="Release the last target once the harness settles near it"><input type="checkbox" id="optStop" checked /> stop condition</label>
+      </div>
+      <div class="sim-controls">
+        <label title="Reduce momentum each step so oscillations shrink"><input type="checkbox" id="optDamp" checked /> damp both</label>
+        <button type="button" id="btnReset" disabled>reset</button>
+        <button type="button" id="btnPulse" disabled>spawn goals</button>
+      </div>
     </div>
     <img class="shared-world" id="agent-print" src="assets/pine-river.webp" width="900" height="600" alt="A Japanese woodblock-style landscape of a pine overlooking a river and mountain." />
-    <canvas class="shared-world" id="agent-world" width="400" height="260" aria-label="ASCII mountain and river landscape that the vat and harness agents repair" hidden></canvas>
+    <canvas class="shared-world" id="agent-world" width="400" height="260" aria-label="ASCII mountain and river landscape with shared targets for the vat and harness agents" hidden></canvas>
     <div class="scores">
-      <span><strong class="vat-key">V Vat</strong> · done: <b id="sVat">0</b> · misses: <b id="dVat">0</b></span>
-      <span><strong class="harness-key">H Harness</strong> · done: <b id="sHarness">0</b> · misses: <b id="dHarness">0</b></span>
+      <span><strong class="vat-key">V Vat</strong> · hits: <b id="sVat">0</b> · misses: <b id="dVat">0</b></span>
+      <span><strong class="harness-key">H Harness</strong> · hits: <b id="sHarness">0</b> · misses: <b id="dHarness">0</b></span>
     </div>
-    <p class="demo-note">Gold + marks a repair, and brackets show who still has it pending. V and H mark actual positions. Lowercase v and h show where an agent thinks it is when those positions differ.</p>
+    <p class="demo-note">Gold crosshairs mark targets. Switch off damping to compare oscillations. V and H show actual positions. Lowercase v and h show estimated positions.</p>
   </div>
 
   <h3 class="experiment-title">02 · Send a task to the right specialist</h3>
@@ -470,6 +476,7 @@ import { createAgent } from './assets/playground-agent.js';
 (function () {
   function opts() {
     return {
+      damp: document.getElementById('optDamp').checked,
       tools: document.getElementById('optTools').checked,
       memory: document.getElementById('optMemory').checked,
       verifier: document.getElementById('optVerifier').checked,
@@ -486,8 +493,10 @@ import { createAgent } from './assets/playground-agent.js';
   const colors = { vat: '#f0ae88', harness: '#39ff14' };
   const trailColors = { vat: '#cc9d7e', harness: '#81e45f' };
   let landscape;
-  let goalNumber = 0;
   const cellWidth = W / columns, cellHeight = H / rows;
+  const tickMs = 1000 / 60;
+  let lastFrame;
+  let elapsed = 0;
 
   const vat = createAgent('vat', W, H);
   const harness = createAgent('harness', W, H);
@@ -497,12 +506,10 @@ import { createAgent } from './assets/playground-agent.js';
     x = Math.max(12, Math.min(W - 12, x));
     y = Math.max(12, Math.min(H - 12, y));
     const cell = cellFor({ x, y });
-    const id = ++goalNumber;
     const goal = {
       x: (cell % columns + 0.5) * cellWidth,
       y: (Math.floor(cell / columns) + 0.5) * cellHeight,
-      id, cell,
-      patch: landscape.cut(cell, id),
+      cell,
       life: 400 + Math.random() * 200,
     };
     for (const agent of agents) agent.state.goals.push({ ...goal });
@@ -536,15 +543,19 @@ import { createAgent } from './assets/playground-agent.js';
     }
     const goals = new Map();
     for (const { state } of agents) {
-      for (const { cell } of state.goals) {
+      const active = !state.goals.length && state.attractor ? [state.attractor] : state.goals;
+      for (const { cell } of active) {
         if (!goals.has(cell)) goals.set(cell, new Set());
         goals.get(cell).add(state.kind);
       }
     }
-    for (const [cell, pending] of goals) {
-      if (pending.has('vat')) mark(cell - 1, '[', colors.vat);
-      mark(cell, '+', '#f0ce87');
-      if (pending.has('harness')) mark(cell + 1, ']', colors.harness);
+    for (const [cell, assigned] of goals) {
+      for (const [offset, pattern] of [[-columns, '\\v/'], [columns, '/^\\']]) {
+        for (let i = 0; i < pattern.length; i++) mark(cell + offset + i - 1, pattern[i], '#ffdf76');
+      }
+      mark(cell - 1, '[', assigned.has('vat') ? colors.vat : '#ffdf76');
+      mark(cell, '+', '#fff6a0');
+      mark(cell + 1, ']', assigned.has('harness') ? colors.harness : '#ffdf76');
     }
 
     const vatCell = cellFor(vat.state.position);
@@ -569,23 +580,31 @@ import { createAgent } from './assets/playground-agent.js';
     document.getElementById('dHarness').textContent = harness.state.misses;
   }
 
-  function loop() {
+  function tick() {
     const options = opts();
     for (const agent of agents) {
-      const completed = agent.step(options);
-      if (completed) landscape.repair(completed);
+      agent.step(options);
       const { trail, position } = agent.state;
       trail.push(cellFor(position));
       if (trail.length > 50) trail.shift();
     }
-    drawWorld();
-    syncScores();
+  }
+
+  function loop(now) {
+    elapsed += Math.min(100, now - (lastFrame ?? now));
+    lastFrame = now;
+    if (elapsed >= tickMs) {
+      while (elapsed >= tickMs) {
+        tick();
+        elapsed -= tickMs;
+      }
+      drawWorld();
+      syncScores();
+    }
     requestAnimationFrame(loop);
   }
   resetButton.onclick = () => {
     for (const agent of agents) agent.reset();
-    landscape.reset();
-    goalNumber = 0;
   };
   spawnButton.onclick = () => {
     for (let i = 0; i < 3; i++) plantGoal(40 + Math.random() * (W - 80), 40 + Math.random() * (H - 80));
@@ -597,7 +616,8 @@ import { createAgent } from './assets/playground-agent.js';
     image.hidden = true;
     resetButton.disabled = false;
     spawnButton.disabled = false;
-    loop();
+    drawWorld();
+    requestAnimationFrame(loop);
   }).catch(() => { canvas.hidden = true; });
 
   // --- director / specialist routing (general) ---
