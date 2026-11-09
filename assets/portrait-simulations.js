@@ -25,7 +25,7 @@ export function createSimulations(ui) {
     return { ...ui.makeCell(tone), glyph, ink: ui.phosphor, ...extra };
   }
   const lifeCells = [' ', '.', ':', '+', '#'].map((glyph, lifeAge) => marked(lifeAge / 4, glyph, { lifeAge }));
-  const wall = marked(1, '=', { wall: true, ink: '#9dbac9', backdrop: '#19323b' });
+  const wall = marked(1, '=', { wall: true, keepInk: true, ink: '#9dbac9', backdrop: '#19323b' });
   const dryInk = marked(0.62, '~');
   const indexAt = ([x, y]) => y * columns + x;
 
@@ -92,12 +92,14 @@ export function createSimulations(ui) {
       );
       const grid = ui.current().slice();
       grid[index] = marked(0.85, next === index ? '*' : arrows[next - index], {
-        ink: '#f0ce87', backdrop: '#3d2d12',
+        keepInk: true, ink: '#f0ce87', backdrop: '#3d2d12',
       });
       ui.apply(grid);
       const height = surface[index].toFixed(3);
       if (next === index) {
-        ui.report(`Local minimum · ${steps} steps · Density ${startTone.toFixed(3)} → ${height}.`);
+        ui.report(steps
+          ? `Local minimum · ${steps} steps · Density ${startTone.toFixed(3)} → ${height}.`
+          : `Already at a local minimum · Density ${height} · No downhill neighbor.`);
         return;
       }
       steps++;

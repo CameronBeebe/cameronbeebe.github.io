@@ -43,7 +43,10 @@ export function quantizeRow(source, working, errors, row, columns, glyphs, makeC
   const levels = glyphs.length - 1;
   for (let column = 0; column < columns; column++) {
     const index = row * columns + column;
-    if (!source[index]) continue;
+    if (!source[index] || source[index].keepInk) {
+      working[index] = source[index];
+      continue;
+    }
     const tone = Math.max(0, Math.min(1, source[index].tone + (errors?.[index] ?? 0)));
     const level = Math.round(tone * levels);
     working[index] = makeCell(level / levels, glyphs[level]);

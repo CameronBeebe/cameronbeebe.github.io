@@ -98,6 +98,7 @@ function enablePortraitExperiments() {
   function lockControls(locked) {
     rewinding = locked;
     for (const control of controls.querySelectorAll('button, input')) control.disabled = locked;
+    if (!locked) dither.disabled = alphabet === glyphs.length;
   }
 
   function applyGrid(next) {
@@ -293,9 +294,11 @@ function enablePortraitExperiments() {
   function shrink(size) {
     stop();
     alphabet = size;
+    const full = size === glyphs.length;
+    dither.disabled = full;
     const source = beginPreview(true, true);
     const reducedGlyphs = { 2: ' @', 4: ' :o@', 8: ' .:;ox#@' }[size];
-    const errors = dither.checked ? new Float64Array(source.length) : null;
+    const errors = !full && dither.checked ? new Float64Array(source.length) : null;
     let row = 0;
     const reducedCell = (tone, glyph) => ({
       tone, glyph, ink: phosphor, rank: glyphs.indexOf(glyph) * inks.length + inks.length - 1,
@@ -304,11 +307,19 @@ function enablePortraitExperiments() {
     function step() {
       const end = Math.min(row + 3, rows);
       const next = working.slice();
-      for (; row < end; row++) quantizeRow(source, next, errors, row, columns, reducedGlyphs, reducedCell);
+      for (; row < end; row++) {
+        if (full) {
+          const start = row * columns;
+          for (let i = start; i < start + columns; i++) next[i] = source[i];
+        } else {
+          quantizeRow(source, next, errors, row, columns, reducedGlyphs, reducedCell);
+        }
+      }
       applyGrid(next);
       draw();
       const result = row === rows ? 'Done' : `${row}/${rows} rows`;
-      report(`${result} · ${size} glyphs including space · ${errors ? 'Error diffusion' : 'Direct rounding'}.`);
+      const treatment = full ? 'Full input' : errors ? 'Error diffusion' : 'Direct rounding';
+      report(`${result} · ${size} glyphs including space · ${treatment}.`);
       if (row < rows) later(step, 45);
     }
     step();
@@ -319,7 +330,7 @@ function enablePortraitExperiments() {
     sort: ['Sort the ASCII portrait', 'Drag across rows or columns to sort them together by ink density. Restore rewinds the edits across tools.'],
     repair: ['Damage & repair', 'Drag to erase characters. Repair estimates each missing cell from its neighbors, one pass at a time.'],
     trace: ['Trace the ink', 'Click a character to rewrite connected cells of similar tone. Change tolerance to see where the fill stops.'],
-    alphabet: ['Shrink the alphabet', 'Redraw the current grid with 2, 4, or 8 glyphs. More glyphs recover detail from the grid you started with in this tool. Dither spreads rounding error to nearby cells.'],
+    alphabet: ['Shrink the alphabet', 'Try 2, 4, or 8 glyphs with optional dithering. Use 12 to restore the grid you entered with. Colored mechanics marks keep their glyphs and ink.'],
   };
 
   for (const button of modeButtons) {
@@ -408,6 +419,7 @@ function enablePortraitExperiments() {
   document.getElementById('alphabet-four').addEventListener('click', () => shrink(4));
   document.getElementById('alphabet-two').addEventListener('click', () => shrink(2));
   document.getElementById('alphabet-eight').addEventListener('click', () => shrink(8));
+  document.getElementById('alphabet-twelve').addEventListener('click', () => shrink(glyphs.length));
   dither.addEventListener('change', () => shrink(alphabet));
 
   selectMode('sort');
