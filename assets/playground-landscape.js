@@ -2,6 +2,7 @@ import { glyphs, sampleImageTones } from './ascii-image.js';
 
 export const columns = 150;
 export const rows = 65;
+const background = '#031803';
 
 export function createLandscape(canvas, image, font) {
   const ctx = canvas.getContext('2d', { alpha: false });
@@ -35,20 +36,20 @@ export function createLandscape(canvas, image, font) {
     ctx.textBaseline = 'middle';
 
     if (!previous) {
-      ctx.fillStyle = '#031803';
+      ctx.fillStyle = background;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
-    frame.forEach(({ glyph, ink }, index) => {
+    frame.forEach(({ glyph, ink, backdrop }, index) => {
       const old = previous?.[index];
-      if (old?.glyph === glyph && old.ink === ink) return;
+      if (old?.glyph === glyph && old.ink === ink && old.backdrop === backdrop) return;
       const column = index % columns;
       const row = Math.floor(index / columns);
       const x = Math.round(column * cellWidth);
       const y = Math.round(row * cellHeight);
       const width = Math.round((column + 1) * cellWidth) - x;
       const height = Math.round((row + 1) * cellHeight) - y;
-      if (old && old.glyph !== ' ') {
-        ctx.fillStyle = '#031803';
+      if (backdrop || old?.backdrop || (old && old.glyph !== ' ')) {
+        ctx.fillStyle = backdrop ?? background;
         ctx.fillRect(x, y, width, height);
       }
       if (glyph === ' ') return;

@@ -282,13 +282,46 @@
       color: var(--ink);
       letter-spacing: -0.025em;
     }
+    .bot-playground {
+      --vat-ink: #f0ce87;
+      --vat-backdrop: #3d2d12;
+      --vat-estimate: #cba76e;
+      --vat-trail: #2a210f;
+      --harness-ink: #c5ffdb;
+      --harness-backdrop: #164232;
+      --harness-estimate: #96cbb0;
+      --harness-trail: #0f3023;
+      --overlap-ink: #f8eed3;
+      --overlap-backdrop: #303228;
+    }
     .bot-playground .experiment-title { font-size: 1rem; }
     .bot-playground .scores { flex-wrap: wrap; }
     .sim-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.8rem; }
     .shared-world { display: block; width: 100%; height: auto; max-width: 680px; margin: 0 auto; aspect-ratio: 400 / 260; object-fit: cover; }
     .shared-world[hidden] { display: none; }
-    .vat-key, .scores #sVat, .scores #dVat { color: var(--danger); }
-    .harness-key { color: var(--phosphor); }
+    .vat-key, .scores #sVat, .scores #dVat { color: var(--vat-ink); }
+    .harness-key, .scores #sHarness, .scores #dHarness { color: var(--harness-ink); }
+    .agent-legend {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.35rem 0.8rem;
+      max-width: 680px;
+      margin: 0.65rem auto 0.45rem;
+      padding-top: 0.65rem;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 0.82em;
+    }
+    @media (max-width: 620px) { .agent-legend { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    .agent-legend div { display: flex; align-items: baseline; gap: 0.55rem; }
+    .agent-legend dd { margin: 0; }
+    .agent-legend code { display: inline-block; padding: 0 0.25em; font: inherit; font-weight: 700; }
+    .legend-vat { color: var(--vat-ink); background: var(--vat-backdrop); }
+    .legend-harness { color: var(--harness-ink); background: var(--harness-backdrop); }
+    .legend-overlap { color: var(--overlap-ink); background: var(--overlap-backdrop); }
+    .legend-vat-estimate { color: var(--vat-estimate); }
+    .legend-harness-estimate { color: var(--harness-estimate); }
+    .legend-target { color: #fff6a0; }
     .bot-playground .task { flex-wrap: wrap; cursor: grab; }
     .bot-playground select { max-width: 100%; background: var(--well); color: var(--link); border: 1px solid var(--line); padding: 0.3rem; }
     .bot-playground summary { cursor: pointer; }
@@ -413,10 +446,7 @@
         <label title="Release the last target once the harness settles near it"><input type="checkbox" id="optStop" checked /> stop condition</label>
         <label title="Reduce momentum during feedback corrections so oscillations shrink"><input type="checkbox" id="optDamp" checked /> damp</label>
       </div>
-      <div class="sim-controls">
-        <button type="button" id="btnReset" disabled>reset</button>
-        <button type="button" id="btnPulse" disabled>spawn goals</button>
-      </div>
+      <button type="button" id="btnReset" disabled>reset</button>
     </div>
     <img class="shared-world" id="agent-print" src="assets/pine-river.webp" width="900" height="600" alt="A Japanese woodblock-style landscape of a pine overlooking a river and mountain." />
     <canvas class="shared-world" id="agent-world" width="400" height="260" aria-label="ASCII mountain and river landscape with shared targets for the vat and harness agents" hidden></canvas>
@@ -424,7 +454,15 @@
       <span><strong class="vat-key">V Vat</strong> · hits: <b id="sVat">0</b> · misses: <b id="dVat">0</b></span>
       <span><strong class="harness-key">H Harness</strong> · hits: <b id="sHarness">0</b> · misses: <b id="dHarness">0</b></span>
     </div>
-    <p class="demo-note">V and H mark actual positions. Lowercase markers and dots show estimates. The first physical arrival clears the target. Switch off damping to see oscillation.</p>
+    <dl class="agent-legend" aria-label="ASCII marker legend">
+      <div><dt><code class="legend-vat">&lt;V&gt;</code></dt><dd>Vat position</dd></div>
+      <div><dt><code class="legend-harness">&lt;H&gt;</code></dt><dd>Harness position</dd></div>
+      <div><dt><code class="legend-overlap">&lt;&amp;&gt;</code></dt><dd>Same cell</dd></div>
+      <div><dt><code class="legend-vat-estimate">&lt;v&gt;</code></dt><dd>Vat estimate</dd></div>
+      <div><dt><code class="legend-harness-estimate">&lt;h&gt;</code></dt><dd>Harness estimate</dd></div>
+      <div><dt><code class="legend-target">[+]</code></dt><dd>Shared target</dd></div>
+    </dl>
+    <p class="demo-note">Shaded trails show actual paths. Dots show estimated paths. The first physical arrival clears the target.</p>
   </div>
 
   <h3 class="experiment-title">02 · Send a task to the right specialist</h3>
@@ -487,11 +525,18 @@ import { createAgent } from './assets/playground-agent.js';
   const canvas = document.getElementById('agent-world');
   const image = document.getElementById('agent-print');
   const resetButton = document.getElementById('btnReset');
-  const spawnButton = document.getElementById('btnPulse');
   const W = canvas.width, H = canvas.height;
-  const font = getComputedStyle(canvas).getPropertyValue('--mono').trim();
-  const colors = { vat: '#f0ae88', harness: '#39ff14' };
-  const trailColors = { vat: '#cc9d7e', harness: '#81e45f' };
+  const style = getComputedStyle(canvas);
+  const font = style.getPropertyValue('--mono').trim();
+  function markerColors(kind) {
+    return {
+      ink: style.getPropertyValue(`--${kind}-ink`).trim(),
+      backdrop: style.getPropertyValue(`--${kind}-backdrop`).trim(),
+      estimate: style.getPropertyValue(`--${kind}-estimate`).trim(),
+      trail: style.getPropertyValue(`--${kind}-trail`).trim(),
+    };
+  }
+  const colors = { vat: markerColors('vat'), harness: markerColors('harness'), overlap: markerColors('overlap') };
   let landscape;
   const cellWidth = W / columns, cellHeight = H / rows;
   const tickMs = 1000 / 60;
@@ -534,22 +579,22 @@ import { createAgent } from './assets/playground-agent.js';
 
   function drawWorld() {
     const frame = landscape.cells.slice();
-    function mark(cell, glyph, ink) { frame[cell] = { glyph, ink }; }
-    function cursor(cell, glyph, ink) {
-      mark(cell - 1, '<', ink);
-      mark(cell, glyph, ink);
-      mark(cell + 1, '>', ink);
+    function mark(cell, glyph, ink, backdrop) { frame[cell] = { glyph, ink, backdrop }; }
+    function cursor(cell, glyph, ink, backdrop) {
+      mark(cell - 1, '<', ink, backdrop);
+      mark(cell, glyph, ink, backdrop);
+      mark(cell + 1, '>', ink, backdrop);
     }
     for (const { state } of agents) {
-      const ink = state.kind === 'vat' ? '#b88b68' : '#70a45e';
       for (const { actual, estimated } of state.trail) {
-        if (actual !== estimated) mark(estimated, '.', ink);
+        if (actual !== estimated) mark(estimated, '.', colors[state.kind].estimate);
       }
     }
     for (const { state } of agents) {
+      const { ink, trail } = colors[state.kind];
       for (const { actual: cell } of state.trail) {
         const { glyph } = landscape.cells[cell];
-        mark(cell, glyph === ' ' ? ':' : glyph, trailColors[state.kind]);
+        mark(cell, glyph === ' ' ? ':' : glyph, ink, trail);
       }
     }
     const assignments = new Map();
@@ -564,22 +609,22 @@ import { createAgent } from './assets/playground-agent.js';
       for (const [offset, pattern] of [[-columns, '\\v/'], [columns, '/^\\']]) {
         for (let i = 0; i < pattern.length; i++) mark(cell + offset + i - 1, pattern[i], '#ffdf76');
       }
-      mark(cell - 1, '[', assigned?.has('vat') ? colors.vat : '#ffdf76');
+      mark(cell - 1, '[', assigned?.has('vat') ? colors.vat.ink : '#ffdf76');
       mark(cell, '+', '#fff6a0');
-      mark(cell + 1, ']', assigned?.has('harness') ? colors.harness : '#ffdf76');
+      mark(cell + 1, ']', assigned?.has('harness') ? colors.harness.ink : '#ffdf76');
     }
 
     const vatCell = cellFor(vat.state.position);
     const harnessCell = cellFor(harness.state.position);
     const vatEstimate = cellFor(vat.state.estimate);
     const harnessEstimate = cellFor(harness.state.estimate);
-    if (vatEstimate !== vatCell) cursor(vatEstimate, 'v', trailColors.vat);
-    if (harnessEstimate !== harnessCell) cursor(harnessEstimate, 'h', trailColors.harness);
+    if (vatEstimate !== vatCell) cursor(vatEstimate, 'v', colors.vat.estimate);
+    if (harnessEstimate !== harnessCell) cursor(harnessEstimate, 'h', colors.harness.estimate);
     if (vatCell === harnessCell) {
-      cursor(vatCell, '&', '#f0ce87');
+      cursor(vatCell, '&', colors.overlap.ink, colors.overlap.backdrop);
     } else {
-      cursor(vatCell, 'V', colors.vat);
-      cursor(harnessCell, 'H', colors.harness);
+      cursor(vatCell, 'V', colors.vat.ink, colors.vat.backdrop);
+      cursor(harnessCell, 'H', colors.harness.ink, colors.harness.backdrop);
     }
     landscape.draw(frame);
   }
@@ -621,16 +666,11 @@ import { createAgent } from './assets/playground-agent.js';
     for (const agent of agents) agent.reset();
     targets.clear();
   };
-  spawnButton.onclick = () => {
-    for (let i = 0; i < 3; i++) plantGoal(40 + Math.random() * (W - 80), 40 + Math.random() * (H - 80));
-  };
-
   image.decode().then(() => {
     canvas.hidden = false;
     landscape = createLandscape(canvas, image, font);
     image.hidden = true;
     resetButton.disabled = false;
-    spawnButton.disabled = false;
     drawWorld();
     requestAnimationFrame(loop);
   }).catch(() => { canvas.hidden = true; });
