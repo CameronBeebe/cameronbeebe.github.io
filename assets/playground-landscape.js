@@ -1,4 +1,4 @@
-import { glyphs, sampleImageTones } from './ascii-image.js';
+import { glyphs, sampleImageTones } from './ascii-image.js?v=2';
 
 export const columns = 150;
 export const rows = 65;

@@ -1,11 +1,13 @@
 import { createSimulations, simulationDescriptions } from './portrait-simulations.js';
 import { swapCells, sortPass, neighbors, repairPass, quantizeRow } from './portrait-grid.js';
-import { glyphs, sampleImageTones } from './ascii-image.js';
+import { glyphs, sampleImageTones } from './ascii-image.js?v=2';
 
 const portrait = document.querySelector('.portrait-print');
 const terminal = document.querySelector('.portrait-terminal');
 const controls = document.querySelector('.portrait-controls');
-const phosphor = getComputedStyle(document.documentElement).getPropertyValue('--phosphor').trim();
+const theme = getComputedStyle(document.documentElement);
+const phosphor = theme.getPropertyValue('--phosphor').trim();
+const font = theme.getPropertyValue('--mono').trim();
 
 const columns = 75;
 const rows = 50;
@@ -22,9 +24,9 @@ function drawTerminal(ctx, cells) {
   const cellHeight = terminal.height / rows;
   ctx.fillStyle = '#031803';
   ctx.fillRect(0, 0, terminal.width, terminal.height);
-  ctx.font = '13px monospace';
-  ctx.textAlign = 'left';
-  ctx.textBaseline = 'top';
+  ctx.font = `${cellHeight * 13 / 12}px ${font}`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
 
   cells.forEach((cell, index) => {
     if (!cell || cell.glyph === ' ') return;
@@ -36,7 +38,7 @@ function drawTerminal(ctx, cells) {
       ctx.fillRect(x, y, cellWidth, cellHeight);
     }
     ctx.fillStyle = ink;
-    ctx.fillText(glyph, x, y);
+    ctx.fillText(glyph, x + cellWidth / 2, y + cellHeight / 2, cellWidth);
   });
 }
 
@@ -67,6 +69,15 @@ function enablePortraitExperiments() {
   let preview = null;
 
   function draw() { drawTerminal(ctx, working); }
+  function fitCanvas() {
+    const scale = window.devicePixelRatio || 1;
+    const width = Math.round(terminal.clientWidth * scale);
+    const height = Math.round(terminal.clientHeight * scale);
+    if (!width || !height || (width === terminal.width && height === terminal.height)) return;
+    terminal.width = width;
+    terminal.height = height;
+    draw();
+  }
   function report(message) { status.textContent = message; }
   function later(step, delay) {
     timer = setTimeout(() => {
@@ -341,8 +352,8 @@ function enablePortraitExperiments() {
 
   function pointAt(event) {
     const bounds = terminal.getBoundingClientRect();
-    const x = Math.floor((event.clientX - bounds.left) / bounds.width * columns);
-    const y = Math.floor((event.clientY - bounds.top) / bounds.height * rows);
+    const x = Math.floor((event.clientX - bounds.left - terminal.clientLeft) / terminal.clientWidth * columns);
+    const y = Math.floor((event.clientY - bounds.top - terminal.clientTop) / terminal.clientHeight * rows);
     return [Math.max(0, Math.min(columns - 1, x)), Math.max(0, Math.min(rows - 1, y))];
   }
 
@@ -409,6 +420,9 @@ function enablePortraitExperiments() {
   portrait.hidden = true;
   terminal.hidden = false;
   controls.hidden = false;
+  new ResizeObserver(fitCanvas).observe(terminal);
+  window.addEventListener('resize', fitCanvas);
+  fitCanvas();
 }
 
 if (portrait.complete) enablePortraitExperiments();
