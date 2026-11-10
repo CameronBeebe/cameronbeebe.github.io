@@ -137,9 +137,6 @@
       color: var(--muted);
       font-size: 0.9em;
     }
-    .bio-section .project-context { margin-bottom: 0.35rem; }
-    .bio-browse { border-top: 1px solid var(--line); padding: 0.85rem 0; }
-    .bio-browse > summary { color: var(--link); cursor: pointer; }
     .ask-panel [hidden] { display: none; }
     .ask-panel p + p { margin-top: 0.5rem; }
     .ask-panel form:not([hidden]), .ask-samples {
@@ -160,7 +157,7 @@
     .ask-panel button:disabled { opacity: 0.55; cursor: wait; }
     .ask-samples, .ask-panel [role="status"], .ask-panel details, .ask-source-status { font-size: 0.85em; }
     .ask-panel [role="status"], .ask-source-status { color: var(--muted); }
-    .ask-results blockquote { margin: 0.65rem 0; padding-left: 0.75rem; border-left: 2px solid var(--line); }
+    .ask-results blockquote { margin: 0.65rem 0; padding-left: 0.75rem; border-left: 2px solid var(--line); white-space: pre-line; }
     .ask-panel summary { cursor: pointer; color: var(--link); }
     @media (max-width: 700px) {
       .hero { grid-template-columns: 1fr; }
@@ -375,7 +372,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/tex-chtml.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <script type="module" src="assets/portrait.js?v=2"></script>
-  <script type="module" src="assets/ask-cameron.js?v=2"></script>
+  <script type="module" src="assets/ask-cameron.js?v=3"></script>
 </head>
 <body>
   <main>
@@ -466,7 +463,7 @@
       <div class="ask-panel">
         <p>Explore my <a href="cv.md">CV</a>, <a href="https://github.com/CameronBeebe?tab=repositories">GitHub projects</a>, and <a href="https://edoc.ub.uni-muenchen.de/28655/">dissertation</a>.</p>
         <p class="ask-preview bio-detail">Preview mode. Try a sample question below.</p>
-        <p class="ask-live bio-detail" id="ask-service-note" hidden>Questions are sent to TypeSafe to select relevant excerpts.</p>
+        <p class="ask-live bio-detail" id="ask-service-note" hidden>Questions go to TypeSafe. Each score is Jev’s estimate of how likely the excerpt is to answer your question.</p>
         <form hidden>
           <input name="question" type="text" aria-label="Question about Cameron" aria-describedby="ask-service-note" placeholder="What would you like to know?" maxlength="280" required />
           <button type="submit">Ask</button>
@@ -484,48 +481,6 @@
         </details>
       </div>
     </section>
-    <details class="bio-browse">
-      <summary>Browse education, experience, and projects</summary>
-      <section class="bio-section" id="education" aria-labelledby="education-title">
-        <h2 id="education-title">Education</h2>
-        <ul>
-          <li>
-            Ph.D. from the Graduate School of Systemic Neurosciences, LMU Munich
-            <span class="bio-detail">
-              Dissertation <a href="https://edoc.ub.uni-muenchen.de/28655/1/Beebe_Cameron.pdf"><em>Knowledge Transfer in Cognitive Systems Theory</em></a>
-              — knowledge as control via structure mapping, using cybernetics to explain neural networks as error-controlled regulators.
-            </span>
-          </li>
-          <li>Masters from the Munich Center for Mathematical Philosophy, LMU Munich</li>
-        </ul>
-      </section>
-      <section class="bio-section" id="experience" aria-labelledby="experience-title">
-        <h2 id="experience-title">Experience</h2>
-        <ul>
-          <li>
-            <a href="https://appy.ai/about">Appy.AI</a> on the core team developing the multi-agent harness for <em>Violet</em> — an AI Chief of Staff that routes specialist agents with scoped context for real workflows.
-            <span class="bio-detail">Prompts, context, orchestration, steering, agent standards (skills), evals and testing.</span>
-          </li>
-          <li>Cray deep-learning internship.</li>
-          <li>
-            Building and experimentation with agentic tools and new models
-            <span class="bio-detail">Devin, Claude Code, Cursor, Grok Bot, Typesafe's Jev, DSPy, RLMs, etc.</span>
-          </li>
-        </ul>
-      </section>
-      <section class="bio-section" id="projects" aria-labelledby="projects-title">
-        <h2 id="projects-title">Projects</h2>
-        <div>
-          <p class="project-context">From the SciPhi Initiative</p>
-          <ul>
-            <li><a href="https://github.com/CameronBeebe/fungi_fortress">fungi_fortress</a> (generative game harness)</li>
-            <li><a href="https://github.com/CameronBeebe/fungi_chromatic">fungi_chromatic</a> (its Game Boy Color cartridge)</li>
-            <li><a href="https://github.com/CameronBeebe/Structural_Idealism">Structural Idealism</a></li>
-            <li><a href="https://github.com/CameronBeebe/scipfs">scipfs</a></li>
-          </ul>
-        </div>
-      </section>
-    </details>
   </div>
 
   <section class="bot-playground" id="playground" aria-labelledby="playground-title">

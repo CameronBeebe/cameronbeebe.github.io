@@ -117,7 +117,7 @@ export async function publicPassages(question) {
   const [cvEntries, lmuEntries, ...githubEntries] = collections;
   return {
     passages: [
-      ...shortlist(cvEntries, question, 19),
+      ...cvEntries,
       ...shortlist(lmuEntries, question, 4),
       ...shortlist(githubEntries.flat(), question, 9),
     ],

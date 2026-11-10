@@ -36,6 +36,7 @@ function post(body, headers = {}) {
 test('extracts public CV passages with headings and readable text', () => {
   const passages = cvPassages(cv);
   assert.ok(passages.some(p => p.heading.includes('Appy.AI') && p.text.includes('eval dashboard')));
+  assert.ok(passages.some(p => p.text.includes('B.A. in Philosophy') && p.text.includes('Montana State University')));
   assert.ok(passages.some(p => p.text.startsWith('fungi_fortress / fungi_chromatic')));
   assert.ok(passages.every(p => !p.text.includes('mailto:') && p.text.length));
 });
@@ -50,9 +51,14 @@ test('returns only ranked CV excerpts or an empty result when evidence is weak',
     const { state, questions } = JSON.parse(options.body);
     assert.equal(state.visitor_question, 'What did Cameron build?');
     assert.ok(Object.keys(questions).length <= 32);
-    assert.ok(Object.values(questions).every(q => q.type === 'noul'));
+    const candidates = Object.entries(questions).map(([id, q]) => {
+      assert.equal(q.type, 'noul');
+      return [id, q.instructions.excerpt];
+    });
+    assert.deepEqual(candidates.filter(([, p]) => p.section).map(([, p]) => p),
+      cvPassages(cv).map(({ section, heading, text }) => ({ section, heading, text })));
     calls++;
-    const answers = Object.fromEntries(Object.entries(state.passages).map(([id, passage]) => [id, {
+    const answers = Object.fromEntries(candidates.map(([id, passage]) => [id, {
       type: 'noul', noul: passage.heading.includes('Appy.AI') ? score : 0.1,
     }]));
     answers.unknown = { type: 'noul', noul: 1, text: 'Fake passage' };
@@ -62,12 +68,13 @@ test('returns only ranked CV excerpts or an empty result when evidence is weak',
   const match = await worker.fetch(post({ question: 'What did Cameron build?' }), env);
   assert.equal(match.headers.get('Access-Control-Allow-Origin'), origin);
   assert.deepEqual(await match.json(), {
-    excerpts: cvPassages(cv).filter(p => p.heading.includes('Appy.AI')),
+    excerpts: cvPassages(cv).filter(p => p.heading.includes('Appy.AI')).map(p => ({ ...p, relevance: 0.95 })),
+    bestRelevance: 0.95,
     unavailableSources: [],
   });
   score = 0.6;
   const miss = await worker.fetch(post({ question: 'What did Cameron build?' }), env);
-  assert.deepEqual(await miss.json(), { excerpts: [], unavailableSources: [] });
+  assert.deepEqual(await miss.json(), { excerpts: [], bestRelevance: 0.6, unavailableSources: [] });
   assert.equal(calls, 2);
 });
 
@@ -75,13 +82,13 @@ test('returns GitHub and LMU links when the CV is unavailable', async t => {
   t.mock.method(globalThis, 'fetch', async (url, options) => {
     if (url === `${origin}/cv.md`) return new Response(null, { status: 503 });
     if (url !== 'https://api.typesafe.ai/v1/systemone') return publicSource(url, options);
-    const { state } = JSON.parse(options.body);
-    const entries = Object.entries(state.passages);
+    const { questions } = JSON.parse(options.body);
+    const entries = Object.entries(questions).map(([id, q]) => [id, q.instructions.excerpt]);
     assert.ok(entries.some(([, p]) => p.heading === 'Recently pushed public repositories'));
     assert.ok(entries.every(([, p]) => p.heading !== 'old-game'));
     const answers = Object.fromEntries(entries.map(([id, p]) => [id, {
       type: 'noul',
-      noul: p.source.url === lmuUrl || p.source.url.endsWith('/fungi_chromatic#readme') ? 0.95 : 0.1,
+      noul: p.text.includes('Knowledge transfer concerns') || p.text.includes('experimental Game Boy Color') ? 0.95 : 0.1,
     }]));
     return Response.json({ answers });
   });

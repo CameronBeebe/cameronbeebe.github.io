@@ -12,28 +12,38 @@ export function cvPassages(markdown) {
   const passages = [];
   let section;
   let heading;
+  let entry;
   let paragraph = [];
 
   function addPassage(text) {
-    if (section && text) passages.push({ section, heading, text: plainText(text), source: { label: 'CV', url: cvUrl } });
+    if (section && text) passages.push({ section, heading, text, source: { label: 'CV', url: cvUrl } });
+  }
+
+  function addBlock(text) {
+    if (!text) return;
+    if (entry) entry.push(plainText(text));
+    else addPassage(plainText(text));
   }
 
   for (const line of markdown.split(/\r?\n/)) {
     const title = /^(#{2,3})\s+(.+)$/.exec(line);
     const bullet = /^-\s+(.+)$/.exec(line);
     if (title || bullet || !line.trim()) {
-      addPassage(paragraph.join(' '));
+      addBlock(paragraph.join(' '));
       paragraph = [];
       if (title) {
+        if (entry) addPassage(entry.join('\n\n'));
         if (title[1] === '##') section = plainText(title[2]);
         heading = plainText(title[2]);
+        entry = title[1] === '###' ? [heading] : undefined;
       } else if (bullet) {
-        addPassage(bullet[1]);
+        addBlock(bullet[1]);
       }
     } else {
       paragraph.push(line);
     }
   }
-  addPassage(paragraph.join(' '));
+  addBlock(paragraph.join(' '));
+  if (entry) addPassage(entry.join('\n\n'));
   return passages;
 }

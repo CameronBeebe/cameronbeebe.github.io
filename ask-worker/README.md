@@ -1,6 +1,10 @@
 # Ask about Cameron
 
-The GitHub Pages panel shows two labeled sample answers using the public `cv.md`. Set the panel’s `data-endpoint` in `index.html` to a deployed Worker’s HTTPS `/ask` URL to enable free-form questions. The Worker looks up the published CV, the LMU dissertation abstract, Cameron’s recently pushed public repositories, and the openings of featured and recent GitHub READMEs. Jev ranks up to 32 passages and the page shows up to two excerpts with links. Questions with no passage above the relevance threshold get a no-answer result.
+The GitHub Pages panel shows two labeled sample answers using the public `cv.md`. Set the panel’s `data-endpoint` in `index.html` to a deployed Worker’s HTTPS `/ask` URL to enable free-form questions.
+
+The Worker reads the published CV on each lookup, subject to the source cache. It groups Markdown subheadings with their body text and splits top-level section content into paragraphs and bullets. All those passages go to Jev. The Worker also selects up to four passages from the LMU dissertation abstract and nine from GitHub repository metadata and README intros, using keyword overlap for those shortlists.
+
+Jev judges each passage against the question in one batch. The page shows up to two excerpts with links and Jev’s estimated match probabilities, using a 70% cutoff. If nothing clears the cutoff, the page shows the best score. The displayed text comes from the sources.
 
 ## Local development
 

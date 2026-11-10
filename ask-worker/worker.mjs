@@ -8,7 +8,7 @@ const allowedOrigins = new Set([
   'http://localhost:8741',
 ]);
 const maxBodyBytes = 4096;
-const minimumRelevance = 0.8;
+const minimumRelevance = 0.7;
 
 async function readBody(request) {
   const decoder = new TextDecoder();
@@ -70,18 +70,21 @@ export default {
       if (!passages.length) throw new Error('Public sources unavailable');
 
       const candidates = Object.fromEntries(passages.map((passage, i) => [`p${i + 1}`, passage]));
-      const questions = Object.fromEntries(Object.keys(candidates).map(id => [id, {
+      const questions = Object.fromEntries(Object.entries(candidates).map(([id, { section, heading, text }]) => [id, {
         type: 'noul',
-        instructions: `Does the public source passage in \`passages.${id}\` directly answer a part of \`visitor_question\` about Cameron Beebe?`,
+        instructions: {
+          task: 'Does the excerpt directly answer part of the visitor question about Cameron Beebe? Use its heading and section to resolve what it refers to.',
+          excerpt: { section, heading, text },
+        },
         criteria: {
-          true: 'The passage states a specific fact that answers the question.',
-          false: 'It only shares a topic, requires speculation, or does not answer the question about Cameron Beebe.',
+          true: 'The text supplies a specific answer about the entity, event, or time asked about, including when the question uses different wording.',
+          false: 'The text only shares a topic, supplies the fact for a different entity, event, or time, or would require speculation.',
         },
       }]));
       const response = await fetch(typeSafeUrl, {
         method: 'POST',
         headers: { Authorization: `Bearer ${env.TYPESAFE_API_KEY}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ model: 'jev-latest', state: { visitor_question: question, current_date: new Date().toISOString().slice(0, 10), passages: candidates }, questions }),
+        body: JSON.stringify({ model: 'jev-latest', state: { visitor_question: question, current_date: new Date().toISOString().slice(0, 10) }, questions }),
         signal: AbortSignal.timeout(8000),
         redirect: 'error',
       });
@@ -95,9 +98,10 @@ export default {
         }
         return { passage, relevance };
       });
+      ranked.sort((a, b) => b.relevance - a.relevance);
       const excerpts = ranked.filter(({ relevance }) => relevance >= minimumRelevance)
-        .sort((a, b) => b.relevance - a.relevance).slice(0, 2).map(({ passage }) => passage);
-      return json({ excerpts, unavailableSources });
+        .slice(0, 2).map(({ passage, relevance }) => ({ ...passage, relevance }));
+      return json({ excerpts, bestRelevance: ranked[0].relevance, unavailableSources });
     } catch {
       return json({ error: 'Public source lookup is temporarily unavailable. Try again shortly.' }, 503);
     }

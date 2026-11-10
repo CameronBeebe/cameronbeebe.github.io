@@ -1,4 +1,4 @@
-import { cvPassages, maxQuestionLength } from './cv-passages.mjs?v=2';
+import { cvPassages, maxQuestionLength } from './cv-passages.mjs?v=3';
 
 const panel = document.getElementById('ask-cameron');
 const form = panel.querySelector('form');
@@ -15,6 +15,7 @@ const localLive = ['127.0.0.1', 'localhost'].includes(location.hostname)
 const endpoint = panel.dataset.endpoint || (localLive ? 'http://127.0.0.1:8787/ask' : '');
 const sampleHeadings = { appy: /Appy\.AI/i, phd: /PhD at GSN/i };
 const sourceHosts = new Set(['cameronbeebe.github.io', 'edoc.ub.uni-muenchen.de', 'github.com']);
+const percentage = value => `${Math.round(value * 100)}%`;
 
 function renderExcerpts(excerpts) {
   results.replaceChildren();
@@ -23,9 +24,15 @@ function renderExcerpts(excerpts) {
   sources.open = false;
 
   const seen = new Set();
-  for (const { text, heading, source } of excerpts) {
+  for (const { text, heading, source, relevance } of excerpts) {
     const quote = document.createElement('blockquote');
-    quote.textContent = text;
+    if (Number.isFinite(relevance)) {
+      const score = document.createElement('span');
+      score.className = 'bio-detail';
+      score.textContent = `${percentage(relevance)} match · Jev`;
+      quote.append(score);
+    }
+    quote.append(text);
     results.append(quote);
     const url = new URL(source.url);
     if (url.protocol !== 'https:' || !sourceHosts.has(url.hostname)) continue;
@@ -57,7 +64,7 @@ async function ask(question, sample) {
   sourceStatus.hidden = true;
   status.textContent = endpoint ? 'Checking public sources…' : 'Loading sample excerpts…';
   try {
-    let excerpts;
+    let excerpts, bestRelevance;
     if (endpoint) {
       const response = await fetch(endpoint, {
         method: 'POST',
@@ -68,6 +75,7 @@ async function ask(question, sample) {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error);
       excerpts = data.excerpts;
+      bestRelevance = data.bestRelevance;
       if (data.unavailableSources.length) {
         sourceStatus.textContent = `Unavailable for this question · ${data.unavailableSources.join(', ')}`;
         sourceStatus.hidden = false;
@@ -75,12 +83,14 @@ async function ask(question, sample) {
     } else {
       const cv = await fetch('./cv.md');
       if (!cv.ok) throw new Error('The CV could not be loaded.');
-      excerpts = cvPassages(await cv.text()).filter(({ heading }) => sampleHeadings[sample].test(heading)).slice(0, 2);
+      excerpts = cvPassages(await cv.text()).filter(({ heading }) => sampleHeadings[sample].test(heading));
     }
     renderExcerpts(excerpts);
     status.textContent = excerpts.length
       ? (endpoint ? 'Public source excerpts · selected by Jev' : 'Sample answer · excerpts from the public CV')
-      : 'I couldn’t find an answer in the sources I could check.';
+      : Number.isFinite(bestRelevance)
+        ? `No answer found in the public sources checked. Best match was ${percentage(bestRelevance)}.`
+        : 'No answer found in the public sources checked.';
   } catch (error) {
     status.textContent = error instanceof Error && error.name === 'Error' && error.message
       ? error.message : 'Public source lookup is unavailable. Try again shortly.';
