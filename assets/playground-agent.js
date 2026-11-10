@@ -3,6 +3,8 @@ const spring = 0.0024;
 const damping = 0.978;
 const still = { x: 0, y: 0 };
 const goalSensorRange = 52;
+const observationTicks = 18;
+const refinementTicks = 36;
 
 export const arrivalRadius = 8;
 
@@ -17,7 +19,7 @@ export function createAgent(width, height) {
 
   function reset() {
     const center = { x: width / 2, y: height / 2 };
-    Object.assign(state, { position: center, estimate: center, goals: [], attractor: null, done: 0, misses: 0, trail: [] });
+    Object.assign(state, { position: center, estimate: center, goals: [], attractor: null, planning: false, done: 0, misses: 0, trail: [] });
     velocity = still;
     rememberedCurrent = still;
   }
@@ -62,14 +64,30 @@ export function createAgent(width, height) {
   }
 
   function addGoal(target, life) {
+    target.age = 0;
     target.observation = observeGoal(target, 1);
+    target.belief = target.observation.reported;
+    target.refinement = { to: target.belief, tick: refinementTicks };
     state.goals = state.goals.filter(goal => goal.target.cell !== target.cell);
     state.goals.push({ target, life });
   }
 
-  function estimateGoal(target, plan) {
+  function refineGoal(target, plan) {
     const observation = target.localReading ?? target.observation;
-    return target.verified ?? (plan ? observation.planned : observation.reported);
+    const reading = target.verified ?? (plan ? observation.planned : observation.reported);
+    if (target.refinement.to !== reading) {
+      target.refinement = { from: target.belief, to: reading, tick: 0 };
+    }
+    const change = target.refinement;
+    if (change.tick === refinementTicks) return;
+    const progress = ++change.tick / refinementTicks;
+    const weight = progress * progress * (3 - 2 * progress);
+    const { from, to } = change;
+    target.belief = progress === 1 ? to : {
+      x: from.x + (to.x - from.x) * weight,
+      y: from.y + (to.y - from.y) * weight,
+      radius: from.radius + (to.radius - from.radius) * weight,
+    };
   }
 
   function currentAt({ x, y }, scale = 1) {
@@ -108,11 +126,19 @@ export function createAgent(width, height) {
 
   function step(options, visibleTargets) {
     const { tools: feedback, memory, plan } = options;
-    for (const target of visibleTargets) {
+    state.planning = false;
+    const targets = new Set(visibleTargets);
+    for (const { target } of state.goals) targets.add(target);
+    if (state.attractor) targets.add(state.attractor);
+    for (const target of targets) {
+      target.age++;
+      const observed = target.age > observationTicks;
+      const planning = plan && target.age <= observationTicks + refinementTicks;
       const actualDistance = distanceBetween(target, state.position);
-      if (feedback && !target.localReading && actualDistance <= goalSensorRange) {
+      if (feedback && observed && !planning && !target.localReading && actualDistance <= goalSensorRange) {
         target.localReading = observeGoal(target, 0.22);
       }
+      refineGoal(target, plan && observed);
       if (!target.reached && actualDistance <= arrivalRadius) {
         target.reached = true;
         state.done++;
@@ -125,7 +151,7 @@ export function createAgent(width, height) {
     let pending;
     let distance = Infinity;
     for (const goal of state.goals) {
-      const gap = distanceBetween(estimateGoal(goal.target, plan), state.estimate);
+      const gap = distanceBetween(goal.target.belief, state.estimate);
       if (gap < distance) {
         pending = goal;
         distance = gap;
@@ -138,7 +164,12 @@ export function createAgent(width, height) {
       velocity = still;
       return;
     }
-    const aim = estimateGoal(target, plan);
+    state.planning = Boolean(pending && plan && target.age <= observationTicks + refinementTicks);
+    if (state.planning || (target.verified && target.belief !== target.verified)) {
+      velocity = still;
+      return;
+    }
+    const aim = target.belief;
     const dx = aim.x - state.estimate.x;
     const dy = aim.y - state.estimate.y;
 
@@ -150,7 +181,7 @@ export function createAgent(width, height) {
         if (options.verifier) {
           // The independent arrival check supplies a fix for both positions.
           state.estimate = state.position;
-          target.verified = { x: target.x, y: target.y, radius: 0 };
+          target.verified ??= { x: target.x, y: target.y, radius: 2 };
           velocity = still;
           return;
         }
@@ -186,5 +217,5 @@ export function createAgent(width, height) {
   }
 
   reset();
-  return { state, step, reset, addGoal, estimateGoal };
+  return { state, step, reset, addGoal };
 }

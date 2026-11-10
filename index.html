@@ -445,14 +445,14 @@
   <h3 class="experiment-title">01 · Brain in a vat vs harness</h3>
   <p class="demo-note">
     Click the print to set a target. The agent steers by its estimates of where it is and where
-    the goal is. Plan refines the goal estimate. Tools let the agent correct its course using live
+    the goal is. Plan refines the goal estimate before the agent moves. Tools let it correct its course using live
     readings. The verifier checks arrival.
   </p>
   <div class="demo agent-demo" data-mode="harness">
     <div class="controls" role="group" aria-label="Agent settings and simulation controls">
       <div class="sim-controls">
         <span>Harness:</span>
-        <label title="Refine the goal reading and use a rough model of the current to predict drift"><input type="checkbox" id="optPlan" /> plan</label>
+        <label title="Refine the goal reading and use a rough model of the current to predict drift"><input type="checkbox" id="optPlan" checked /> plan</label>
         <label title="Read an imperfect self position and get a closer goal reading within range"><input type="checkbox" id="optTools" checked /> tools</label>
         <label title="Use recent readings to predict the current"><input type="checkbox" id="optMemory" checked /> memory</label>
         <label title="Check arrival and confirm the goal location after a miss"><input type="checkbox" id="optVerifier" checked /> verifier</label>
@@ -466,6 +466,7 @@
     <div class="scores" aria-label="Agent status">
       <strong class="agent-key" id="agent-mode">Harness enabled</strong>
       <span>hits: <b id="agent-hits">0</b> · misses: <b id="agent-misses">0</b></span>
+      <span id="agent-planning" hidden>Planning…</span>
     </div>
     <figure class="agent-metrics" aria-labelledby="estimate-error-label">
       <figcaption id="estimate-error-label">Estimation error <small>Actual to estimate · ~5 units per #</small></figcaption>
@@ -479,8 +480,8 @@
       <div><dt><code class="legend-target">[*]</code></dt><dd>Actual goal you clicked</dd></div>
       <div><dt><code class="legend-target">[g]</code></dt><dd>Where the agent thinks the goal is</dd></div>
     </dl>
-    <p class="demo-note">Shaded trails show actual paths. Dots trace estimates. A separate estimate appears when its cell differs from the actual position.</p>
-    <p class="demo-note">The dotted ring shows uncertainty around the latest goal estimate. The target clears when the agent physically arrives.</p>
+    <p class="demo-note">Shaded trails show actual paths. Dots trace estimates. Symbols sharing a cell take turns.</p>
+    <p class="demo-note">The dotted ring shows uncertainty around the latest goal estimate. The latest target stays marked after arrival.</p>
   </div>
 
   <h3 class="experiment-title">02 · Send a task to the right specialist</h3>
@@ -527,7 +528,7 @@
 
 <script type="module">
 import { columns, rows, createLandscape } from './assets/playground-landscape.js';
-import { createAgent, distanceBetween } from './assets/playground-agent.js?v=4';
+import { createAgent, distanceBetween } from './assets/playground-agent.js?v=5';
 
 (function () {
   function opts() {
@@ -548,6 +549,7 @@ import { createAgent, distanceBetween } from './assets/playground-agent.js?v=4';
   const modeReadout = document.getElementById('agent-mode');
   const hits = document.getElementById('agent-hits');
   const misses = document.getElementById('agent-misses');
+  const planningReadout = document.getElementById('agent-planning');
   const W = canvas.width, H = canvas.height;
   const font = getComputedStyle(canvas).getPropertyValue('--mono').trim();
   function markerColors() {
@@ -562,7 +564,8 @@ import { createAgent, distanceBetween } from './assets/playground-agent.js?v=4';
   let colors = markerColors();
   let landscape;
   const cellWidth = W / columns, cellHeight = H / rows;
-  const tickMs = 1000 / 60;
+  const tickMs = 1000 / 50;
+  const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
   let lastFrame;
   let elapsed = 0;
 
@@ -593,9 +596,10 @@ import { createAgent, distanceBetween } from './assets/playground-agent.js?v=4';
     const { position, estimate } = state;
     syncMeter(errorBar, distanceBetween(position, estimate), 5);
     syncMeter(goalBar, goal ? distanceBetween(latestTarget, goal) : null, 5);
-    const text = goal ? `Goal uncertainty radius · ${goal.radius} units` : 'Goal uncertainty —';
+    const text = goal ? `Goal uncertainty radius · ${Math.ceil(goal.radius)} units` : 'Goal uncertainty —';
     if (confidence.textContent !== text) confidence.textContent = text;
     warning.hidden = !latestTarget?.falseArrival || latestTarget.reached;
+    planningReadout.hidden = !state.planning;
   }
 
   function plantGoal(x, y) {
@@ -625,7 +629,7 @@ import { createAgent, distanceBetween } from './assets/playground-agent.js?v=4';
       + Math.min(columns - 1, Math.floor(x / cellWidth));
   }
 
-  function drawWorld(goal) {
+  function drawWorld(goal, now = 0) {
     const frame = landscape.cells.slice();
     function mark(cell, glyph, ink, backdrop) { frame[cell] = { glyph, ink, backdrop }; }
     for (const { actual, estimated } of state.trail) {
@@ -635,36 +639,37 @@ import { createAgent, distanceBetween } from './assets/playground-agent.js?v=4';
       const { glyph } = landscape.cells[cell];
       mark(cell, glyph === ' ' ? ':' : glyph, colors.ink, colors.trail);
     }
-    if (goal?.radius && !latestTarget.reached) {
-      const points = Math.ceil(goal.radius * Math.PI / 2);
+    if (goal) {
+      // Keep small rings visible around a three-glyph marker.
+      const radius = Math.max(goal.radius, cellHeight * 1.5);
+      const points = Math.ceil(radius * Math.PI / 2);
       for (let i = 0; i < points; i++) {
         const angle = 2 * Math.PI * i / points;
-        const x = goal.x + goal.radius * Math.cos(angle);
-        const y = goal.y + goal.radius * Math.sin(angle);
+        const x = goal.x + radius * Math.cos(angle);
+        const y = goal.y + radius * Math.sin(angle);
         if (x >= 0 && x < W && y >= 0 && y < H) mark(cellFor({ x, y }), '.', '#ffdf76', '#493417');
       }
     }
+    const markers = new Map();
+    function cursor(cell, glyph, ink, backdrop, left, right) {
+      if (!markers.has(cell)) markers.set(cell, []);
+      markers.get(cell).push({ glyph, ink, backdrop, left, right });
+    }
     const targetBackdrop = '#332511';
     for (const cell of targets.keys()) {
-      mark(cell - 1, '[', '#ffdf76', targetBackdrop);
-      mark(cell, cell === latestTarget?.cell ? '*' : '+', '#fff6a0', targetBackdrop);
-      mark(cell + 1, ']', '#ffdf76', targetBackdrop);
+      cursor(cell, cell === latestTarget?.cell ? '*' : '+', '#fff6a0', targetBackdrop, '[', ']');
     }
+    cursor(cellFor(state.position), 'A', colors.ink, colors.backdrop, '<', '>');
+    cursor(cellFor(state.estimate), 'a', colors.estimate, undefined, '<', '>');
+    if (goal) cursor(cellFor(goal), 'g', '#ffdf76', targetBackdrop, '[', ']');
 
-    const actual = cellFor(state.position);
-    const estimated = cellFor(state.estimate);
-    let guessed = goal?.radius && !latestTarget.reached ? cellFor(goal) : -1;
-    if (guessed === latestTarget?.cell) guessed = -1;
-    while (guessed === actual || guessed === estimated) guessed -= columns;
-    function cursor(cell, glyph, ink, backdrop, left, right) {
-      const occupied = index => index === actual || index === estimated || index === guessed;
-      if (!occupied(cell - 1)) mark(cell - 1, left, ink, backdrop);
+    const phase = reducedMotion.matches ? 0 : Math.floor(now / 550);
+    for (const [cell, stack] of markers) {
+      const { glyph, ink, backdrop, left, right } = stack[phase % stack.length];
+      if (!markers.has(cell - 1)) mark(cell - 1, left, ink, backdrop);
       mark(cell, glyph, ink, backdrop);
-      if (!occupied(cell + 1)) mark(cell + 1, right, ink, backdrop);
+      if (!markers.has(cell + 1)) mark(cell + 1, right, ink, backdrop);
     }
-    if (guessed >= 0) cursor(guessed, 'g', '#ffdf76', targetBackdrop, '[', ']');
-    if (actual !== estimated) cursor(estimated, 'a', colors.estimate, undefined, '<', '>');
-    cursor(actual, 'A', colors.ink, colors.backdrop, '<', '>');
     landscape.draw(frame);
   }
 
@@ -683,7 +688,7 @@ import { createAgent, distanceBetween } from './assets/playground-agent.js?v=4';
     trail.push({ actual: cellFor(position), estimated: cellFor(estimate) });
     if (trail.length > 150) trail.shift();
     for (const [cell, target] of targets) {
-      if (target.reached) targets.delete(cell);
+      if (target.reached && target !== latestTarget) targets.delete(cell);
     }
   }
 
@@ -696,8 +701,8 @@ import { createAgent, distanceBetween } from './assets/playground-agent.js?v=4';
         tick(options);
         elapsed -= tickMs;
       }
-      const goal = latestTarget && agent.estimateGoal(latestTarget, options.plan);
-      drawWorld(goal);
+      const goal = latestTarget?.belief;
+      drawWorld(goal, now);
       if (hits.textContent !== String(state.done)) hits.textContent = state.done;
       if (misses.textContent !== String(state.misses)) misses.textContent = state.misses;
       syncReadouts(goal);
