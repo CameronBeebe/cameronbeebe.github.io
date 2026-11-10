@@ -119,16 +119,29 @@
       background: var(--bg);
     }
     .hero .icons a:hover { border-color: var(--accent); }
-    .about { padding: clamp(1.75rem, 5vw, 3rem) 0 0.5rem; }
-    .bio {
+    .bio { padding-top: clamp(1rem, 3vw, 1.75rem); }
+    .bio-section {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 0 clamp(1.5rem, 5vw, 4rem);
+      grid-template-columns: 8rem minmax(0, 1fr);
+      gap: 0.45rem clamp(1rem, 4vw, 3rem);
+      padding: 0.9rem 0;
     }
+    .bio-section + .bio-section { border-top: 1px solid var(--line); }
+    .bio-section > h2, .bio-section p, .bio-section ul { margin: 0; }
+    .bio-section > :not(h2) { max-width: 76ch; overflow-wrap: anywhere; }
+    .bio-section li + li { margin-top: 0.35rem; }
+    .bio-section li::marker { color: var(--muted); }
+    .bio-detail {
+      display: block;
+      margin-top: 0.2rem;
+      color: var(--muted);
+      font-size: 0.9em;
+    }
+    .bio-section .project-context { margin-bottom: 0.35rem; }
     @media (max-width: 700px) {
       .hero { grid-template-columns: 1fr; }
       .hero-art { justify-self: start; }
-      .bio { grid-template-columns: 1fr; }
+      .bio-section { grid-template-columns: minmax(0, 1fr); }
     }
     :focus-visible { outline: 2px solid var(--phosphor); outline-offset: 3px; }
     h2, .experiment-title {
@@ -418,24 +431,51 @@
   </figure>
   </header>
 
-  <section class="about" id="about" aria-label="Biography">
   <div class="bio">
-  <p>
-    Interdisciplinary philosopher of science. Ph.D., GSN / LMU Munich; Masters from the Munich Center for Mathematical Philosophy. Dissertation: <a href="https://edoc.ub.uni-muenchen.de/28655/1/Beebe_Cameron.pdf"><em>Knowledge Transfer in Cognitive Systems Theory</em></a> — knowledge as control via structure mapping; using cybernetics to explain neural networks as error-controlled regulators. Cray deep-learning internship.
-  </p>
-  <p>
-    Spent the last year at <a href="https://appy.ai/about">Appy.AI</a> on the core team developing the multi-agent harness for <em>Violet</em> — an AI Chief of Staff that routes specialist agents with scoped context for real workflows. Prompts, context, orchestration, steering, agent standards (skills), evals and testing.
-  </p>
-  <p>
-    Significant experience and experimentation with agentic tools and new models: Devin, Claude Code, Cursor, Grok Bot, Typesafe's Jev, DSPy, etc.
-  </p>
-
-  <p>
-    Projects from the SciPhi Initiative: <a href="https://github.com/CameronBeebe/fungi_fortress">fungi_fortress</a> (generative game harness), <a href="https://github.com/CameronBeebe/fungi_chromatic">fungi_chromatic</a> (its Game Boy Color cartridge), <a href="https://github.com/CameronBeebe/Structural_Idealism">Structural Idealism</a>, <a href="https://github.com/CameronBeebe/scipfs">scipfs</a>. Co-organizer, Nederland Philosophy Club.
-  </p>
-
+    <section class="bio-section" id="about" aria-labelledby="about-title">
+      <h2 id="about-title">About</h2>
+      <p>Agentic product engineer and interdisciplinary philosopher of science. AI research and consulting via the SciPhi Initiative. Co-organizer, Nederland Philosophy Club.</p>
+    </section>
+    <section class="bio-section" id="education" aria-labelledby="education-title">
+      <h2 id="education-title">Education</h2>
+      <ul>
+        <li>
+          Ph.D. from the Graduate School of Systemic Neurosciences, LMU Munich
+          <span class="bio-detail">
+            Dissertation <a href="https://edoc.ub.uni-muenchen.de/28655/1/Beebe_Cameron.pdf"><em>Knowledge Transfer in Cognitive Systems Theory</em></a>
+            — knowledge as control via structure mapping, using cybernetics to explain neural networks as error-controlled regulators.
+          </span>
+        </li>
+        <li>Masters from the Munich Center for Mathematical Philosophy, LMU Munich</li>
+      </ul>
+    </section>
+    <section class="bio-section" id="experience" aria-labelledby="experience-title">
+      <h2 id="experience-title">Experience</h2>
+      <ul>
+        <li>
+          <a href="https://appy.ai/about">Appy.AI</a> on the core team developing the multi-agent harness for <em>Violet</em> — an AI Chief of Staff that routes specialist agents with scoped context for real workflows.
+          <span class="bio-detail">Prompts, context, orchestration, steering, agent standards (skills), evals and testing.</span>
+        </li>
+        <li>Cray deep-learning internship.</li>
+        <li>
+          Building and experimentation with agentic tools and new models
+          <span class="bio-detail">Devin, Claude Code, Cursor, Grok Bot, Typesafe's Jev, DSPy, RLMs, etc.</span>
+        </li>
+      </ul>
+    </section>
+    <section class="bio-section" id="projects" aria-labelledby="projects-title">
+      <h2 id="projects-title">Projects</h2>
+      <div>
+        <p class="project-context">From the SciPhi Initiative</p>
+        <ul>
+          <li><a href="https://github.com/CameronBeebe/fungi_fortress">fungi_fortress</a> (generative game harness)</li>
+          <li><a href="https://github.com/CameronBeebe/fungi_chromatic">fungi_chromatic</a> (its Game Boy Color cartridge)</li>
+          <li><a href="https://github.com/CameronBeebe/Structural_Idealism">Structural Idealism</a></li>
+          <li><a href="https://github.com/CameronBeebe/scipfs">scipfs</a></li>
+        </ul>
+      </div>
+    </section>
   </div>
-  </section>
 
   <section class="bot-playground" id="playground" aria-labelledby="playground-title">
   <h2 class="experiment-title" id="playground-title">Agent = model + harness</h2>
