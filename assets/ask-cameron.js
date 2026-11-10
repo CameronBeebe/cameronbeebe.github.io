@@ -5,7 +5,6 @@ const form = panel.querySelector('form');
 const input = form.elements.question;
 const submit = form.querySelector('button');
 const status = panel.querySelector('[role="status"]');
-const sourceStatus = panel.querySelector('.ask-source-status');
 const results = panel.querySelector('.ask-results');
 const sources = panel.querySelector('details');
 const sourceList = sources.querySelector('ul');
@@ -61,10 +60,9 @@ async function ask(question, sample) {
   submit.disabled = true;
   for (const button of samples) button.disabled = true;
   renderExcerpts([]);
-  sourceStatus.hidden = true;
   status.textContent = endpoint ? 'Checking public sources…' : 'Loading sample excerpts…';
   try {
-    let excerpts, bestRelevance;
+    let excerpts;
     if (endpoint) {
       const response = await fetch(endpoint, {
         method: 'POST',
@@ -75,11 +73,6 @@ async function ask(question, sample) {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error);
       excerpts = data.excerpts;
-      bestRelevance = data.bestRelevance;
-      if (data.unavailableSources.length) {
-        sourceStatus.textContent = `Unavailable for this question · ${data.unavailableSources.join(', ')}`;
-        sourceStatus.hidden = false;
-      }
     } else {
       const cv = await fetch('./cv.md');
       if (!cv.ok) throw new Error('The CV could not be loaded.');
@@ -87,10 +80,8 @@ async function ask(question, sample) {
     }
     renderExcerpts(excerpts);
     status.textContent = excerpts.length
-      ? (endpoint ? 'Public source excerpts · selected by Jev' : 'Sample answer · excerpts from the public CV')
-      : Number.isFinite(bestRelevance)
-        ? `No answer found in the public sources checked. Best match was ${percentage(bestRelevance)}.`
-        : 'No answer found in the public sources checked.';
+      ? (endpoint ? 'Top matches · ranked by Jev' : 'Sample answer · excerpts from the public CV')
+      : 'No excerpts found in the public sources checked.';
   } catch (error) {
     status.textContent = error instanceof Error && error.name === 'Error' && error.message
       ? error.message : 'Public source lookup is unavailable. Try again shortly.';

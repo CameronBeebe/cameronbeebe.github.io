@@ -41,12 +41,13 @@ test('extracts public CV passages with headings and readable text', () => {
   assert.ok(passages.every(p => !p.text.includes('mailto:') && p.text.length));
 });
 
-test('returns only ranked CV excerpts or an empty result when evidence is weak', async t => {
-  let score = 0.95;
-  let calls = 0;
-  t.mock.method(globalThis, 'fetch', async (url, options) => {
+test('returns the top three source excerpts even when all matches are weak', async t => {
+  const cvEntries = cvPassages(cv);
+  const expected = cvEntries.slice(0, 3).reverse().map((passage, i) => ({
+    ...passage, relevance: [0.6, 0.4, 0.2][i],
+  }));
+  const upstream = t.mock.method(globalThis, 'fetch', async (url, options) => {
     if (url !== 'https://api.typesafe.ai/v1/systemone') return publicSource(url, options);
-    assert.equal(url, 'https://api.typesafe.ai/v1/systemone');
     assert.equal(options.headers.Authorization, 'Bearer test-secret');
     const { state, questions } = JSON.parse(options.body);
     assert.equal(state.visitor_question, 'What did Cameron build?');
@@ -56,26 +57,18 @@ test('returns only ranked CV excerpts or an empty result when evidence is weak',
       return [id, q.instructions.excerpt];
     });
     assert.deepEqual(candidates.filter(([, p]) => p.section).map(([, p]) => p),
-      cvPassages(cv).map(({ section, heading, text }) => ({ section, heading, text })));
-    calls++;
+      cvEntries.map(({ section, heading, text }) => ({ section, heading, text })));
     const answers = Object.fromEntries(candidates.map(([id, passage]) => [id, {
-      type: 'noul', noul: passage.heading.includes('Appy.AI') ? score : 0.1,
+      type: 'noul', noul: expected.find(entry => entry.text === passage.text)?.relevance ?? 0.1,
     }]));
     answers.unknown = { type: 'noul', noul: 1, text: 'Fake passage' };
     return Response.json({ answers });
   });
 
-  const match = await worker.fetch(post({ question: 'What did Cameron build?' }), env);
-  assert.equal(match.headers.get('Access-Control-Allow-Origin'), origin);
-  assert.deepEqual(await match.json(), {
-    excerpts: cvPassages(cv).filter(p => p.heading.includes('Appy.AI')).map(p => ({ ...p, relevance: 0.95 })),
-    bestRelevance: 0.95,
-    unavailableSources: [],
-  });
-  score = 0.6;
-  const miss = await worker.fetch(post({ question: 'What did Cameron build?' }), env);
-  assert.deepEqual(await miss.json(), { excerpts: [], bestRelevance: 0.6, unavailableSources: [] });
-  assert.equal(calls, 2);
+  const response = await worker.fetch(post({ question: 'What did Cameron build?' }), env);
+  assert.equal(response.headers.get('Access-Control-Allow-Origin'), origin);
+  assert.deepEqual(await response.json(), { excerpts: expected, unavailableSources: [] });
+  assert.equal(upstream.mock.calls.filter(call => call.arguments[0] === 'https://api.typesafe.ai/v1/systemone').length, 1);
 });
 
 test('returns GitHub and LMU links when the CV is unavailable', async t => {
@@ -96,7 +89,7 @@ test('returns GitHub and LMU links when the CV is unavailable', async t => {
   assert.equal(response.status, 200);
   const { excerpts, unavailableSources } = await response.json();
   assert.deepEqual(unavailableSources, ['CV']);
-  assert.deepEqual(excerpts.map(p => p.source.url), [lmuUrl, 'https://github.com/CameronBeebe/fungi_chromatic#readme']);
+  assert.deepEqual(excerpts.slice(0, 2).map(p => p.source.url), [lmuUrl, 'https://github.com/CameronBeebe/fungi_chromatic#readme']);
   assert.equal(excerpts[0].heading, 'Knowledge transfer & control');
   assert.match(excerpts[1].text, /experimental Game Boy Color game/);
 });

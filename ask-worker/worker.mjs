@@ -8,7 +8,6 @@ const allowedOrigins = new Set([
   'http://localhost:8741',
 ]);
 const maxBodyBytes = 4096;
-const minimumRelevance = 0.7;
 
 async function readBody(request) {
   const decoder = new TextDecoder();
@@ -99,9 +98,8 @@ export default {
         return { passage, relevance };
       });
       ranked.sort((a, b) => b.relevance - a.relevance);
-      const excerpts = ranked.filter(({ relevance }) => relevance >= minimumRelevance)
-        .slice(0, 2).map(({ passage, relevance }) => ({ ...passage, relevance }));
-      return json({ excerpts, bestRelevance: ranked[0].relevance, unavailableSources });
+      const excerpts = ranked.slice(0, 3).map(({ passage, relevance }) => ({ ...passage, relevance }));
+      return json({ excerpts, unavailableSources });
     } catch {
       return json({ error: 'Public source lookup is temporarily unavailable. Try again shortly.' }, 503);
     }

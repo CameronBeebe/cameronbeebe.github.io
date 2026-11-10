@@ -4,7 +4,7 @@ The GitHub Pages panel shows two labeled sample answers using the public `cv.md`
 
 The Worker reads the published CV on each lookup, subject to the source cache. It groups Markdown subheadings with their body text and splits top-level section content into paragraphs and bullets. All those passages go to Jev. The Worker also selects up to four passages from the LMU dissertation abstract and nine from GitHub repository metadata and README intros, using keyword overlap for those shortlists.
 
-Jev judges each passage against the question in one batch. The page shows up to two excerpts with links and Jev’s estimated match probabilities, using a 70% cutoff. If nothing clears the cutoff, the page shows the best score. The displayed text comes from the sources.
+Jev judges each passage against the question in one batch. The page shows the top three excerpts with links and Jev’s estimated match probabilities, even when the scores are low. The displayed text comes from the sources.
 
 ## Local development
 
@@ -28,4 +28,4 @@ npx wrangler dev --config ask-worker/wrangler.toml --port 8787 --env-file /path/
 
 3. Set `data-endpoint` in `index.html` to the Worker URL with `/ask` appended, then publish the static page.
 
-The endpoint accepts only short JSON questions and rate-limits calls using Cloudflare’s visitor IP header. Cloudflare’s limiter applies per location. The Worker forwards the question and selected public passages to TypeSafe. Source URLs are fixed in `sources.mjs`, which also defines the featured README list. Fetches use a 15-minute cache on Cloudflare, and the page reports sources that were unavailable for a question.
+The endpoint accepts only short JSON questions and rate-limits calls using Cloudflare’s visitor IP header. Cloudflare’s limiter applies per location. The Worker forwards the question and selected public passages to TypeSafe. Source URLs are fixed in `sources.mjs`, which also defines the featured README list. Fetches use a 15-minute cache on Cloudflare. The Worker can rank available passages when a source fails to load or yields no passages.
