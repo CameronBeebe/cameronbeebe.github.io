@@ -80,23 +80,22 @@ test('returns the top three source excerpts even when all matches are weak', asy
   const response = await worker.fetch(post({ question: 'What did Cameron build?' }), env);
   assert.equal(response.headers.get('Access-Control-Allow-Origin'), origin);
   assert.deepEqual(await response.json(), { excerpts: expected, unavailableSources: [] });
-  assert.equal(upstream.mock.calls.filter(call => call.arguments[0] === 'https://api.typesafe.ai/v1/systemone').length, 2);
+  const batches = upstream.mock.calls
+    .filter(call => call.arguments[0] === 'https://api.typesafe.ai/v1/systemone')
+    .map(call => JSON.parse(call.arguments[1].body).questions.p1.instructions);
+  assert.ok(batches.filter(batch => batch.source).length > 1);
+  assert.ok(batches.at(-1).excerpt);
 });
 
 test('routes GitHub repository groups before ranking their excerpts alongside LMU', async t => {
-  let routingCalls = 0;
+  const routes = new Map();
   t.mock.method(globalThis, 'fetch', async (url, options) => {
     if (url === `${origin}/cv.md`) return new Response(null, { status: 503 });
     if (url !== 'https://api.typesafe.ai/v1/systemone') return publicSource(url, options);
     const { questions } = JSON.parse(options.body);
     if (questions.p1.instructions.source) {
-      routingCalls++;
       const branches = Object.entries(questions).map(([id, q]) => [id, q.instructions.source]);
-      const project = branches.find(([, source]) => source.heading === 'fungi_chromatic')[1];
-      assert.equal(project.preview.length, 3, 'repository metadata and README sections share a group');
-      assert.ok(project.preview[1].includes('ModRetro Chromatic'));
-      assert.ok(project.preview[2].includes('Try it without hardware'));
-      assert.ok(branches.some(([, source]) => source.heading.includes('Sequent Calculus')));
+      for (const [, source] of branches) routes.set(source.heading, source);
       return Response.json({ answers: Object.fromEntries(branches.map(([id, source]) => [id, {
         type: 'noul', noul: ['Recently pushed public repositories', 'fungi_chromatic', 'fungi_fortress', 'scipfs'].includes(source.heading) ? 0.8 : 0.01,
       }])) });
@@ -115,7 +114,11 @@ test('routes GitHub repository groups before ranking their excerpts alongside LM
   });
   const response = await worker.fetch(post({ question: 'Where can I read his thesis and find the handheld console game?' }), env);
   assert.equal(response.status, 200);
-  assert.equal(routingCalls, 1);
+  const project = routes.get('fungi_chromatic');
+  assert.equal(project.preview.length, 3, 'repository metadata and README sections share a group');
+  assert.ok(project.preview[1].includes('ModRetro Chromatic'));
+  assert.ok(project.preview[2].includes('Try it without hardware'));
+  assert.ok([...routes.keys()].some(heading => heading.includes('Sequent Calculus')));
   const { excerpts, unavailableSources } = await response.json();
   assert.deepEqual(unavailableSources, ['CV']);
   assert.deepEqual(excerpts.slice(0, 2).map(p => p.source.url), [lmuUrl, 'https://github.com/CameronBeebe/fungi_chromatic#readme']);
@@ -140,27 +143,33 @@ test('routes a paper chapter and returns a passage with a PDF page citation', as
   assert.match(excerpts[0].section, /Interference and Non-monotonicity/);
 });
 
-test('uses the open dissertation chapter as evidence about Model-Based Computation', async t => {
+test('routes the full dissertation chapter and finds a short passage deep in it', async t => {
+  const evidence = 'since there are finite levels in the hierarchy';
+  let fullChapter;
   t.mock.method(globalThis, 'fetch', async (url, options) => {
     if (url !== 'https://api.typesafe.ai/v1/systemone') return publicSource(url, options);
     const { questions } = JSON.parse(options.body);
     const answers = Object.fromEntries(Object.entries(questions).map(([id, { instructions }]) => {
-      const candidate = instructions.source ?? instructions.excerpt;
-      if (/model-based computation/i.test(candidate.heading)) {
-        assert.match(candidate.heading, /^Knowledge Transfer in Cognitive Systems Theory · /);
+      const { source, excerpt } = instructions;
+      const relevant = (source ?? excerpt).text?.includes(evidence);
+      if (source && relevant) {
+        fullChapter = source.text;
+        assert.match(source.heading, / · Model-Based Computation$/);
       }
-      const relevant = instructions.source
-        ? candidate.heading.endsWith(' · Model-Based Computation')
-        : candidate.text.startsWith('The notion of model-based computation');
       return [id, { type: 'noul', noul: relevant ? 0.95 : 0.1 }];
     }));
     return Response.json({ answers });
   });
-  const response = await worker.fetch(post({ question: 'What is model-based computation?' }), env);
+  const response = await worker.fetch(post({ question: 'How does the model avoid an infinite regress of homunculi?' }), env);
   assert.equal(response.status, 200);
   const { excerpts } = await response.json();
-  assert.equal(excerpts[0].section, 'Model-Based Computation');
-  assert.equal(excerpts[0].source.url, `${lmuUrl}1/Beebe_Cameron.pdf#page=46`);
+  assert.ok(fullChapter.indexOf(evidence) > 30000);
+  assert.match(fullChapter, /What is Analog Computation\?/);
+  assert.match(fullChapter, /Conclusion/);
+  assert.ok(excerpts[0].text.includes(evidence));
+  assert.ok(excerpts[0].text.length <= 750);
+  assert.equal(excerpts[0].section, 'Bayesian Brain and Generative Modeling');
+  assert.match(excerpts[0].source.url, /Beebe_Cameron\.pdf#page=5[12]$/);
 });
 
 test('uses the default-branch README even when the GitHub REST API is blocked', async t => {

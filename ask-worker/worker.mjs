@@ -1,5 +1,5 @@
 import { cvUrl, maxQuestionLength } from '../assets/cv-passages.mjs';
-import { publicPassages } from './sources.mjs';
+import { chapterPassages, publicPassages } from './sources.mjs';
 
 const typeSafeUrl = 'https://api.typesafe.ai/v1/systemone';
 const allowedOrigins = new Set([
@@ -9,42 +9,78 @@ const allowedOrigins = new Set([
 ]);
 const maxBodyBytes = 4096;
 const sourceGroupLimit = 4;
+const maxJevBatchBytes = 110000;
+const concurrentJevBatches = 4;
+const utf8 = new TextEncoder();
 
-async function rankWithJev(items, judgment, state, apiKey, signal) {
-  const questions = Object.fromEntries(items.map((item, i) => [`p${i + 1}`, {
-    type: 'noul',
-    ...judgment(item),
-  }]));
+async function scoreBatch(batch, stateJson, apiKey, signal) {
+  const questions = batch.map(({ id, question }) => `"${id}":${question}`).join(',');
   const response = await fetch(typeSafeUrl, {
     method: 'POST',
     headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model: 'jev-latest', state, questions }),
+    body: `{"model":"jev-latest","state":${stateJson},"questions":{${questions}}}`,
     signal,
     redirect: 'manual',
   });
-  if (!response.ok) throw Object.assign(new Error('Jev unavailable'), { status: response.status });
+  if (!response.ok) {
+    const problem = response.status === 400 ? await response.json().catch(() => null) : null;
+    const code = problem?.detail?.code ?? problem?.code;
+    if (code === 'max_tokens_exceeded' && batch.length > 1) {
+      const mid = Math.ceil(batch.length / 2);
+      return [
+        ...await scoreBatch(batch.slice(0, mid), stateJson, apiKey, signal),
+        ...await scoreBatch(batch.slice(mid), stateJson, apiKey, signal),
+      ];
+    }
+    if (!response.bodyUsed) await response.body?.cancel();
+    throw Object.assign(new Error('Jev unavailable'), { status: response.status });
+  }
   const { answers } = await response.json();
-  return items.map((item, i) => {
-    const answer = answers?.[`p${i + 1}`];
+  return batch.map(({ id, item }) => {
+    const answer = answers?.[id];
     const relevance = answer?.noul;
     if (answer?.type !== 'noul' || !Number.isFinite(relevance) || relevance < 0 || relevance > 1) {
       throw new Error('Unexpected Jev answer');
     }
     return { item, relevance };
-  }).sort((a, b) => b.relevance - a.relevance);
+  });
 }
 
-function sourceJudgment(group) {
+async function rankWithJev(items, judgment, state, apiKey, signal) {
+  const stateJson = JSON.stringify(state);
+  const overhead = utf8.encode(stateJson).length + 64;
+  const batches = [];
+  let batch = [];
+  let bytes = overhead;
+  for (const item of items) {
+    const question = JSON.stringify({ type: 'noul', ...judgment(item) });
+    const questionBytes = utf8.encode(question).length + 16;
+    if (batch.length && bytes + questionBytes > maxJevBatchBytes) {
+      batches.push(batch);
+      batch = [];
+      bytes = overhead;
+    }
+    batch.push({ id: `p${batch.length + 1}`, item, question });
+    bytes += questionBytes;
+  }
+  if (batch.length) batches.push(batch);
+
+  const scored = [];
+  for (let i = 0; i < batches.length; i += concurrentJevBatches) {
+    const parallel = batches.slice(i, i + concurrentJevBatches);
+    scored.push(...(await Promise.all(parallel.map(entries => scoreBatch(entries, stateJson, apiKey, signal)))).flat());
+  }
+  return scored.sort((a, b) => b.relevance - a.relevance);
+}
+
+function sourceJudgment({ heading, text, preview }) {
   return {
     instructions: {
-      task: 'Could this public source contain evidence that answers part of the visitor question about Cameron Beebe or his work?',
-      source: {
-        heading: group[0].heading,
-        preview: group.map(({ section, text }) => section ? section + ' — ' + text.slice(0, 120) : text.slice(0, 240)),
-      },
+      task: 'Could this source contain a passage that answers part of the visitor question? Questions can be about Cameron Beebe, his projects, or concepts discussed in his work. Read the supplied source text for relevant evidence.',
+      source: { heading, text, preview },
     },
     criteria: {
-      true: 'The source title, section headings, or previews suggest the source could answer the question, even when it uses different words.',
+      true: 'The text or headings indicate the source could contain a specific answer, including when it uses different words.',
       false: 'This source concerns a different work or subject and is unlikely to answer the question.',
     },
   };
@@ -121,16 +157,13 @@ export default {
       }
 
       phase = 'source lookup';
-      const { referencePassages, sourceGroups, unavailableSources } = await publicPassages();
+      const { referencePassages, routes, unavailableSources } = await publicPassages();
       const state = { visitor_question: question, current_date: new Date().toISOString().slice(0, 10) };
-      const signal = AbortSignal.timeout(8000);
-      let selectedGroups = sourceGroups;
-      if (sourceGroups.length > sourceGroupLimit) {
-        phase = 'source routing';
-        const routes = await rankWithJev(sourceGroups, sourceJudgment, state, env.TYPESAFE_API_KEY, signal);
-        selectedGroups = routes.slice(0, sourceGroupLimit).map(({ item }) => item);
-      }
-      const passages = [...referencePassages, ...selectedGroups.flat()];
+      const signal = AbortSignal.timeout(18000);
+      phase = 'source routing';
+      const rankedRoutes = await rankWithJev(routes, sourceJudgment, state, env.TYPESAFE_API_KEY, signal);
+      const selected = [...new Set(rankedRoutes.map(({ item }) => item.chapter ?? item))].slice(0, sourceGroupLimit);
+      const passages = [...referencePassages, ...selected.flatMap(group => group.passages ?? chapterPassages(group))];
       if (!passages.length) throw new Error('Public sources unavailable');
 
       phase = 'excerpt ranking';

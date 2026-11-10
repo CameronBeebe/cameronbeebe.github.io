@@ -6,15 +6,15 @@ The Worker reads the published CV on each lookup, subject to the source cache. I
 
 GitHub metadata and README passages are grouped by repository, with the recent repository list in its own group. The Worker fetches default-branch README files directly and uses the README API to locate other names or paths. It selects prose from the introduction and later sections within the first 24,000 characters, up to seven passages per README.
 
-The search also includes page-linked PDF excerpts. Jev routes among repository and research groups using their titles, section names, and short previews. The Worker keeps the four highest-scoring groups and ranks their passages alongside the CV and LMU abstract. The page shows the top match and lets readers expand the next two.
+Jev routes across repository previews and the complete extracted text of each PDF chapter. It receives each chapter as one question where it fits. Longer chapters are sent in consecutive parts, with the highest part score used for the chapter. The Worker keeps the four highest-scoring groups, splits the selected chapters into short passages, and ranks those alongside repository, CV, and LMU abstract passages. Independent judgments are batched within the context budget, with up to four requests running in parallel per pass. The page shows the top match and lets readers expand the next two.
 
 ## Research corpus
 
-`research-index.json` contains opening passages from chapters and sections of the public [LMU dissertation](https://edoc.ub.uni-muenchen.de/28655/), [arXiv quantum-circuits paper](https://arxiv.org/abs/1606.06799), [PhilSci-Archive Bayesian confirmation preprint](https://philsci-archive.pitt.edu/23020/), and [master’s thesis](https://github.com/CameronBeebe/analog_physics/blob/main/BeebeFMMPCC.pdf). Jev receives chapter previews for routing and excerpts from the selected chapters for ranking. Each citation links to the source PDF and identifies the page where its section begins.
+`research-sources.json` lists the public [LMU dissertation](https://edoc.ub.uni-muenchen.de/28655/), [arXiv quantum-circuits paper](https://arxiv.org/abs/1606.06799), [PhilSci-Archive Bayesian confirmation preprint](https://philsci-archive.pitt.edu/23020/), and [master’s thesis](https://github.com/CameronBeebe/analog_physics/blob/main/BeebeFMMPCC.pdf). The indexer uses bookmarks or numbered headings, records the page of each text fragment, and skips acknowledgements, marked tables of contents, and references while retaining abstracts. It expects selectable text. Figures and scanned pages require a separate extraction method.
 
 Chapter 3 of the dissertation is the expanded version of Model-Based Computation. It provides an open source for that work.
 
-To rebuild, download the public PDFs and run `uv run --with pymupdf python ask-worker/index-research.py --output ask-worker/research-index.json`. Add one `--pdf FILE PDF_URL LABEL TITLE` argument group per document. The script uses bookmarks or numbered headings and expects selectable text. Review the generated excerpts and page links before deploying.
+From the repository root, run `uv run --with pymupdf python ask-worker/index-research.py` before testing or deploying. It downloads the listed PDFs with curl and writes `research-index.generated.json`, which Wrangler bundles into the Worker. The generated corpus stays out of Git and GitHub Pages. To build from local PDFs, pass one `--pdf FILE PDF_URL LABEL TITLE` argument group per document. Ranked PDF passages are capped at 750 characters and cite the page where each passage begins.
 
 ## Local development
 

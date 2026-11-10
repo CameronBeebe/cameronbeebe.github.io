@@ -1,10 +1,71 @@
 import { cvPassages, cvUrl, plainText } from '../assets/cv-passages.mjs';
-import researchGroups from './research-index.json' with { type: 'json' };
+import researchChapters from './research-index.generated.json' with { type: 'json' };
 
 const lmuUrl = 'https://edoc.ub.uni-muenchen.de/28655/';
 const githubApi = 'https://api.github.com';
 const githubProfile = 'https://github.com/CameronBeebe';
 const featuredRepos = ['fungi_chromatic', 'fungi_fortress', 'scipfs', 'Structural_Idealism', 'diaspy', 'transfer_keras'];
+const chapterPartLength = 75000;
+const passageLength = 750;
+const passageOverlap = 120;
+
+const researchRoutes = researchChapters.flatMap(chapter => {
+  const text = chapter.sections.map(({ heading, pages }) =>
+    [heading, ...pages.map(page => page.text)].join('\n')).join('\n\n');
+  const routes = [];
+  for (let start = 0; start < text.length;) {
+    let end = Math.min(start + chapterPartLength, text.length);
+    if (end < text.length) {
+      const boundary = text.lastIndexOf(' ', end);
+      if (boundary > start) end = boundary + 1;
+    }
+    routes.push({ heading: chapter.heading, text: text.slice(start, end), chapter });
+    start = end;
+  }
+  return routes;
+});
+
+export function chapterPassages({ heading, source, sections }) {
+  return sections.flatMap(section => {
+    let offset = 0;
+    const pages = section.pages.map(({ page, text }) => {
+      const start = offset;
+      offset += text.length + 1;
+      return { page, start };
+    });
+    const text = section.pages.map(page => page.text).join(' ');
+    const passages = [];
+    let pageIndex = 0;
+    for (let start = 0; start < text.length;) {
+      let end = Math.min(start + passageLength, text.length);
+      let nextStart = end;
+      if (end < text.length) {
+        const window = text.slice(start, end + 1);
+        const sentenceEnds = [...window.matchAll(/[.!?](?= [“"'(A-Z])/g)].map(match => match.index + 1);
+        const sentenceEnd = sentenceEnds.at(-1);
+        const previousEnd = sentenceEnds.at(-2);
+        if (sentenceEnd >= passageLength / 2 && sentenceEnd <= passageLength) {
+          end = start + sentenceEnd;
+          // Keep one full sentence of overlap when it fits comfortably.
+          nextStart = previousEnd > 0 && sentenceEnd - previousEnd <= passageLength / 3
+            ? start + previousEnd + 1 : end + 1;
+        } else {
+          const boundary = window.lastIndexOf(' ');
+          if (boundary > passageOverlap) end = start + boundary;
+          const nextWord = text.indexOf(' ', end - passageOverlap);
+          nextStart = nextWord < 0 || nextWord >= end ? end : nextWord + 1;
+        }
+      }
+      while (pageIndex + 1 < pages.length && start >= pages[pageIndex + 1].start) pageIndex++;
+      passages.push({
+        heading, section: section.heading, text: text.slice(start, end).trim(),
+        source: { ...source, url: `${source.url}#page=${pages[pageIndex].page}` },
+      });
+      start = nextStart;
+    }
+    return passages;
+  });
+}
 
 async function fetchSource(url, headers) {
   const response = await fetch(url, {
@@ -132,9 +193,14 @@ export async function publicPassages() {
     if (!projectGroups.has(url)) projectGroups.set(url, []);
     projectGroups.get(url).push(passage);
   }
+  const projectRoutes = [...projectGroups.values()].map(passages => ({
+    heading: passages[0].heading,
+    preview: passages.map(({ section, text }) => section ? section + ' — ' + text.slice(0, 120) : text.slice(0, 240)),
+    passages,
+  }));
   return {
     referencePassages: [...cvEntries, ...lmuEntries],
-    sourceGroups: [...projectGroups.values(), ...researchGroups],
+    routes: [...projectRoutes, ...researchRoutes],
     unavailableSources,
   };
 }
