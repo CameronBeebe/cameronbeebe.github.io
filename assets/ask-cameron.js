@@ -3,8 +3,11 @@ import { cvPassages, maxQuestionLength } from './cv-passages.mjs?v=3';
 const panel = document.getElementById('ask-cameron');
 const form = panel.querySelector('form');
 const input = form.elements.question;
-const suggestions = form.querySelector('#ask-suggestions');
-const submit = form.querySelector('button');
+const suggestions = form.querySelector('.ask-suggestions');
+const suggestionToggle = suggestions.querySelector('summary');
+const suggestedQuestions = new Map([...suggestions.querySelectorAll('button')].map(button =>
+  [button.textContent.trim(), button.dataset.cvSample]));
+const submit = form.querySelector('button[type="submit"]');
 const status = panel.querySelector('[role="status"]');
 const results = panel.querySelector('.ask-results');
 const localLive = ['127.0.0.1', 'localhost'].includes(location.hostname)
@@ -56,7 +59,7 @@ async function ask(question) {
     status.textContent = `Enter a question of up to ${maxQuestionLength} characters.`;
     return;
   }
-  const sample = endpoint ? undefined : [...suggestions.options].find(option => option.value === question)?.dataset.cvSample;
+  const sample = endpoint ? undefined : suggestedQuestions.get(question);
   if (!endpoint && !sample) {
     status.textContent = 'Choose a suggested question in preview mode.';
     return;
@@ -94,10 +97,27 @@ async function ask(question) {
   }
 }
 
-suggestions.addEventListener('change', () => {
-  input.value = suggestions.value;
-  suggestions.value = '';
+suggestions.addEventListener('click', event => {
+  const option = event.target.closest('button');
+  if (!option) return;
+  input.value = option.textContent.trim();
+  suggestions.open = false;
   input.focus();
+});
+
+suggestions.addEventListener('keydown', event => {
+  if (event.key !== 'Escape' || !suggestions.open) return;
+  event.preventDefault();
+  suggestions.open = false;
+  suggestionToggle.focus();
+});
+
+suggestions.addEventListener('focusout', event => {
+  if (event.relatedTarget && !suggestions.contains(event.relatedTarget)) suggestions.open = false;
+});
+
+document.addEventListener('click', event => {
+  if (suggestions.open && !suggestions.contains(event.target)) suggestions.open = false;
 });
 
 form.addEventListener('submit', event => {

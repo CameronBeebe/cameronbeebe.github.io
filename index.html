@@ -145,17 +145,47 @@
       gap: 0.45rem;
       margin: 0.6rem 0;
     }
-    .ask-panel :is(input, button, select) {
+    .ask-panel :is(input, button) {
       border: 1px solid var(--line);
       background: var(--well);
       padding: 0.4rem 0.6rem;
       font: inherit;
     }
-    .ask-panel input { flex: 1 1 12rem; min-width: 0; color: var(--link); }
-    .ask-panel select { width: calc(11ch + 2.5rem); color: var(--link); cursor: pointer; }
     .ask-panel button { color: var(--phosphor); cursor: pointer; text-align: left; }
-    .ask-panel :is(button, select):hover { border-color: var(--phosphor); }
+    .ask-panel button:hover { border-color: var(--phosphor); }
     .ask-panel button:disabled { opacity: 0.55; cursor: wait; }
+    .ask-field {
+      position: relative;
+      display: flex;
+      flex: 1 1 12rem;
+      min-width: 0;
+      border: 1px solid var(--line);
+      background: var(--well);
+    }
+    .ask-field:focus-within { outline: 2px solid var(--phosphor); outline-offset: 2px; }
+    .ask-field input { flex: 1; min-width: 0; border: 0; background: transparent; color: var(--link); }
+    .ask-field input:focus-visible { outline: none; }
+    .ask-suggestions summary {
+      display: grid;
+      place-items: center;
+      width: 2.5rem;
+      height: 100%;
+      list-style: none;
+      color: var(--link);
+      cursor: pointer;
+    }
+    .ask-suggestions summary::-webkit-details-marker { display: none; }
+    .ask-suggestions summary:focus-visible { outline: none; background: var(--panel); color: var(--phosphor); }
+    .ask-suggestions summary:hover, .ask-suggestions[open] summary { color: var(--phosphor); }
+    .ask-suggestions-list {
+      position: absolute;
+      z-index: 2;
+      inset: calc(100% + 0.3rem) -1px auto;
+      border: 1px solid var(--line);
+      background: var(--well);
+    }
+    .ask-suggestions-list button { display: block; width: 100%; border: 0; color: var(--link); }
+    .ask-suggestions-list button:is(:hover, :focus-visible) { background: var(--panel); color: var(--phosphor); }
     .ask-panel [role="status"], .ask-results summary { font-size: 0.85em; }
     .ask-panel [role="status"] { color: var(--muted); }
     .ask-results summary { color: var(--link); cursor: pointer; }
@@ -373,7 +403,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/tex-chtml.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <script type="module" src="assets/portrait.js?v=2"></script>
-  <script type="module" src="assets/ask-cameron.js?v=10"></script>
+  <script type="module" src="assets/ask-cameron.js?v=11"></script>
 </head>
 <body>
   <main>
@@ -466,13 +496,17 @@
         <p class="ask-preview bio-detail" hidden>Preview mode. Choose a suggested question.</p>
         <p class="ask-live bio-detail" id="ask-service-note">Hierarchical semantic search over context using Jev.</p>
         <form>
-          <input name="question" type="text" autocomplete="off" aria-label="Question about Cameron" aria-describedby="ask-service-note" placeholder="What would you like to know?" maxlength="280" required />
+          <div class="ask-field">
+            <input name="question" type="text" autocomplete="off" aria-label="Question about Cameron" aria-describedby="ask-service-note" placeholder="What would you like to know?" maxlength="280" required />
+            <details class="ask-suggestions">
+              <summary aria-label="Suggested questions"><span aria-hidden="true">▾</span></summary>
+              <div class="ask-suggestions-list">
+                <button type="button" data-cv-sample="appy">What did Cameron build at Appy.AI?</button>
+                <button type="button" data-cv-sample="phd">What was Cameron’s Ph.D. research about?</button>
+              </div>
+            </details>
+          </div>
           <button type="submit">Ask</button>
-          <select id="ask-suggestions" aria-label="Suggested questions">
-            <option value="" selected disabled>Suggestions</option>
-            <option data-cv-sample="appy">What did Cameron build at Appy.AI?</option>
-            <option data-cv-sample="phd">What was Cameron’s Ph.D. research about?</option>
-          </select>
         </form>
         <p role="status"></p>
         <div class="ask-results"></div>
