@@ -3,6 +3,7 @@ import { cvPassages, maxQuestionLength } from './cv-passages.mjs?v=3';
 const panel = document.getElementById('ask-cameron');
 const form = panel.querySelector('form');
 const input = form.elements.question;
+const suggestions = form.querySelector('#ask-suggestions');
 const submit = form.querySelector('button');
 const status = panel.querySelector('[role="status"]');
 const results = panel.querySelector('.ask-results');
@@ -55,7 +56,7 @@ async function ask(question) {
     status.textContent = `Enter a question of up to ${maxQuestionLength} characters.`;
     return;
   }
-  const sample = endpoint ? undefined : [...input.list.options].find(option => option.value === question)?.dataset.cvSample;
+  const sample = endpoint ? undefined : [...suggestions.options].find(option => option.value === question)?.dataset.cvSample;
   if (!endpoint && !sample) {
     status.textContent = 'Choose a suggested question in preview mode.';
     return;
@@ -92,6 +93,12 @@ async function ask(question) {
     submit.disabled = false;
   }
 }
+
+suggestions.addEventListener('change', () => {
+  input.value = suggestions.value;
+  suggestions.value = '';
+  input.focus();
+});
 
 form.addEventListener('submit', event => {
   event.preventDefault();

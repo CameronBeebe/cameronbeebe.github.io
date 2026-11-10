@@ -145,15 +145,16 @@
       gap: 0.45rem;
       margin: 0.6rem 0;
     }
-    .ask-panel :is(input, button) {
+    .ask-panel :is(input, button, select) {
       border: 1px solid var(--line);
       background: var(--well);
       padding: 0.4rem 0.6rem;
       font: inherit;
     }
-    .ask-panel input { flex: 1 1 16rem; min-width: 0; color: var(--link); }
+    .ask-panel input { flex: 1 1 12rem; min-width: 0; color: var(--link); }
+    .ask-panel select { width: calc(11ch + 2.5rem); color: var(--link); cursor: pointer; }
     .ask-panel button { color: var(--phosphor); cursor: pointer; text-align: left; }
-    .ask-panel button:hover { border-color: var(--phosphor); }
+    .ask-panel :is(button, select):hover { border-color: var(--phosphor); }
     .ask-panel button:disabled { opacity: 0.55; cursor: wait; }
     .ask-panel [role="status"], .ask-results summary { font-size: 0.85em; }
     .ask-panel [role="status"] { color: var(--muted); }
@@ -372,7 +373,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/tex-chtml.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <script type="module" src="assets/portrait.js?v=2"></script>
-  <script type="module" src="assets/ask-cameron.js?v=9"></script>
+  <script type="module" src="assets/ask-cameron.js?v=10"></script>
 </head>
 <body>
   <main>
@@ -465,13 +466,14 @@
         <p class="ask-preview bio-detail" hidden>Preview mode. Choose a suggested question.</p>
         <p class="ask-live bio-detail" id="ask-service-note">Hierarchical semantic search over context using Jev.</p>
         <form>
-          <input name="question" type="text" list="ask-suggestions" autocomplete="off" aria-label="Question about Cameron" aria-describedby="ask-service-note" placeholder="What would you like to know?" maxlength="280" required />
+          <input name="question" type="text" autocomplete="off" aria-label="Question about Cameron" aria-describedby="ask-service-note" placeholder="What would you like to know?" maxlength="280" required />
           <button type="submit">Ask</button>
+          <select id="ask-suggestions" aria-label="Suggested questions">
+            <option value="" selected disabled>Suggestions</option>
+            <option data-cv-sample="appy">What did Cameron build at Appy.AI?</option>
+            <option data-cv-sample="phd">What was Cameron’s Ph.D. research about?</option>
+          </select>
         </form>
-        <datalist id="ask-suggestions">
-          <option value="What did Cameron build at Appy.AI?" data-cv-sample="appy"></option>
-          <option value="What was Cameron’s Ph.D. research about?" data-cv-sample="phd"></option>
-        </datalist>
         <p role="status"></p>
         <div class="ask-results"></div>
       </div>

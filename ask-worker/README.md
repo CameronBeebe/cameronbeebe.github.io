@@ -1,6 +1,6 @@
 # Ask about Cameron
 
-The GitHub Pages panel sends free-form questions to the Worker URL in its `data-endpoint` attribute. With an empty endpoint it shows two labeled sample answers using the public `cv.md`.
+The GitHub Pages panel sends free-form questions to the Worker URL in its `data-endpoint` attribute. The Suggestions dropdown fills the editable question field. With an empty endpoint the panel shows two labeled sample answers using the public `cv.md`.
 
 The Worker reads the published CV on each lookup, subject to the source cache. It groups Markdown subheadings with their body text and splits top-level section content into paragraphs and bullets. All structured CV passages and the LMU dissertation abstract go to Jev.
 
