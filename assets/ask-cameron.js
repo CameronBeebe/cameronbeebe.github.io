@@ -1,10 +1,11 @@
-import { cvPassages, maxQuestionLength } from './cv-passages.mjs';
+import { cvPassages, maxQuestionLength } from './cv-passages.mjs?v=2';
 
 const panel = document.getElementById('ask-cameron');
 const form = panel.querySelector('form');
 const input = form.elements.question;
 const submit = form.querySelector('button');
 const status = panel.querySelector('[role="status"]');
+const sourceStatus = panel.querySelector('.ask-source-status');
 const results = panel.querySelector('.ask-results');
 const sources = panel.querySelector('details');
 const sourceList = sources.querySelector('ul');
@@ -13,6 +14,7 @@ const localLive = ['127.0.0.1', 'localhost'].includes(location.hostname)
   && new URLSearchParams(location.search).has('live-ask');
 const endpoint = panel.dataset.endpoint || (localLive ? 'http://127.0.0.1:8787/ask' : '');
 const sampleHeadings = { appy: /Appy\.AI/i, phd: /PhD at GSN/i };
+const sourceHosts = new Set(['cameronbeebe.github.io', 'edoc.ub.uni-muenchen.de', 'github.com']);
 
 function renderExcerpts(excerpts) {
   results.replaceChildren();
@@ -20,18 +22,22 @@ function renderExcerpts(excerpts) {
   sources.hidden = excerpts.length === 0;
   sources.open = false;
 
-  for (const { text } of excerpts) {
+  const seen = new Set();
+  for (const { text, heading, source } of excerpts) {
     const quote = document.createElement('blockquote');
     quote.textContent = text;
     results.append(quote);
-  }
-
-  const headings = new Set(excerpts.map(({ heading }) => heading));
-  for (const heading of headings) {
+    const url = new URL(source.url);
+    if (url.protocol !== 'https:' || !sourceHosts.has(url.hostname)) continue;
+    quote.cite = url.href;
+    const label = `${source.label} · ${heading}`;
+    const key = `${url.href} ${label}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
     const item = document.createElement('li');
     const link = document.createElement('a');
-    link.href = './cv.md';
-    link.textContent = `CV · ${heading}`;
+    link.href = url.href;
+    link.textContent = label;
     item.append(link);
     sourceList.append(item);
   }
@@ -48,7 +54,8 @@ async function ask(question, sample) {
   submit.disabled = true;
   for (const button of samples) button.disabled = true;
   renderExcerpts([]);
-  status.textContent = endpoint ? 'Checking the CV…' : 'Loading sample excerpts…';
+  sourceStatus.hidden = true;
+  status.textContent = endpoint ? 'Checking public sources…' : 'Loading sample excerpts…';
   try {
     let excerpts;
     if (endpoint) {
@@ -56,11 +63,15 @@ async function ask(question, sample) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ question }),
-        signal: AbortSignal.timeout(14000),
+        signal: AbortSignal.timeout(17000),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error);
       excerpts = data.excerpts;
+      if (data.unavailableSources.length) {
+        sourceStatus.textContent = `Unavailable for this question · ${data.unavailableSources.join(', ')}`;
+        sourceStatus.hidden = false;
+      }
     } else {
       const cv = await fetch('./cv.md');
       if (!cv.ok) throw new Error('The CV could not be loaded.');
@@ -68,11 +79,11 @@ async function ask(question, sample) {
     }
     renderExcerpts(excerpts);
     status.textContent = excerpts.length
-      ? (endpoint ? 'From the public CV · selected by Jev' : 'Sample answer · excerpts from the public CV')
-      : 'I couldn’t find an answer in the public CV.';
+      ? (endpoint ? 'Public source excerpts · selected by Jev' : 'Sample answer · excerpts from the public CV')
+      : 'I couldn’t find an answer in the sources I could check.';
   } catch (error) {
     status.textContent = error instanceof Error && error.name === 'Error' && error.message
-      ? error.message : 'The CV lookup is unavailable. Try again shortly.';
+      ? error.message : 'Public source lookup is unavailable. Try again shortly.';
   } finally {
     submit.disabled = false;
     for (const button of samples) button.disabled = false;

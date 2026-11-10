@@ -1,6 +1,7 @@
 export const maxQuestionLength = 280;
+export const cvUrl = 'https://cameronbeebe.github.io/cv.md';
 
-function plainText(markdown) {
+export function plainText(markdown) {
   return markdown.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
     .replace(/\*\*([^*]+)\*\*|\*([^*]+)\*/g, (_, bold, italic) => bold ?? italic)
     .replace(/`([^`]+)`/g, '$1')
@@ -14,7 +15,7 @@ export function cvPassages(markdown) {
   let paragraph = [];
 
   function addPassage(text) {
-    if (section && text) passages.push({ section, heading, text: plainText(text) });
+    if (section && text) passages.push({ section, heading, text: plainText(text), source: { label: 'CV', url: cvUrl } });
   }
 
   for (const line of markdown.split(/\r?\n/)) {

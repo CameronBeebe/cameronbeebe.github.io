@@ -1,6 +1,6 @@
 # Ask about Cameron
 
-The GitHub Pages panel shows two labeled sample answers using the public `cv.md`. Set the panel’s `data-endpoint` in `index.html` to a deployed Worker’s HTTPS `/ask` URL to enable free-form questions. The Worker uses Jev to rank CV passages and returns up to two excerpts. Questions with no passage above the relevance threshold get a no-answer result.
+The GitHub Pages panel shows two labeled sample answers using the public `cv.md`. Set the panel’s `data-endpoint` in `index.html` to a deployed Worker’s HTTPS `/ask` URL to enable free-form questions. The Worker looks up the published CV, the LMU dissertation abstract, Cameron’s recently pushed public repositories, and the openings of featured and recent GitHub READMEs. Jev ranks up to 32 passages and the page shows up to two excerpts with links. Questions with no passage above the relevance threshold get a no-answer result.
 
 ## Local development
 
@@ -24,4 +24,4 @@ npx wrangler dev --config ask-worker/wrangler.toml --port 8787 --env-file /path/
 
 3. Set `data-endpoint` in `index.html` to the Worker URL with `/ask` appended, then publish the static page.
 
-The endpoint accepts only short JSON questions and rate-limits calls using Cloudflare’s visitor IP header. Cloudflare’s limiter applies per location. The Worker fetches the published CV and forwards the question and candidate passages to TypeSafe.
+The endpoint accepts only short JSON questions and rate-limits calls using Cloudflare’s visitor IP header. Cloudflare’s limiter applies per location. The Worker forwards the question and selected public passages to TypeSafe. Source URLs are fixed in `sources.mjs`, which also defines the featured README list. Fetches use a 15-minute cache on Cloudflare, and the page reports sources that were unavailable for a question.

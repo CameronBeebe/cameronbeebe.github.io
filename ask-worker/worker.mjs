@@ -1,6 +1,6 @@
-import { cvPassages, maxQuestionLength } from '../assets/cv-passages.mjs';
+import { cvUrl, maxQuestionLength } from '../assets/cv-passages.mjs';
+import { publicPassages } from './sources.mjs';
 
-const cvUrl = 'https://cameronbeebe.github.io/cv.md';
 const typeSafeUrl = 'https://api.typesafe.ai/v1/systemone';
 const allowedOrigins = new Set([
   new URL(cvUrl).origin,
@@ -66,24 +66,22 @@ export default {
         return json({ error: 'Too many questions. Try again in a minute.' }, 429);
       }
 
-      const cv = await fetch(cvUrl, { signal: AbortSignal.timeout(3000), redirect: 'error' });
-      if (!cv.ok) throw new Error('CV unavailable');
-      const passages = cvPassages(await cv.text());
-      if (!passages.length) throw new Error('Empty CV');
+      const { passages, unavailableSources } = await publicPassages(question);
+      if (!passages.length) throw new Error('Public sources unavailable');
 
       const candidates = Object.fromEntries(passages.map((passage, i) => [`p${i + 1}`, passage]));
       const questions = Object.fromEntries(Object.keys(candidates).map(id => [id, {
         type: 'noul',
-        instructions: `Does the CV passage in \`passages.${id}\` directly answer a part of \`visitor_question\` about Cameron Beebe?`,
+        instructions: `Does the public source passage in \`passages.${id}\` directly answer a part of \`visitor_question\` about Cameron Beebe?`,
         criteria: {
           true: 'The passage states a specific fact that answers the question.',
-          false: 'It only shares a topic, requires speculation, or the request asks for something outside the CV.',
+          false: 'It only shares a topic, requires speculation, or does not answer the question about Cameron Beebe.',
         },
       }]));
       const response = await fetch(typeSafeUrl, {
         method: 'POST',
         headers: { Authorization: `Bearer ${env.TYPESAFE_API_KEY}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ model: 'jev-latest', state: { visitor_question: question, passages: candidates }, questions }),
+        body: JSON.stringify({ model: 'jev-latest', state: { visitor_question: question, current_date: new Date().toISOString().slice(0, 10), passages: candidates }, questions }),
         signal: AbortSignal.timeout(8000),
         redirect: 'error',
       });
@@ -99,9 +97,9 @@ export default {
       });
       const excerpts = ranked.filter(({ relevance }) => relevance >= minimumRelevance)
         .sort((a, b) => b.relevance - a.relevance).slice(0, 2).map(({ passage }) => passage);
-      return json({ excerpts });
+      return json({ excerpts, unavailableSources });
     } catch {
-      return json({ error: 'The CV lookup is temporarily unavailable. Try again shortly.' }, 503);
+      return json({ error: 'Public source lookup is temporarily unavailable. Try again shortly.' }, 503);
     }
   },
 };
