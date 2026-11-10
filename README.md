@@ -6,7 +6,7 @@ A portfolio for philosophy of science and agent engineering, with a CV, research
 
 An interactive frog samurai rendered as a grid of characters. Sort or repair the portrait, change its glyph palette, or explore simulations such as gravity, gradient descent, and percolation. The screenshot shows a completed descent across the glyphs.
 
-![ASCII frog samurai with gradient descent selected and a path through the glyphs](docs/screenshots/ascii-portrait.jpg)
+<img src="docs/screenshots/ascii-portrait.jpg" width="480" alt="ASCII frog samurai with gradient descent selected and a path through the glyphs">
 
 ## Ask more
 
