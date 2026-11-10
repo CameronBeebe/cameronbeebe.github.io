@@ -261,26 +261,15 @@
       border: 1px dotted var(--line);
       padding: 0.3rem;
     }
-    .playground-intro {
+    .bot-playground {
       margin: clamp(1.75rem, 5vw, 3rem) 0 0;
       padding-top: 1.25rem;
       border-top: 1px solid var(--line);
-    }
-    .playground-intro p {
-      margin: 0.4rem 0 0;
-      color: var(--muted);
-      font-size: 0.95rem;
     }
     .formula {
       font-size: 0.9em;
       color: var(--muted);
       font-family: var(--mono);
-    }
-    .playground-title {
-      margin: 0;
-      font: 600 clamp(1.4rem, 3vw, 1.9rem)/1.25 var(--mono);
-      color: var(--ink);
-      letter-spacing: -0.025em;
     }
     .agent-demo {
       --agent-ink: #c5ffdb;
@@ -295,6 +284,7 @@
       --agent-trail: #2a210f;
     }
     .bot-playground .experiment-title { font-size: 1rem; }
+    .bot-playground > .experiment-title { margin-top: 0; }
     .bot-playground .scores { flex-wrap: wrap; }
     .sim-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.8rem; }
     .shared-world { display: block; width: 100%; height: auto; max-width: 680px; margin: 0 auto; aspect-ratio: 400 / 260; object-fit: cover; }
@@ -437,16 +427,11 @@
   </section>
 
   <section class="bot-playground" id="playground" aria-labelledby="playground-title">
-  <header class="playground-intro">
-    <h2 class="playground-title" id="playground-title">Bot playground</h2>
-    <p>Interactive demos on feedback and task routing, built with bots.</p>
-  </header>
-
-  <h3 class="experiment-title">01 · Brain in a vat vs harness</h3>
+  <h2 class="experiment-title" id="playground-title">Agent = model + harness</h2>
   <p class="demo-note">
-    Click the print to set a target. The agent steers by its estimates of where it is and where
-    the goal is. Plan refines the goal estimate before the agent moves. Tools let it correct its course using live
-    readings. The verifier checks arrival.
+    Click the print to set a target. With the harness off, the model is a brain in a vat.
+    Plan refines the goal estimate and predicts drift. Tools give live feedback for course correction.
+    Memory keeps unfinished goals when you click somewhere new, and the verifier checks arrival.
   </p>
   <div class="demo agent-demo" data-mode="harness">
     <div class="controls" role="group" aria-label="Agent settings and simulation controls">
@@ -454,7 +439,7 @@
         <span>Harness:</span>
         <label title="Refine the goal reading and use a rough model of the current to predict drift"><input type="checkbox" id="optPlan" checked /> plan</label>
         <label title="Read an imperfect self position and get a closer goal reading within range"><input type="checkbox" id="optTools" checked /> tools</label>
-        <label title="Use recent readings to predict the current"><input type="checkbox" id="optMemory" checked /> memory</label>
+        <label title="Remember unfinished goals and return to them after the current attempt"><input type="checkbox" id="optMemory" checked /> memory</label>
         <label title="Check arrival and confirm the goal location after a miss"><input type="checkbox" id="optVerifier" checked /> verifier</label>
         <label title="Release the last target once the harness settles near it"><input type="checkbox" id="optStop" checked /> stop condition</label>
         <label title="Reduce momentum during feedback corrections so oscillations shrink"><input type="checkbox" id="optDamp" checked /> damp</label>
@@ -477,14 +462,16 @@
     <dl class="agent-legend" aria-label="ASCII marker legend">
       <div><dt><code class="legend-agent">&lt;A&gt;</code></dt><dd>Agent position</dd></div>
       <div><dt><code class="agent-estimate">&lt;a&gt;</code></dt><dd>Self estimate</dd></div>
-      <div><dt><code class="legend-target">[*]</code></dt><dd>Actual goal you clicked</dd></div>
-      <div><dt><code class="legend-target">[g]</code></dt><dd>Where the agent thinks the goal is</dd></div>
+      <div><dt><code class="legend-target">[*]</code></dt><dd>Latest goal you clicked</dd></div>
+      <div><dt><code class="legend-target">[g]</code></dt><dd>Estimate for the goal being pursued</dd></div>
+      <div><dt><code class="legend-target">[+]</code></dt><dd>Earlier unfinished goal</dd></div>
     </dl>
     <p class="demo-note">Shaded trails show actual paths. Dots trace estimates. Symbols sharing a cell take turns.</p>
-    <p class="demo-note">The dotted ring shows uncertainty around the latest goal estimate. The latest target stays marked after arrival.</p>
+    <p class="demo-note">The dotted ring follows the agent’s current goal estimate. The latest click stays marked after arrival.</p>
   </div>
 
-  <h3 class="experiment-title">02 · Send a task to the right specialist</h3>
+  <template id="routing-demo-template">
+  <h3 class="experiment-title">Send a task to the right specialist</h3>
   <p class="demo-note">
     Play the coordinator: match each task to a specialist’s role. Drag a task, or select
     a specialist from its menu. “Match next task” shows a simple automatic assignment.
@@ -520,6 +507,7 @@
       </div>
     </div>
   </div>
+  </template>
 
   </section>
   <div class="ket">\[ {\langle\texttt{sci}|\texttt{phi}\rangle}_i \]</div>
@@ -528,7 +516,7 @@
 
 <script type="module">
 import { columns, rows, createLandscape } from './assets/playground-landscape.js';
-import { createAgent, distanceBetween } from './assets/playground-agent.js?v=6';
+import { createAgent, distanceBetween } from './assets/playground-agent.js?v=7';
 
 (function () {
   function opts() {
@@ -536,7 +524,7 @@ import { createAgent, distanceBetween } from './assets/playground-agent.js?v=6';
       plan: document.getElementById('optPlan').checked,
       damp: document.getElementById('optDamp').checked,
       tools: document.getElementById('optTools').checked,
-      memory: document.getElementById('optMemory').checked,
+      memory: memoryControl.checked,
       verifier: document.getElementById('optVerifier').checked,
       stop: document.getElementById('optStop').checked,
     };
@@ -546,6 +534,7 @@ import { createAgent, distanceBetween } from './assets/playground-agent.js?v=6';
   const demo = canvas.closest('.agent-demo');
   const image = document.getElementById('agent-print');
   const resetButton = document.getElementById('btnReset');
+  const memoryControl = document.getElementById('optMemory');
   const modeReadout = document.getElementById('agent-mode');
   const hits = document.getElementById('agent-hits');
   const misses = document.getElementById('agent-misses');
@@ -571,7 +560,8 @@ import { createAgent, distanceBetween } from './assets/playground-agent.js?v=6';
 
   const agent = createAgent(W, H);
   const { state } = agent;
-  const targets = new Map();
+  const fadingGoals = new Map();
+  const fadeInks = ['#315231', '#5a5d36', '#937e46'];
   let latestTarget;
 
   function meterParts(row) {
@@ -593,12 +583,12 @@ import { createAgent, distanceBetween } from './assets/playground-agent.js?v=6';
   }
 
   function syncReadouts(goal) {
-    const { position, estimate } = state;
+    const { position, estimate, focusedGoal } = state;
     syncMeter(errorBar, distanceBetween(position, estimate), 5);
-    syncMeter(goalBar, goal ? distanceBetween(latestTarget, goal) : null, 5);
+    syncMeter(goalBar, goal ? distanceBetween(focusedGoal, goal) : null, 5);
     const text = goal ? `Goal uncertainty radius · ${Math.ceil(goal.radius)} units` : 'Goal uncertainty —';
     if (confidence.textContent !== text) confidence.textContent = text;
-    warning.hidden = !latestTarget?.falseArrival || latestTarget.reached;
+    warning.hidden = !focusedGoal?.falseArrival || focusedGoal.reached;
     planningReadout.hidden = !state.planning;
   }
 
@@ -611,11 +601,19 @@ import { createAgent, distanceBetween } from './assets/playground-agent.js?v=6';
       y: (Math.floor(cell / columns) + 0.5) * cellHeight,
       cell, reached: false,
     };
-    const life = 1000 + Math.random() * 500;
-    targets.set(cell, target);
+    fadingGoals.delete(cell);
     latestTarget = target;
-    agent.addGoal(target, life);
+    agent.addGoal(target);
+    if (!memoryControl.checked) forgetQueuedGoals();
   }
+
+  function forgetQueuedGoals() {
+    for (const { cell } of agent.forgetQueuedGoals()) fadingGoals.set(cell, 45);
+  }
+
+  memoryControl.addEventListener('change', () => {
+    if (!memoryControl.checked) forgetQueuedGoals();
+  });
 
   canvas.addEventListener('click', event => {
     const bounds = canvas.getBoundingClientRect();
@@ -656,12 +654,16 @@ import { createAgent, distanceBetween } from './assets/playground-agent.js?v=6';
       markers.get(cell).push({ glyph, ink, backdrop, left, right });
     }
     const targetBackdrop = '#332511';
-    for (const cell of targets.keys()) {
-      cursor(cell, cell === latestTarget?.cell ? '*' : '+', '#fff6a0', targetBackdrop, '[', ']');
+    if (latestTarget) cursor(latestTarget.cell, '*', '#fff6a0', targetBackdrop, '[', ']');
+    for (const target of state.goals) {
+      if (target !== latestTarget && !target.reached) cursor(target.cell, '+', '#fff6a0', targetBackdrop, '[', ']');
     }
     cursor(cellFor(state.position), 'A', colors.ink, colors.backdrop, '<', '>');
     cursor(cellFor(state.estimate), 'a', colors.estimate, undefined, '<', '>');
     if (goal) cursor(cellFor(goal), 'g', '#ffdf76', targetBackdrop, '[', ']');
+    for (const [cell, ticks] of fadingGoals) {
+      if (!markers.has(cell)) cursor(cell, '+', fadeInks[Math.floor((ticks - 1) / 15)], undefined, '[', ']');
+    }
 
     const phase = reducedMotion.matches ? 0 : Math.floor(now / 550);
     for (const [cell, stack] of markers) {
@@ -683,12 +685,13 @@ import { createAgent, distanceBetween } from './assets/playground-agent.js?v=6';
 
   function tick(options) {
     syncMode(options);
-    agent.step(options, targets.values());
+    agent.step(options);
     const { trail, position, estimate } = state;
     trail.push({ actual: cellFor(position), estimated: cellFor(estimate) });
     if (trail.length > 150) trail.shift();
-    for (const [cell, target] of targets) {
-      if (target.reached && target !== latestTarget) targets.delete(cell);
+    for (const [cell, ticks] of fadingGoals) {
+      if (ticks === 1) fadingGoals.delete(cell);
+      else fadingGoals.set(cell, ticks - 1);
     }
   }
 
@@ -701,7 +704,7 @@ import { createAgent, distanceBetween } from './assets/playground-agent.js?v=6';
         tick(options);
         elapsed -= tickMs;
       }
-      const goal = latestTarget?.belief;
+      const goal = state.focusedGoal?.belief;
       drawWorld(goal, now);
       if (hits.textContent !== String(state.done)) hits.textContent = state.done;
       if (misses.textContent !== String(state.misses)) misses.textContent = state.misses;
@@ -711,7 +714,7 @@ import { createAgent, distanceBetween } from './assets/playground-agent.js?v=6';
   }
   resetButton.onclick = () => {
     agent.reset();
-    targets.clear();
+    fadingGoals.clear();
     latestTarget = undefined;
   };
   image.decode().then(() => {
@@ -724,6 +727,8 @@ import { createAgent, distanceBetween } from './assets/playground-agent.js?v=6';
   }).catch(() => { canvas.hidden = true; });
 
   // --- director / specialist routing (general) ---
+  const inbox = document.getElementById('inbox');
+  if (!inbox) return;
   const TASKS = [
     { type: 'map', label: 'Find a shared pattern between two systems' },
     { type: 'map', label: 'Describe two examples using one common model' },
@@ -732,7 +737,6 @@ import { createAgent, distanceBetween } from './assets/playground-agent.js?v=6';
     { type: 'crit', label: 'Check a claim against the evidence' },
     { type: 'crit', label: 'Stop a run when its error exceeds a limit' },
   ];
-  const inbox = document.getElementById('inbox');
   let routeScore = 0;
   let dragTask = null;
   const roles = { map: 'Analogy finder', ctrl: 'Feedback controller', crit: 'Independent reviewer' };

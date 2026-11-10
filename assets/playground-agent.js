@@ -15,13 +15,13 @@ export function distanceBetween(first, second) {
 export function createAgent(width, height) {
   const state = {};
   let velocity;
-  let rememberedCurrent;
+  let learnedCurrent;
 
   function reset() {
     const center = { x: width / 2, y: height / 2 };
-    Object.assign(state, { position: center, estimate: center, goals: [], attractor: null, planning: false, done: 0, misses: 0, trail: [] });
+    Object.assign(state, { position: center, estimate: center, goals: [], focusedGoal: null, settling: false, planning: false, done: 0, misses: 0, trail: [] });
     velocity = still;
-    rememberedCurrent = still;
+    learnedCurrent = still;
   }
 
   function advance(point, current, strength) {
@@ -58,13 +58,26 @@ export function createAgent(width, height) {
     return { reported: reading(35), planned: reading(11) };
   }
 
-  function addGoal(target, life) {
+  function focusGoal(target) {
+    state.focusedGoal = target;
+    state.settling = false;
+    velocity = still;
+  }
+
+  function addGoal(target) {
     target.age = 0;
     target.observation = observeGoal(target, 1);
     target.belief = target.observation.reported;
     target.refinement = { to: target.belief, tick: refinementTicks };
-    state.goals = state.goals.filter(goal => goal.target.cell !== target.cell);
-    state.goals.push({ target, life });
+    state.goals = state.goals.filter(goal => goal.cell !== target.cell);
+    state.goals.push(target);
+    focusGoal(target);
+  }
+
+  function forgetQueuedGoals() {
+    const forgotten = state.goals.filter(goal => goal !== state.focusedGoal);
+    state.goals = state.goals.filter(goal => goal === state.focusedGoal);
+    return forgotten;
   }
 
   function refineGoal(target, plan) {
@@ -92,25 +105,24 @@ export function createAgent(width, height) {
     };
   }
 
-  function move(feedback, memory, plan) {
+  function move(feedback, plan) {
     const current = currentAt(state.position);
-    const remembered = memory ? rememberedCurrent : still;
     // The plan forecasts a weaker current at the estimated position.
     const forecast = plan ? currentAt(state.estimate, 0.75) : still;
     const correction = plan ? {
-      x: 0.65 * forecast.x + 0.35 * remembered.x,
-      y: 0.65 * forecast.y + 0.35 * remembered.y,
-    } : remembered;
+      x: 0.65 * forecast.x + 0.35 * learnedCurrent.x,
+      y: 0.65 * forecast.y + 0.35 * learnedCurrent.y,
+    } : still;
     const slip = { x: current.x - correction.x, y: current.y - correction.y };
     const strength = Math.min(1, Math.hypot(velocity.x, velocity.y) / 2);
     state.position = advance(state.position, slip, strength);
     if (feedback) {
       state.estimate = readPosition();
-      if (memory) {
+      if (plan) {
         // Use recent readings to anticipate the current as it changes across the print.
-        rememberedCurrent = {
-          x: rememberedCurrent.x + 0.07 * (current.x - rememberedCurrent.x),
-          y: rememberedCurrent.y + 0.07 * (current.y - rememberedCurrent.y),
+        learnedCurrent = {
+          x: learnedCurrent.x + 0.07 * (current.x - learnedCurrent.x),
+          y: learnedCurrent.y + 0.07 * (current.y - learnedCurrent.y),
         };
       }
     } else {
@@ -119,57 +131,62 @@ export function createAgent(width, height) {
     }
   }
 
-  function step(options, visibleTargets) {
-    const { tools: feedback, memory, plan } = options;
-    state.planning = false;
-    const targets = new Set(visibleTargets);
-    for (const { target } of state.goals) targets.add(target);
-    if (state.attractor) targets.add(state.attractor);
-    for (const target of targets) {
-      target.age++;
-      const observed = target.age > observationTicks;
-      const planning = plan && target.age <= observationTicks + refinementTicks;
-      const actualDistance = distanceBetween(target, state.position);
-      if (feedback && observed && !planning && !target.localReading && actualDistance <= goalSensorRange) {
-        target.localReading = observeGoal(target, 0.22);
-      }
-      refineGoal(target, plan && observed);
-      if (!target.reached && actualDistance <= arrivalRadius) {
-        target.reached = true;
-        state.done++;
-      }
+  function scoreArrival(target) {
+    if (!target.reached && distanceBetween(target, state.position) <= arrivalRadius) {
+      target.reached = true;
+      state.done++;
     }
+  }
 
+  function step(options) {
+    const { tools: feedback, plan } = options;
+    state.planning = false;
     if (feedback) state.estimate = readPosition();
 
-    state.goals = state.goals.filter(goal => --goal.life > 0);
-    let pending;
-    let distance = Infinity;
-    for (const goal of state.goals) {
-      const gap = distanceBetween(goal.target.belief, state.estimate);
-      if (gap < distance) {
-        pending = goal;
-        distance = gap;
+    let target = state.focusedGoal;
+    if (!target) return;
+    scoreArrival(target);
+    if (state.goals.length > 1) {
+      for (const goal of state.goals) scoreArrival(goal);
+      state.goals = state.goals.filter(goal => goal === target || !goal.reached);
+    }
+    if (state.goals.length && !state.goals.includes(target)) {
+      let nearestDistance = Infinity;
+      for (const goal of state.goals) {
+        const gap = distanceBetween(goal.belief, state.estimate);
+        if (gap < nearestDistance) {
+          target = goal;
+          nearestDistance = gap;
+        }
       }
+      focusGoal(target);
     }
 
-    if (pending || !feedback) state.attractor = null;
-    const target = pending?.target ?? state.attractor;
-    if (!target) {
+    const pending = state.goals.includes(target);
+    target.age++;
+    const observed = target.age > observationTicks;
+    state.planning = pending && plan && target.age <= observationTicks + refinementTicks;
+    if (feedback && observed && !state.planning && !target.localReading && distanceBetween(target, state.position) <= goalSensorRange) {
+      target.localReading = observeGoal(target, 0.22);
+    }
+    refineGoal(target, plan && observed);
+
+    if (!pending && (!feedback || !state.settling)) {
+      state.settling = false;
       velocity = still;
       return;
     }
-    state.planning = Boolean(pending && plan && target.age <= observationTicks + refinementTicks);
     if (state.planning || (target.verified && target.belief !== target.verified)) {
       velocity = still;
       return;
     }
-    const aim = target.belief;
+    const aim = boundPoint(target.belief.x, target.belief.y);
     const dx = aim.x - state.estimate.x;
     const dy = aim.y - state.estimate.y;
+    const distance = Math.hypot(dx, dy);
 
     // After a failed check, aim closer to the verified center before stopping again.
-    if (pending && distance <= (target.verified ? 2 : arrivalRadius)) {
+    if (pending && distance <= (target.verified && !target.reached ? 2 : arrivalRadius)) {
       if (!target.reached) {
         target.falseArrival = true;
         state.misses++;
@@ -182,15 +199,15 @@ export function createAgent(width, height) {
         }
       }
 
-      state.goals.splice(state.goals.indexOf(pending), 1);
-      if (!feedback) {
+      state.goals.splice(state.goals.indexOf(target), 1);
+      state.settling = feedback && state.goals.length === 0;
+      if (!state.settling) {
         velocity = still;
         return;
       }
-      state.attractor = target;
-    } else if (!pending && options.stop && Math.hypot(dx, dy) < 2
+    } else if (!pending && options.stop && distance < 2
       && Math.hypot(velocity.x, velocity.y) < 0.08) {
-      state.attractor = null;
+      state.settling = false;
       velocity = still;
       return;
     }
@@ -198,7 +215,7 @@ export function createAgent(width, height) {
     if (!feedback) {
       // Steer from the estimate when live position readings are unavailable.
       velocity = { x: dx * maxSpeed / distance, y: dy * maxSpeed / distance };
-      move(false, memory, plan);
+      move(false, plan);
       return;
     }
 
@@ -208,9 +225,9 @@ export function createAgent(width, height) {
     const vy = velocity.y * retention + dy * spring;
     const scale = Math.min(1, maxSpeed / Math.hypot(vx, vy));
     velocity = { x: vx * scale, y: vy * scale };
-    move(true, memory, plan);
+    move(true, plan);
   }
 
   reset();
-  return { state, step, reset, addGoal };
+  return { state, step, reset, addGoal, forgetQueuedGoals };
 }
