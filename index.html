@@ -444,23 +444,23 @@
     Plan refines the goal estimate and predicts drift. Tools give live feedback for course correction.
     Memory keeps unfinished goals when you click somewhere new, and the verifier checks arrival.
   </p>
-  <div class="demo agent-demo" data-mode="harness">
+  <div class="demo agent-demo" data-mode="vat">
     <div class="controls" role="group" aria-label="Agent settings and simulation controls">
       <div class="sim-controls">
         <span>Harness:</span>
-        <label title="Refine the goal reading and use a rough model of the current to predict drift"><input type="checkbox" id="optPlan" checked /> plan</label>
-        <label title="Read an imperfect self position and get a closer goal reading within range"><input type="checkbox" id="optTools" checked /> tools</label>
-        <label title="Remember unfinished goals and return to them after the current attempt"><input type="checkbox" id="optMemory" checked /> memory</label>
-        <label title="Check arrival and confirm the goal location after a miss"><input type="checkbox" id="optVerifier" checked /> verifier</label>
-        <label title="Release the last target once the harness settles near it"><input type="checkbox" id="optStop" checked /> stop condition</label>
-        <label title="Reduce momentum during feedback corrections so oscillations shrink"><input type="checkbox" id="optDamp" checked /> damp</label>
+        <label title="Refine the goal reading and use a rough model of the current to predict drift"><input type="checkbox" id="optPlan" /> plan</label>
+        <label title="Read an imperfect self position and get a closer goal reading within range"><input type="checkbox" id="optTools" /> tools</label>
+        <label title="Remember unfinished goals and return to them after the current attempt"><input type="checkbox" id="optMemory" /> memory</label>
+        <label title="Check arrival and confirm the goal location after a miss"><input type="checkbox" id="optVerifier" /> verifier</label>
+        <label title="Release the last target once the harness settles near it"><input type="checkbox" id="optStop" /> stop condition</label>
+        <label title="Reduce momentum during feedback corrections so oscillations shrink"><input type="checkbox" id="optDamp" /> damp</label>
       </div>
       <button type="button" id="btnReset" disabled>reset</button>
     </div>
     <img class="shared-world" id="agent-print" src="assets/pine-river.webp" width="900" height="600" alt="A Japanese woodblock-style landscape of a pine overlooking a river and mountain." />
     <canvas class="shared-world" id="agent-world" width="400" height="260" aria-label="ASCII mountain and river landscape with one agent navigating to targets" hidden></canvas>
     <div class="scores" aria-label="Agent status">
-      <strong class="agent-key" id="agent-mode">Harness enabled</strong>
+      <strong class="agent-key" id="agent-mode">Brain in a vat</strong>
       <span>hits: <b id="agent-hits">0</b> · misses: <b id="agent-misses">0</b></span>
       <span id="agent-planning" hidden>Planning…</span>
     </div>
