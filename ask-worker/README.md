@@ -6,13 +6,15 @@ The Worker reads the published CV on each lookup, subject to the source cache. I
 
 GitHub metadata and README passages are grouped by repository, with the recent repository list in its own group. The Worker fetches default-branch README files directly and uses the README API to locate other names or paths. It selects prose from the introduction and later sections within the first 24,000 characters, up to seven passages per README.
 
-The search also includes page-linked PDF excerpts and short publication summaries with links. Jev routes among repository and research groups using their titles, section names, and short previews. The Worker keeps the four highest-scoring groups and ranks their passages alongside the CV and LMU abstract. The page shows the top match and lets readers expand the next two.
+The search also includes page-linked PDF excerpts. Jev routes among repository and research groups using their titles, section names, and short previews. The Worker keeps the four highest-scoring groups and ranks their passages alongside the CV and LMU abstract. The page shows the top match and lets readers expand the next two.
 
 ## Research corpus
 
-`research-index.json` contains opening passages from chapters and sections of the public [LMU dissertation](https://edoc.ub.uni-muenchen.de/28655/), [arXiv quantum-circuits paper](https://arxiv.org/abs/1606.06799), and [PhilSci-Archive Bayesian confirmation preprint](https://philsci-archive.pitt.edu/23020/). Jev receives chapter previews for routing and excerpts from the selected chapters for ranking. Each excerpt links to the page where its section begins.
+`research-index.json` contains opening passages from chapters and sections of the public [LMU dissertation](https://edoc.ub.uni-muenchen.de/28655/), [arXiv quantum-circuits paper](https://arxiv.org/abs/1606.06799), [PhilSci-Archive Bayesian confirmation preprint](https://philsci-archive.pitt.edu/23020/), and [master’s thesis](https://github.com/CameronBeebe/analog_physics/blob/main/BeebeFMMPCC.pdf). Jev receives chapter previews for routing and excerpts from the selected chapters for ranking. Each citation links to the source PDF and identifies the page where its section begins.
 
-To rebuild, download the public PDFs and run `uv run --with pymupdf python ask-worker/index-research.py --output ask-worker/research-index.json`. Add one `--pdf FILE PDF_URL LABEL TITLE` argument group per document. The script uses bookmarks or numbered headings and expects selectable text. Review the generated excerpts and page links before deploying. Publication summaries in `sources.mjs` cover additional titles and link to their records.
+Chapter 3 of the dissertation is the expanded version of Model-Based Computation. It provides an open source for that work.
+
+To rebuild, download the public PDFs and run `uv run --with pymupdf python ask-worker/index-research.py --output ask-worker/research-index.json`. Add one `--pdf FILE PDF_URL LABEL TITLE` argument group per document. The script uses bookmarks or numbered headings and expects selectable text. Review the generated excerpts and page links before deploying.
 
 ## Local development
 

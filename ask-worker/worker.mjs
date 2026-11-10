@@ -53,7 +53,7 @@ function sourceJudgment(group) {
 function excerptJudgment({ section, heading, text }) {
   return {
     instructions: {
-      task: 'Does the excerpt directly answer part of the visitor question about Cameron Beebe? Use its heading and section to resolve what it refers to.',
+      task: 'Does the excerpt directly answer part of the visitor question? The question may be about Cameron Beebe, his projects, or concepts discussed in his work. Use the heading and section to identify the subject.',
       excerpt: { section, heading, text },
     },
     criteria: {

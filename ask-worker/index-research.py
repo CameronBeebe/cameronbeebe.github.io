@@ -17,6 +17,7 @@ def clean(text):
 def heading_pattern(title):
     title = re.sub(r"^\d+(?:\.\d+)*\s+", "", title)
     words = r"\s+".join(re.escape(word) for word in clean(title).split())
+    words = re.sub(r"['‘’`]", "['‘’`]", words)
     return rf"(?im)^[ \t]*(?:\d+(?:\.\d+)*[ \t]*)?{words}[ \t]*$"
 
 

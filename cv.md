@@ -54,15 +54,15 @@ Worked for Cray’s Distributed Deep Learning Plugin team. Applied, tested, and 
 
 ## Publications
 
-- [Model-Based Computation](https://link.springer.com/article/10.1007/s11047-017-9643-0). Natural Computing, Volume 17, Issue 2, p. 271-281. 2018.
+- Model-Based Computation. Natural Computing, Volume 17, Issue 2, p. 271-281. 2018. [Expanded dissertation chapter (open PDF)](https://edoc.ub.uni-muenchen.de/28655/1/Beebe_Cameron.pdf#page=39).
 - [Sequent Calculus Representations for Quantum Circuits](https://arxiv.org/abs/1606.06799). Electronic Proceedings in Theoretical Computer Science, volume 214, p. 3-15. 2016.
 
 ### WIP Manuscripts (More on my [ResearchGate.](https://www.researchgate.net/profile/Cameron_Beebe))
 
-- [Artificial Neural Networks as Cybernetic Regulators](https://www.researchgate.net/publication/337915649_Artificial_Neural_Networks_as_Cybernetic_Regulators). (Forthcoming)
-- [Transfer Learning: The Logic of Discovery for Artificial General Intelligence](https://www.researchgate.net/publication/324330770_Transfer_Learning_The_Logic_of_Discovery_for_General_Artificial_Intelligence)
-- [Bayesian Confirmation from Analog Models](https://www.researchgate.net/publication/320259541_Bayesian_Confirmation_from_Analog_Models_Submitted). With [Roland Poellinger](https://www.mcmp.philosophie.uni-muenchen.de/people/external_members/roland_poellinger/index.html).
-- [Decoherence and Survival: Why Incompatible Observables Should be Compatible.](https://www.researchgate.net/publication/331983846_Decoherence_and_Survival_Why_Incompatible_Observables_Should_be_Compatible)
+- Artificial Neural Networks as Cybernetic Regulators. (Forthcoming) [Dissertation chapter](https://edoc.ub.uni-muenchen.de/28655/1/Beebe_Cameron.pdf#page=61).
+- Transfer Learning: The Logic of Discovery for Artificial General Intelligence. [Dissertation chapter](https://edoc.ub.uni-muenchen.de/28655/1/Beebe_Cameron.pdf#page=79).
+- [Bayesian Confirmation from Analog Models (preprint)](https://philsci-archive.pitt.edu/23020/). With [Roland Poellinger](https://www.mcmp.philosophie.uni-muenchen.de/people/external_members/roland_poellinger/index.html).
+- Decoherence and Survival: Why Incompatible Observables Should be Compatible. [Dissertation chapter](https://edoc.ub.uni-muenchen.de/28655/1/Beebe_Cameron.pdf#page=119).
 
 ## Education
 

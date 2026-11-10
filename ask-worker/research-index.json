@@ -760,5 +760,309 @@
         "url": "https://philsci-archive.pitt.edu/23020/1/Beebe%20%26%20Poellinger%20%282017%29%20Bayesian%20Confirmation%20from%20Analog%20Models%20-%20Version%202017-08-08%20FORMATTED.pdf#page=17"
       }
     }
+  ],
+  [
+    {
+      "heading": "Fluid Mechanical Models in Physical and Computational Contexts · Introduction",
+      "section": "Introduction",
+      "text": "In the philosophical analysis of reasoning in argumentation, or what is known as argumentation theory, there is a particular type of argument known as an argument from analogy. Such an argument involves the use of perceived similarities between two concepts, premise domains, physical objects, or abstract structures and formalisms. Similarity in such an argument is known as the positive analogical relationship between two (or more) of these domains, objects, or structures (I will use domain henceforth since it is arguably the more general notion). One can have positive and negative analogies between two domains.",
+      "source": {
+        "label": "Master's thesis",
+        "url": "https://github.com/CameronBeebe/analog_physics/blob/main/BeebeFMMPCC.pdf#page=4"
+      }
+    },
+    {
+      "heading": "Fluid Mechanical Models in Physical and Computational Contexts · Introduction",
+      "section": "Arguments from Analogy",
+      "text": "In this section I provide a minimal working basis with which to utilize in subsequent discussions concerning fluid systems, their similarities with various target phenomena, and arguments based on considerations of these fluid models in both the physical and computational contexts. There are many different approaches to characterizing arguments from analogy, and it is not my intention to resolve controversies in the literature concerning the proper characterization of all types of analogical reasoning or arguments from analogy. The reader may wish to familiarize themselves with a survey, for example in [Bartha, 2013], of various approaches in philosophy towards analyzing analogies—and some of the problems these approaches encounter.",
+      "source": {
+        "label": "Master's thesis",
+        "url": "https://github.com/CameronBeebe/analog_physics/blob/main/BeebeFMMPCC.pdf#page=5"
+      }
+    }
+  ],
+  [
+    {
+      "heading": "Fluid Mechanical Models in Physical and Computational Contexts · Wave Mechanics and Many Worlds in the Physical Context",
+      "section": "Wave Mechanics and Many Worlds in the Physical Context",
+      "text": "There will be several arguments throughout the course of this present work. These will each support the central thesis in some way. This thesis, as mentioned earlier, claims that fluid mechanical models are not only useful in scientific conceptualizations and arguments—they are in many ways uniquely useful in their ability to be applied to a wide range of problems. One of the most important ideas to be analyzed using fluid analog models in this work, is the notion of many worlds in the quantum world— as it will be important to consider in both the physical and computational contexts. Some background on quantum theory and the many worlds approach will be helpful.",
+      "source": {
+        "label": "Master's thesis",
+        "url": "https://github.com/CameronBeebe/analog_physics/blob/main/BeebeFMMPCC.pdf#page=12"
+      }
+    },
+    {
+      "heading": "Fluid Mechanical Models in Physical and Computational Contexts · Wave Mechanics and Many Worlds in the Physical Context",
+      "section": "A Brief Introduction to Wave Mechanics",
+      "text": "Erwin Schr ̈odinger’s wave equations are famous developments in the history of quantum theory, and their relevance and use today is widespread. A brief introduction will be helpful before entering into subsequent sections. Intuitively, in a wave equation we want to represent the change of a medium as a wave propagates through it. A classical wave equation for one dimension takes the following form: ∂2y(x, t) t) = c2∂2y(x, (4) ∂x2 ∂t2 This is a linear second order partial differential equation, representing the time evolution t of a wave with amplitude extending in the y dimension of an x −y plane, traveling with velocity c.",
+      "source": {
+        "label": "Master's thesis",
+        "url": "https://github.com/CameronBeebe/analog_physics/blob/main/BeebeFMMPCC.pdf#page=13"
+      }
+    },
+    {
+      "heading": "Fluid Mechanical Models in Physical and Computational Contexts · Wave Mechanics and Many Worlds in the Physical Context",
+      "section": "Many Worlds",
+      "text": "Many Worlds as an approach to quantum mechanics is also referred to as the Everettian interpretation, named after the physicist Hugh Everett. In this approach, all superposed components of a quantum wave function continue to evolve. This includes the components which we do not apparently ‘observe’ through a measurement, since a measurement will only show us one of the possible outcomes in a superposition. However, a proponent of a many worlds approach may say that there is another ‘world’ where the other components are measured. There are many variations of this approach which attempt to reconcile the appearance of one (classically appearing) world with the ‘actual’ time evolution of all components in a superposition of waves.",
+      "source": {
+        "label": "Master's thesis",
+        "url": "https://github.com/CameronBeebe/analog_physics/blob/main/BeebeFMMPCC.pdf#page=16"
+      }
+    },
+    {
+      "heading": "Fluid Mechanical Models in Physical and Computational Contexts · Wave Mechanics and Many Worlds in the Physical Context",
+      "section": "The Many Worlds Argument",
+      "text": "For the negative analogical argument against many worlds, we could simply refuse to extend the list of similarities between the fluid analog models discussed and the quantum world to include the aspect of ‘many worlds’. This is not particularly interesting, and it seems that perhaps we can grant that worlds may be useful to characterize surface waves in a fluid. However, I will argue that even if such a similarity relation is granted between many worlds in both domains, this is still detrimental to the MW account of quantum mechanics since it means there are worlds of the same kind present in the fluid models.",
+      "source": {
+        "label": "Master's thesis",
+        "url": "https://github.com/CameronBeebe/analog_physics/blob/main/BeebeFMMPCC.pdf#page=17"
+      }
+    },
+    {
+      "heading": "Fluid Mechanical Models in Physical and Computational Contexts · Wave Mechanics and Many Worlds in the Physical Context",
+      "section": "My Job",
+      "text": "My job in this thesis is to first of all convince the reader that fluid analog models are relevant and, on the whole, more similar than dissimilar to the quantum world. Once this is achieved, the reader should agree with me that the notion of many worlds loses much of its explanatory appeal. The main dis-analogies between fluid analog models and the quantum world come in the difference of dimensions and the substance or medium involved in producing the phenomena, while the positively analogous aspects are mainly found in highly controlled and idealized conditions. For example, similar kinds of boundary conditions and the linearity of wave mechanics are found in the respective domains.",
+      "source": {
+        "label": "Master's thesis",
+        "url": "https://github.com/CameronBeebe/analog_physics/blob/main/BeebeFMMPCC.pdf#page=19"
+      }
+    }
+  ],
+  [
+    {
+      "heading": "Fluid Mechanical Models in Physical and Computational Contexts · Fluid :: Quantum",
+      "section": "Faraday Surface Modes :: Quantum `Waves'",
+      "text": "Following the work of Robert Hooke and Ernst Chladni on the investigation of patterns arising in powdered materials on vibrating plates of glass or metal, Michael Faraday undertook a series of experiments on the behavior of different fluids on similar plates. [Faraday, 1831, appendix] The interference patterns and curiously beautiful regularities—what Faraday calls ‘crispations’—that occur in the fluids under such circumstances are often referred to as “Faraday waves”. It is important for the reader to understand what these waves are, as they will prove to be central to the analysis of our fluid analog models in both the physical and computational contexts.",
+      "source": {
+        "label": "Master's thesis",
+        "url": "https://github.com/CameronBeebe/analog_physics/blob/main/BeebeFMMPCC.pdf#page=21"
+      }
+    },
+    {
+      "heading": "Fluid Mechanical Models in Physical and Computational Contexts · Fluid :: Quantum",
+      "section": "Surface Wave Interference :: Quantum Interference",
+      "text": "In the traditional exposition of quantum mechanics, the double-slit experiment (DSE) is used to convey the sense in which both particle and wave pictures are necessary to adequately explain quantum phenomena. A typical set-up involves aiming a laser, or a coherent light source, at a barrier in which two holes (or slits) are cut. A screen behind the barrier records the distribution of light, in which an interference pattern is apparent. We attribute this to the wave nature of light, allowing for interference between the two modes emerging from each respective slit just like that seen in surface waves of a fluid. When one slit is open, we do not observe the interference pattern.",
+      "source": {
+        "label": "Master's thesis",
+        "url": "https://github.com/CameronBeebe/analog_physics/blob/main/BeebeFMMPCC.pdf#page=22"
+      }
+    },
+    {
+      "heading": "Fluid Mechanical Models in Physical and Computational Contexts · Fluid :: Quantum",
+      "section": "`Wavelike' Statistics :: Probability Amplitudes",
+      "text": "Yet another crucial analogical aspect between the fluid and quantum domains is that we can characterize statistics of walking droplets according to the Faraday modes of the boundary conditions in the fluid bath. In other words, the interference of surface waves and underlying Faraday modes of the vibrating bath determine probabilities of droplet location. The previous analogy between surface waves and quantum waves (including the aspect of interference) can be extended to include the statistical behavior associated with the droplets and observed probabilities in quantum mechanics (and calculated via the Born Rule).",
+      "source": {
+        "label": "Master's thesis",
+        "url": "https://github.com/CameronBeebe/analog_physics/blob/main/BeebeFMMPCC.pdf#page=23"
+      }
+    },
+    {
+      "heading": "Fluid Mechanical Models in Physical and Computational Contexts · Fluid :: Quantum",
+      "section": "Droplets :: Quantum `Particles'",
+      "text": "At first glance, perhaps the most obvious aspect of similarity which is present between the fluid analog systems and the quantum world, is that droplets which are sustained 23 on the surface of a vibrating fluid bath (VFB) behave as more or less inelastic, discrete, localized, identifiable bodies. They are, in other words, like particles as long as they do not coalesce back into the fluid bath. While a similar definition of particles has traditionally encountered severe difficulties in the quantum world, it is nonetheless popular to refer to quantum entities as ‘particles’.",
+      "source": {
+        "label": "Master's thesis",
+        "url": "https://github.com/CameronBeebe/analog_physics/blob/main/BeebeFMMPCC.pdf#page=23"
+      }
+    },
+    {
+      "heading": "Fluid Mechanical Models in Physical and Computational Contexts · Fluid :: Quantum",
+      "section": "`Tunneling' :: Quantum Tunneling",
+      "text": "Quantum tunneling is an effect where the amplitude of a state is distributed beyond certain boundary conditions (i.e. a potential or barrier). This results, through the Born Rule calculation, in a non-zero probability of observing a quanta outside of this boundary. Classically, such as in the case of a ball or rigid particle in a valley, such a body is confined to the valley—it cannot escape under ‘natural’ conditions. Unless we impart a force upon the body sufficient for it to roll up and beyond the side of the valley or crash directly through, it will remain in the valley. Vibrating fluid bath systems can also exhibit similar phenomena to tunneling.",
+      "source": {
+        "label": "Master's thesis",
+        "url": "https://github.com/CameronBeebe/analog_physics/blob/main/BeebeFMMPCC.pdf#page=26"
+      }
+    },
+    {
+      "heading": "Fluid Mechanical Models in Physical and Computational Contexts · Fluid :: Quantum",
+      "section": "Analog Casimir Effect :: Casimir Effect",
+      "text": "In this particular analogical relation, we will see that a good example of analogical reasoning is found by scientists working on a macroscopic fluid model of a wellknown quantum behavior. In a similar set up to the VFBs discussed earlier, there is a table-top fluid model of the so-called Casimir Effect. (see [Denardo et al., 2009]) The (quantum) Casimir effect is produced between two very small (and very thin) uncharged parallel metal plates that are placed close together in a vacuum. At certain distances d the plates are pushed together by a force, while at others they are pushed apart.",
+      "source": {
+        "label": "Master's thesis",
+        "url": "https://github.com/CameronBeebe/analog_physics/blob/main/BeebeFMMPCC.pdf#page=26"
+      }
+    }
+  ],
+  [
+    {
+      "heading": "Fluid Mechanical Models in Physical and Computational Contexts · Summing Up the Fluid Analogy in the Physical Context",
+      "section": "Summing Up the Fluid Analogy in the Physical Context",
+      "text": "In the previous sections, we have seen that a number of fundamental properties and behaviors typically associated with the quantum world22 have been convincingly shown to have formal, conceptual, and physical similarities with various properties and behaviors of fluid systems at the macroscopic level. These do not represent all of the possible, or even known, analogical behaviors similar to quantum phenomena.",
+      "source": {
+        "label": "Master's thesis",
+        "url": "https://github.com/CameronBeebe/analog_physics/blob/main/BeebeFMMPCC.pdf#page=31"
+      }
+    },
+    {
+      "heading": "Fluid Mechanical Models in Physical and Computational Contexts · Summing Up the Fluid Analogy in the Physical Context",
+      "section": "Many Worlds in the Physical Context",
+      "text": "Finally, we are ready to make the argument from analogy against a Many Worlds approach to quantum mechanics. We achieve this by noticing that if worlds are present in VFBs then they are similar in kind to the quantum worlds of the Many Worlds approach. Earlier, we took quantum worlds to be defined as orthogonal components in a superposition—called the na ̈ıve definition—and these represent the ‘classical’ states which we are potentially able to observe (i.e. when we make a measurement we will only measure one of these states and not an interference of multiple). However, there is a problem with the interpretation of worlds in VFBs—and it stems from a practicality condition.",
+      "source": {
+        "label": "Master's thesis",
+        "url": "https://github.com/CameronBeebe/analog_physics/blob/main/BeebeFMMPCC.pdf#page=32"
+      }
+    },
+    {
+      "heading": "Fluid Mechanical Models in Physical and Computational Contexts · Summing Up the Fluid Analogy in the Physical Context",
+      "section": "Entanglement and Non-Locality in the Fluid Models",
+      "text": "At this time, it is unclear how (or if) there could be an analogical correspondence of entanglement in the fluid analog model. One could chalk this up to the seeming locality of surface waves in the classical fluid bath—it is unclear whether the distributed surface waves could constitute some kind of analogous non-locality. Since standing Faraday waves are produced in the fluid by the simultaneous vertical oscillation of the entire bath, one could consider this as an analogous aspect of entanglement. In other words, consider the bath as sitting on top of a rigid, bounded plane. In the ideal case (i.e. the plane is non-elastic), each point in this plane oscillates simultaneously.",
+      "source": {
+        "label": "Master's thesis",
+        "url": "https://github.com/CameronBeebe/analog_physics/blob/main/BeebeFMMPCC.pdf#page=35"
+      }
+    }
+  ],
+  [
+    {
+      "heading": "Fluid Mechanical Models in Physical and Computational Contexts · Fluid Analog Models in the Computational Context",
+      "section": "Fluid Analog Models in the Computational Context",
+      "text": "Having hopefully convinced the reader in the first half that the analogy between fluid and quantum domains is more similar than dissimilar, we now proceed to the second argument in this dissertation. In the following sections, we will see that by keeping in mind the above conceptual, physical, and formal similarity some theoretical results can be obtained. As a concrete example, we will consider the foundational debate found in quantum information science over explanations of speed up in quantum computation for certain tasks compared to classical computation.",
+      "source": {
+        "label": "Master's thesis",
+        "url": "https://github.com/CameronBeebe/analog_physics/blob/main/BeebeFMMPCC.pdf#page=36"
+      }
+    },
+    {
+      "heading": "Fluid Mechanical Models in Physical and Computational Contexts · Fluid Analog Models in the Computational Context",
+      "section": "Hydraulic Analogy in Electronics",
+      "text": "The Hydraulic Analogy in electronics is a common way to illustrate and teach some of the fundamental principles involved in classical circuits. Analogous parallel and series circuits are associated with hydraulic flow in pipes and reservoirs. (see e.g. 23I will try to make it clear by context, where I am referring to an analogy in terms discussed previously, and where I am referring to analog as in the type of computing.",
+      "source": {
+        "label": "Master's thesis",
+        "url": "https://github.com/CameronBeebe/analog_physics/blob/main/BeebeFMMPCC.pdf#page=36"
+      }
+    },
+    {
+      "heading": "Fluid Mechanical Models in Physical and Computational Contexts · Fluid Analog Models in the Computational Context",
+      "section": "Analog Computing and Microfluidics",
+      "text": "After the previous discussion of a fluid analogy in electronics, we now begin to transition towards a discussion of computing.26 Analog computing is a field of practical and theoretical computer science which is concerned with building, implementing, and studying computational procedures using logical operations whose data types are not digital or discrete. These operations are based on the physical systems used to implement them, and can take on a continuous range of values. One type of analog computer can be constructed using carefully controlled fluid systems. These systems can be used in a highly controlled manner to perform certain functions.",
+      "source": {
+        "label": "Master's thesis",
+        "url": "https://github.com/CameronBeebe/analog_physics/blob/main/BeebeFMMPCC.pdf#page=39"
+      }
+    }
+  ],
+  [
+    {
+      "heading": "Fluid Mechanical Models in Physical and Computational Contexts · Fluids and Quantum Computation",
+      "section": "Fluids and Quantum Computation",
+      "text": "In this section, I will briefly introduce the basics of quantum computation. Afterwards, we will use the earlier discussions on fluid systems to consider whether we can learn anything about quantum computation. That is, this thesis will conclude with a discussion on whether the intersection of the physical and computational contexts offered by the conceptual and practical aspects of fluids has something to offer the field of quantum computation. I will suggest that, at least on the conceptual side, there is something to gain in the form of a visualization benefit—the fluid analogy makes it easier to visualize what exactly quantum computation is all about.",
+      "source": {
+        "label": "Master's thesis",
+        "url": "https://github.com/CameronBeebe/analog_physics/blob/main/BeebeFMMPCC.pdf#page=41"
+      }
+    },
+    {
+      "heading": "Fluid Mechanical Models in Physical and Computational Contexts · Fluids and Quantum Computation",
+      "section": "A Brief Introduction to Quantum Computation",
+      "text": "In the field of theoretical quantum computation, the following expression represents the quantum analogy of a binary digit or bit, the qubit: |ψ⟩= α |0⟩+ β |1⟩ (16) Here, |ψ⟩(read as “ket psi” in what is known as Dirac notation) is a superposition, i.e. a linear combination represented by the addition sign, of the two basis states |0⟩ and |1⟩. Kets are taken to be column vectors whose entries are complex numbers, whereas ‘bras’ ⟨·| are row vectors whose entries are the complex conjugates of the corresponding ket.",
+      "source": {
+        "label": "Master's thesis",
+        "url": "https://github.com/CameronBeebe/analog_physics/blob/main/BeebeFMMPCC.pdf#page=41"
+      }
+    },
+    {
+      "heading": "Fluid Mechanical Models in Physical and Computational Contexts · Fluids and Quantum Computation",
+      "section": "Quantum Speed-Up",
+      "text": "One of the primary benefits we are supposed to obtain by utilizing quantum computation is that certain computational tasks can be achieved faster. From a complexity theorists’ view, less resources (such as time) would be needed to perform some procedures. Whereas on a classical computer factoring the product of two large prime numbers is hard (i.e. takes exponential time with respect to the input)27, a quantum computer implementing what is called Shor’s algorithm could efficiently achieve factorization—that is, it achieves this in polynomial time with respect to the input. This ability to factor composites efficiently is a well-known example of quantum speed up.",
+      "source": {
+        "label": "Master's thesis",
+        "url": "https://github.com/CameronBeebe/analog_physics/blob/main/BeebeFMMPCC.pdf#page=42"
+      }
+    },
+    {
+      "heading": "Fluid Mechanical Models in Physical and Computational Contexts · Fluids and Quantum Computation",
+      "section": "Parallelism and Many Worlds Explanation",
+      "text": "Parallelism, in terms of computation, is the idea that a computational architecture performs processes simultaneously. The more tasks which can be performed ‘in parallel’ means the computation will take less time. This can be thought of as a trade of using more space to reduce the time of a computation. In a coherent quantum computation, the evolution of all components in superposition is liable to be interpreted in a parallel manner. Proponents of a many worlds approach can embrace this appearance and account for speed-up by saying that parallel computations could be achieved by each of the many worlds simultaneously.",
+      "source": {
+        "label": "Master's thesis",
+        "url": "https://github.com/CameronBeebe/analog_physics/blob/main/BeebeFMMPCC.pdf#page=43"
+      }
+    },
+    {
+      "heading": "Fluid Mechanical Models in Physical and Computational Contexts · Fluids and Quantum Computation",
+      "section": "Entanglement as Explanation",
+      "text": "Another potential explanation of quantum speed up is the explanation from entanglement. An entangled quantum state is one for which we cannot re-write it as a (tensor) product of two factors. Typical entangled states are also called EPR or Bell states, for historical reasons. Such a state is: 1 1 |Φ+⟩= √ |00⟩+ √ |11⟩ (19) 2 2 Where here we could with probability one-half measure either the state |00⟩or the state |11⟩from what is typically called the Bell state |Φ+⟩. In this formalism by convention |00⟩= |0⟩|0⟩= |0⟩⊗|0⟩, and the first state vector is considered the input register while the second is considered the output. Or, the first is Alice’s qubit and the second is Bob’s.",
+      "source": {
+        "label": "Master's thesis",
+        "url": "https://github.com/CameronBeebe/analog_physics/blob/main/BeebeFMMPCC.pdf#page=45"
+      }
+    },
+    {
+      "heading": "Fluid Mechanical Models in Physical and Computational Contexts · Fluids and Quantum Computation",
+      "section": "Interference as Explanation",
+      "text": "There are several ways in which the term interference can be thought to refer to some quantum property, effect, or computational resource, and it will be helpful to distinguish between these since not all of them will be suitable for an explanation of speed up. In this section, we will go through these in depth in order that the reader may have a better sense afterwards of the nuanced way in which interference may affect quantum computations.",
+      "source": {
+        "label": "Master's thesis",
+        "url": "https://github.com/CameronBeebe/analog_physics/blob/main/BeebeFMMPCC.pdf#page=45"
+      }
+    },
+    {
+      "heading": "Fluid Mechanical Models in Physical and Computational Contexts · Fluids and Quantum Computation",
+      "section": "Double-Slit Interference",
+      "text": "The statistical distributions of the double slit experiment in quantum mechanics are known for their characteristic interference patterns. That this distribution displays interference warrants an explanation, and such explanation is usually given in terms of the interference of waves with the acknowledgment of a fundamental wave-particle duality we cannot avoid in our description. The sort of explanation supported by the fluid analog models relevant here is that there really are quantum waves, whatever one wants to think of the word real—they are FAPP real.",
+      "source": {
+        "label": "Master's thesis",
+        "url": "https://github.com/CameronBeebe/analog_physics/blob/main/BeebeFMMPCC.pdf#page=46"
+      }
+    },
+    {
+      "heading": "Fluid Mechanical Models in Physical and Computational Contexts · Fluids and Quantum Computation",
+      "section": "Interference of `Computational Paths'",
+      "text": "In [Fortnow, 2003] it is suggested that the primary component in an explanation of quantum speed up is interference of computational paths. A similar notion is found in [Deutsch et al., 2000]: “The basic idea of quantum computation is to use quantum interference to amplify the correct outcomes and to suppress the incorrect outcomes of computations.”[Deutsch et al., 2000, p. 10] √ To explain these computational paths, consider the NOT ∗-gate from [Deutsch et al., 2000]:29 √ √ 29I call this gate the NOT ∗as opposed to NOT from the original article, since when concatenated twice in a row the operation is not quite like NOT but still exhibits the notion of computational paths interfering.",
+      "source": {
+        "label": "Master's thesis",
+        "url": "https://github.com/CameronBeebe/analog_physics/blob/main/BeebeFMMPCC.pdf#page=46"
+      }
+    },
+    {
+      "heading": "Fluid Mechanical Models in Physical and Computational Contexts · Fluids and Quantum Computation",
+      "section": "Coherent Interference",
+      "text": "The third kind of interference, and what I take to be the correct notion of interference to be a candidate for an explanation of speed up, is what can be called coherent 47 interference. For classical waves, coherence is the consistent phase relationship between superposed modes. Coherence is an interference phenomena that qualifies in general as a quantum feature which can be used in an explanation of speed up. From the coherent interference in the fluid analog model, we can argue that the other notions of interference actually boil down to coherent interference.",
+      "source": {
+        "label": "Master's thesis",
+        "url": "https://github.com/CameronBeebe/analog_physics/blob/main/BeebeFMMPCC.pdf#page=47"
+      }
+    },
+    {
+      "heading": "Fluid Mechanical Models in Physical and Computational Contexts · Fluids and Quantum Computation",
+      "section": "Fluid Analog for Quantum Computation?",
+      "text": "In the previous sections one can see that an intimate connection can be made between the use of standing waves (and finely tuned and controlled fluid systems) in analog models for physics and electronics. Also, in terms of computation, we can consider similar controlled functions of a fluid in analog computers and microfluidic applications. A natural course of inquiry has suggested itself: Can a fluid analog model help us conceptualize some operations in quantum computing? Specifically, can we get a clearer grasp of what is going on in the so-called ‘quantum speed up’, or use the fluid analog in a heuristic manner for engineering quantum circuits? Could we construct a fluid analog quantum computer?",
+      "source": {
+        "label": "Master's thesis",
+        "url": "https://github.com/CameronBeebe/analog_physics/blob/main/BeebeFMMPCC.pdf#page=49"
+      }
+    }
+  ],
+  [
+    {
+      "heading": "Fluid Mechanical Models in Physical and Computational Contexts · Fluid Models as Unique Scientific Devices",
+      "section": "Fluid Models as Unique Scientific Devices",
+      "text": "In closing this present work, it is useful to recount the general results in support of the thesis and suggest future research sympathetic with the approach advocated for here. I argue that fluid mechanical models are unique scientific devices on the basis three primary reasons. First, we have seen the plethora of uses that fluid models have in an analogical capacity. Fluid analog models and systems have been used to form scientific arguments from analogy, as well in conceptualizing difficult-to-access phenomena. The ability for fluid analog models to support analog reasoning, visualizations and conceptualizations in science stem from a variety of attributes.",
+      "source": {
+        "label": "Master's thesis",
+        "url": "https://github.com/CameronBeebe/analog_physics/blob/main/BeebeFMMPCC.pdf#page=51"
+      }
+    }
+  ],
+  [
+    {
+      "heading": "Fluid Mechanical Models in Physical and Computational Contexts · Appendix A: Sequent Representation and Circuit Proofs",
+      "section": "Structural and Operational Rules for Quantum Programs",
+      "text": "It is of interest, in the light of the discussion in the preceding thesis, to briefly discuss the quantum logic approach to explaining quantum speed-up. There are a few aspects which we have seen are incredibly important when viewed from the perspective of fluid analog models. These aspects should be represented in a quantum logic, in order to fully capture potential resources in quantum computation. We should in particular be able to represent phase, and the difference between the interference of coherent amplitudes and the measurement probabilities calculated by the Born Rule.",
+      "source": {
+        "label": "Master's thesis",
+        "url": "https://github.com/CameronBeebe/analog_physics/blob/main/BeebeFMMPCC.pdf#page=54"
+      }
+    },
+    {
+      "heading": "Fluid Mechanical Models in Physical and Computational Contexts · Appendix A: Sequent Representation and Circuit Proofs",
+      "section": "Definition of QMC",
+      "text": "Here, subscripts n, m are added to denote the general rules for finite numbers of qubits of generalized superpositions denoted Σ. The sequent arrow ‘⇒’ is read as a counterfactual ‘measurement’ implication: “if we were to measure Σ then the outcomes are determined by probability distribution P”. The turnstile ‘⊢’ is used to denote post-measurement what was measured from this distribution, with probability subscript p. The pseudo-predicate P denotes the calculation of a probability distribution by the Born Rule (BR), and the left conjunction rule is denoted by ⊗ to mimic tensor product.",
+      "source": {
+        "label": "Master's thesis",
+        "url": "https://github.com/CameronBeebe/analog_physics/blob/main/BeebeFMMPCC.pdf#page=54"
+      }
+    }
   ]
 ]

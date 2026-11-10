@@ -140,6 +140,29 @@ test('routes a paper chapter and returns a passage with a PDF page citation', as
   assert.match(excerpts[0].section, /Interference and Non-monotonicity/);
 });
 
+test('uses the open dissertation chapter as evidence about Model-Based Computation', async t => {
+  t.mock.method(globalThis, 'fetch', async (url, options) => {
+    if (url !== 'https://api.typesafe.ai/v1/systemone') return publicSource(url, options);
+    const { questions } = JSON.parse(options.body);
+    const answers = Object.fromEntries(Object.entries(questions).map(([id, { instructions }]) => {
+      const candidate = instructions.source ?? instructions.excerpt;
+      if (/model-based computation/i.test(candidate.heading)) {
+        assert.match(candidate.heading, /^Knowledge Transfer in Cognitive Systems Theory · /);
+      }
+      const relevant = instructions.source
+        ? candidate.heading.endsWith(' · Model-Based Computation')
+        : candidate.text.startsWith('The notion of model-based computation');
+      return [id, { type: 'noul', noul: relevant ? 0.95 : 0.1 }];
+    }));
+    return Response.json({ answers });
+  });
+  const response = await worker.fetch(post({ question: 'What is model-based computation?' }), env);
+  assert.equal(response.status, 200);
+  const { excerpts } = await response.json();
+  assert.equal(excerpts[0].section, 'Model-Based Computation');
+  assert.equal(excerpts[0].source.url, `${lmuUrl}1/Beebe_Cameron.pdf#page=46`);
+});
+
 test('uses the default-branch README even when the GitHub REST API is blocked', async t => {
   const requests = t.mock.method(globalThis, 'fetch', async (url, options) => {
     if (url.startsWith('https://api.github.com/')) return new Response(null, { status: 403 });
