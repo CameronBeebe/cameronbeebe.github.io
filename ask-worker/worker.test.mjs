@@ -11,6 +11,7 @@ const lmuUrl = 'https://edoc.ub.uni-muenchen.de/28655/';
 
 function publicSource(url, options) {
   assert.equal(options.headers?.Authorization, undefined);
+  assert.equal(options.redirect, 'manual');
   if (url === `${origin}/cv.md`) return new Response(cv);
   if (url === lmuUrl) return new Response(
     '<meta name="DC.title" content="Knowledge transfer &amp; control" />\n'
@@ -55,6 +56,7 @@ test('returns the top three source excerpts even when all matches are weak', asy
   const upstream = t.mock.method(globalThis, 'fetch', async (url, options) => {
     if (url !== 'https://api.typesafe.ai/v1/systemone') return publicSource(url, options);
     assert.equal(options.headers.Authorization, 'Bearer test-secret');
+    assert.equal(options.redirect, 'manual');
     const { state, questions } = JSON.parse(options.body);
     assert.equal(state.visitor_question, 'What did Cameron build?');
     assert.ok(Object.keys(questions).length <= 32);

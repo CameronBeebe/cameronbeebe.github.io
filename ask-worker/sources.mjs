@@ -9,7 +9,7 @@ async function fetchSource(url, headers) {
   const response = await fetch(url, {
     ...(headers && { headers }),
     signal: AbortSignal.timeout(3000),
-    redirect: 'error',
+    redirect: 'manual',
     cf: { cacheEverything: true, cacheTtlByStatus: { '200-299': 900, '400-599': -1 } },
   });
   if (!response.ok) throw Object.assign(new Error('Public source unavailable'), { status: response.status });
@@ -112,6 +112,15 @@ export async function publicPassages() {
     return [];
   });
   const [cvEntries, lmuEntries, ...githubEntries] = collections;
+  if (collections.every(passages => passages.length === 0)) {
+    console.error(JSON.stringify({
+      message: 'Ask sources yielded no passages',
+      sources: results.map((result, i) => ({
+        name: feeds[i][0],
+        reason: result.status === 'rejected' ? String(result.reason).slice(0, 160) : 'empty',
+      })),
+    }));
+  }
   const projectGroups = new Map();
   for (const passage of githubEntries.flat()) {
     const url = passage.source.url.split('#')[0];

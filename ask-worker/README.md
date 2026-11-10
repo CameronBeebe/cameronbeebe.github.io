@@ -1,6 +1,6 @@
 # Ask about Cameron
 
-The GitHub Pages panel shows two labeled sample answers using the public `cv.md`. Set the panel’s `data-endpoint` in `index.html` to a deployed Worker’s HTTPS `/ask` URL to enable free-form questions.
+The GitHub Pages panel sends free-form questions to the Worker URL in its `data-endpoint` attribute. With an empty endpoint it shows two labeled sample answers using the public `cv.md`.
 
 The Worker reads the published CV on each lookup, subject to the source cache. It groups Markdown subheadings with their body text and splits top-level section content into paragraphs and bullets. All structured CV passages and the LMU dissertation abstract go to Jev.
 
@@ -10,9 +10,9 @@ The page shows the top three excerpts with links and their passage-level match p
 
 ## Local development
 
-Run the tests from the repository root with `node --test ask-worker/worker.test.mjs`. The default local homepage shows the sample mode without a Worker or API key.
+Run the tests from the repository root with `node --test ask-worker/worker.test.mjs`. The local homepage uses the deployed Worker by default when an endpoint is configured.
 
-For live local testing, put `TYPESAFE_API_KEY` in a private environment file outside the repository and the directory served by the preview. Run Wrangler and open the localhost page with `?live-ask#ask-cameron`.
+To test against a local Worker, put `TYPESAFE_API_KEY` in a private environment file outside the repository and the directory served by the preview. Run Wrangler and open the localhost page with `?live-ask#ask-cameron` to override the deployed endpoint.
 
 ```sh
 npx wrangler dev --config ask-worker/wrangler.toml --port 8787 --env-file /path/to/private/ask-worker.env

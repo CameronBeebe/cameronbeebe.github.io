@@ -9,7 +9,7 @@ const results = panel.querySelector('.ask-results');
 const samples = [...panel.querySelectorAll('[data-cv-sample]')];
 const localLive = ['127.0.0.1', 'localhost'].includes(location.hostname)
   && new URLSearchParams(location.search).has('live-ask');
-const endpoint = panel.dataset.endpoint || (localLive ? 'http://127.0.0.1:8787/ask' : '');
+const endpoint = localLive ? 'http://127.0.0.1:8787/ask' : panel.dataset.endpoint;
 const sampleHeadings = { appy: /Appy\.AI/i, phd: /PhD at GSN/i };
 const sourceHosts = new Set(['cameronbeebe.github.io', 'edoc.ub.uni-muenchen.de', 'github.com']);
 const percentage = value => `${Math.round(value * 100)}%`;

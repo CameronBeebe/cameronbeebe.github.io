@@ -20,9 +20,9 @@ async function rankWithJev(items, judgment, state, apiKey, signal) {
     headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ model: 'jev-latest', state, questions }),
     signal,
-    redirect: 'error',
+    redirect: 'manual',
   });
-  if (!response.ok) throw new Error('Jev unavailable');
+  if (!response.ok) throw Object.assign(new Error('Jev unavailable'), { status: response.status });
   const { answers } = await response.json();
   return items.map((item, i) => {
     const answer = answers?.[`p${i + 1}`];
@@ -109,6 +109,7 @@ export default {
       return json({ error: 'Live questions are temporarily unavailable.' }, 503);
     }
 
+    let phase = 'rate limit';
     try {
       const { success } = await env.ASK_LIMIT.limit({ key: request.headers.get('CF-Connecting-IP') ?? 'unknown' });
       if (!success) {
@@ -116,21 +117,25 @@ export default {
         return json({ error: 'Too many questions. Try again in a minute.' }, 429);
       }
 
+      phase = 'source lookup';
       const { referencePassages, projectGroups, unavailableSources } = await publicPassages();
       const state = { visitor_question: question, current_date: new Date().toISOString().slice(0, 10) };
       const signal = AbortSignal.timeout(8000);
       let selectedGroups = projectGroups;
       if (projectGroups.length > projectGroupLimit) {
+        phase = 'repository routing';
         const routes = await rankWithJev(projectGroups, projectJudgment, state, env.TYPESAFE_API_KEY, signal);
         selectedGroups = routes.slice(0, projectGroupLimit).map(({ item }) => item);
       }
       const passages = [...referencePassages, ...selectedGroups.flat()];
       if (!passages.length) throw new Error('Public sources unavailable');
 
+      phase = 'excerpt ranking';
       const ranked = await rankWithJev(passages, excerptJudgment, state, env.TYPESAFE_API_KEY, signal);
       const excerpts = ranked.slice(0, 3).map(({ item, relevance }) => ({ ...item, relevance }));
       return json({ excerpts, unavailableSources });
-    } catch {
+    } catch (error) {
+      console.error(JSON.stringify({ message: 'Ask lookup failed', phase, status: error?.status }));
       return json({ error: 'Public source lookup is temporarily unavailable. Try again shortly.' }, 503);
     }
   },
