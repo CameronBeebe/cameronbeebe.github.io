@@ -31,10 +31,10 @@ export function createAgent(width, height) {
     );
   }
 
-  function boundPoint(x, y) {
+  function boundPoint(x, y, inset = 12) {
     return {
-      x: Math.max(12, Math.min(width - 12, x)),
-      y: Math.max(12, Math.min(height - 12, y)),
+      x: Math.max(inset, Math.min(width - inset, x)),
+      y: Math.max(inset, Math.min(height - inset, y)),
     };
   }
 
@@ -44,23 +44,18 @@ export function createAgent(width, height) {
       y - 0.7 + 3.1 * Math.cos((2 * x - y) / 49));
   }
 
-  function goalBias({ x, y }) {
-    return { x: 20 + 7 * Math.sin(y / 42), y: -14 + 7 * Math.cos(x / 57) };
-  }
-
   function observeGoal(target, scale) {
-    const bias = goalBias(target);
-    const reading = { x: target.x + scale * bias.x, y: target.y + scale * bias.y };
-    // Planning approximately inverts the distortion in the goal reading.
-    const correction = goalBias(reading);
-    return {
-      reported: { ...boundPoint(reading.x, reading.y), radius: Math.ceil(scale * 35) },
-      planned: {
-        ...boundPoint(reading.x - 0.8 * scale * correction.x, reading.y - 0.8 * scale * correction.y),
-        // Bound the residual from the partial correction and the spatial variation in goalBias.
-        radius: Math.ceil(scale * 11),
-      },
-    };
+    // Sample by area in a disk. In this model, planning reduces the same reading's error.
+    const angle = Math.random() * 2 * Math.PI;
+    const magnitude = Math.sqrt(Math.random()) * scale;
+    const dx = Math.cos(angle) * magnitude;
+    const dy = Math.sin(angle) * magnitude;
+    function reading(radius) {
+      // The goal estimate can sit closer to the print's edge than the agent can travel.
+      const center = boundPoint(target.x + dx * radius, target.y + dy * radius, 4);
+      return { ...center, radius: Math.ceil(scale * radius) };
+    }
+    return { reported: reading(35), planned: reading(11) };
   }
 
   function addGoal(target, life) {
