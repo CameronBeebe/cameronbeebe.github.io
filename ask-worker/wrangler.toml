@@ -1,0 +1,8 @@
+name = "cameron-portfolio-ask"
+main = "worker.mjs"
+compatibility_date = "2026-11-10"
+
+[[ratelimits]]
+name = "ASK_LIMIT"
+namespace_id = "74101"
+simple = { limit = 8, period = 60 }
