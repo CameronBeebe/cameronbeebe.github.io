@@ -4,7 +4,7 @@ The GitHub Pages panel shows two labeled sample answers using the public `cv.md`
 
 The Worker reads the published CV on each lookup, subject to the source cache. It groups Markdown subheadings with their body text and splits top-level section content into paragraphs and bullets. All structured CV passages and the LMU dissertation abstract go to Jev.
 
-GitHub metadata and README passages are grouped by repository, with the recent repository list in its own group. If more than four groups are available, Jev scores each group using its heading and short text previews. The Worker keeps the four highest-scoring groups, then asks Jev to rank their full passages alongside the CV and abstract. With four or fewer groups, the Worker goes directly to passage ranking.
+GitHub metadata and README passages are grouped by repository, with the recent repository list in its own group. README text comes from each repository's default Git branch. The Worker fetches the standard README directly from GitHub's raw content host and uses the README API to locate other names or paths. If more than four groups are available, Jev scores each group using its heading and short text previews. The Worker keeps the four highest-scoring groups, then asks Jev to rank their full passages alongside the CV and abstract. With four or fewer groups, the Worker goes directly to passage ranking.
 
 The page shows the top three excerpts with links and their passage-level match probabilities, even when the scores are low. The displayed text comes from the sources.
 

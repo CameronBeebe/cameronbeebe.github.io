@@ -12,7 +12,7 @@ async function fetchSource(url, headers) {
     redirect: 'error',
     cf: { cacheEverything: true, cacheTtlByStatus: { '200-299': 900, '400-599': -1 } },
   });
-  if (!response.ok) throw new Error('Public source unavailable');
+  if (!response.ok) throw Object.assign(new Error('Public source unavailable'), { status: response.status });
   return response;
 }
 
@@ -78,10 +78,20 @@ async function githubProjects() {
 }
 
 async function projectReadme(repo) {
-  const url = `${githubApi}/repos/CameronBeebe/${repo}/readme`;
-  const markdown = await (await fetchSource(url, githubHeaders('application/vnd.github.raw+json'))).text();
+  const encodedRepo = encodeURIComponent(repo);
+  const rawUrl = `https://raw.githubusercontent.com/CameronBeebe/${encodedRepo}/HEAD/README.md`;
+  let response;
+  try {
+    response = await fetchSource(rawUrl);
+  } catch (error) {
+    if (error.status !== 404) throw error;
+    // The API can locate READMEs with a different name or path on the default branch.
+    const url = `${githubApi}/repos/CameronBeebe/${encodedRepo}/readme`;
+    response = await fetchSource(url, githubHeaders('application/vnd.github.raw+json'));
+  }
+  const markdown = await response.text();
   const intro = markdown.slice(0, 6000).split(/\r?\n##\s/)[0];
-  const source = { label: 'GitHub README', url: `${githubProfile}/${repo}#readme` };
+  const source = { label: 'GitHub README', url: `${githubProfile}/${encodedRepo}#readme` };
   return intro.split(/\r?\n\s*\r?\n/)
     .map(block => block.trim())
     .filter(block => block && !/^(#|<|!\[|\[!\[|```|\|)/.test(block))

@@ -20,8 +20,14 @@ function publicSource(url, options) {
     { name: 'fungi_chromatic', description: 'A Game Boy Color cartridge.', pushed_at: '2026-11-07T00:00:00Z', archived: false },
     { name: 'old-game', pushed_at: '2026-11-07T00:00:00Z', archived: true },
   ]);
-  assert.match(url, /^https:\/\/api\.github\.com\/repos\/CameronBeebe\/[\w.-]+\/readme$/);
-  assert.equal(options.headers.Accept, 'application/vnd.github.raw+json');
+  if (url === 'https://raw.githubusercontent.com/CameronBeebe/Structural_Idealism/HEAD/README.md') {
+    return new Response(null, { status: 404 });
+  }
+  if (url === 'https://api.github.com/repos/CameronBeebe/Structural_Idealism/readme') {
+    assert.equal(options.headers.Accept, 'application/vnd.github.raw+json');
+  } else {
+    assert.match(url, /^https:\/\/raw\.githubusercontent\.com\/CameronBeebe\/[\w.-]+\/HEAD\/README\.md$/);
+  }
   return new Response('# Project\n\nAn **experimental Game Boy Color game** that runs on the ModRetro Chromatic.');
 }
 
@@ -74,7 +80,7 @@ test('returns the top three source excerpts even when all matches are weak', asy
   assert.equal(upstream.mock.calls.filter(call => call.arguments[0] === 'https://api.typesafe.ai/v1/systemone').length, 2);
 });
 
-test('routes GitHub branches before ranking their excerpts alongside LMU', async t => {
+test('routes GitHub repository groups before ranking their excerpts alongside LMU', async t => {
   let routingCalls = 0;
   t.mock.method(globalThis, 'fetch', async (url, options) => {
     if (url === `${origin}/cv.md`) return new Response(null, { status: 503 });
@@ -84,7 +90,7 @@ test('routes GitHub branches before ranking their excerpts alongside LMU', async
       routingCalls++;
       const branches = Object.entries(questions).map(([id, q]) => [id, q.instructions.source]);
       const project = branches.find(([, source]) => source.heading === 'fungi_chromatic')[1];
-      assert.equal(project.preview.length, 2, 'repository metadata and README share a branch');
+      assert.equal(project.preview.length, 2, 'repository metadata and README share a group');
       assert.ok(project.preview[1].includes('ModRetro Chromatic'));
       assert.equal(branches.length, 5);
       return Response.json({ answers: Object.fromEntries(branches.map(([id, source]) => [id, {
@@ -110,6 +116,26 @@ test('routes GitHub branches before ranking their excerpts alongside LMU', async
   assert.deepEqual(excerpts.slice(0, 2).map(p => p.source.url), [lmuUrl, 'https://github.com/CameronBeebe/fungi_chromatic#readme']);
   assert.equal(excerpts[0].heading, 'Knowledge transfer & control');
   assert.match(excerpts[1].text, /experimental Game Boy Color game/);
+});
+
+test('uses the default-branch README even when the GitHub REST API is blocked', async t => {
+  const requests = t.mock.method(globalThis, 'fetch', async (url, options) => {
+    if (url.startsWith('https://api.github.com/')) return new Response(null, { status: 403 });
+    if (url !== 'https://api.typesafe.ai/v1/systemone') return publicSource(url, options);
+    const { questions } = JSON.parse(options.body);
+    const answers = Object.fromEntries(Object.entries(questions).map(([id, { instructions }]) => [id, {
+      type: 'noul', noul: instructions.excerpt.heading === 'fungi_chromatic' ? 0.95 : 0.1,
+    }]));
+    return Response.json({ answers });
+  });
+  const response = await worker.fetch(post({ question: 'What hardware runs the handheld game?' }), env);
+  assert.equal(response.status, 200);
+  const { excerpts, unavailableSources } = await response.json();
+  assert.ok(unavailableSources.includes('GitHub project list'));
+  assert.equal(excerpts[0].source.url, 'https://github.com/CameronBeebe/fungi_chromatic#readme');
+  assert.match(excerpts[0].text, /runs on the ModRetro Chromatic/);
+  assert.ok(requests.mock.calls.some(call =>
+    call.arguments[0] === 'https://raw.githubusercontent.com/CameronBeebe/fungi_chromatic/HEAD/README.md'));
 });
 
 test('rejects invalid and rate-limited requests before calling upstream', async t => {

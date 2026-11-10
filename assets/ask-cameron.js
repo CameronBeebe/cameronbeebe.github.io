@@ -6,8 +6,6 @@ const input = form.elements.question;
 const submit = form.querySelector('button');
 const status = panel.querySelector('[role="status"]');
 const results = panel.querySelector('.ask-results');
-const sources = panel.querySelector('details');
-const sourceList = sources.querySelector('ul');
 const samples = [...panel.querySelectorAll('[data-cv-sample]')];
 const localLive = ['127.0.0.1', 'localhost'].includes(location.hostname)
   && new URLSearchParams(location.search).has('live-ask');
@@ -18,34 +16,25 @@ const percentage = value => `${Math.round(value * 100)}%`;
 
 function renderExcerpts(excerpts) {
   results.replaceChildren();
-  sourceList.replaceChildren();
-  sources.hidden = excerpts.length === 0;
-  sources.open = false;
 
-  const seen = new Set();
   for (const { text, heading, source, relevance } of excerpts) {
     const quote = document.createElement('blockquote');
+    const byline = document.createElement('span');
+    byline.className = 'bio-detail';
     if (Number.isFinite(relevance)) {
-      const score = document.createElement('span');
-      score.className = 'bio-detail';
-      score.textContent = `${percentage(relevance)} match · Jev`;
-      quote.append(score);
+      byline.textContent = `${percentage(relevance)} match · Jev`;
     }
-    quote.append(text);
-    results.append(quote);
     const url = new URL(source.url);
-    if (url.protocol !== 'https:' || !sourceHosts.has(url.hostname)) continue;
-    quote.cite = url.href;
-    const label = `${source.label} · ${heading}`;
-    const key = `${url.href} ${label}`;
-    if (seen.has(key)) continue;
-    seen.add(key);
-    const item = document.createElement('li');
-    const link = document.createElement('a');
-    link.href = url.href;
-    link.textContent = label;
-    item.append(link);
-    sourceList.append(item);
+    if (url.protocol === 'https:' && sourceHosts.has(url.hostname)) {
+      quote.cite = url.href;
+      const link = document.createElement('a');
+      link.href = url.href;
+      link.textContent = `${source.label} · ${heading}`;
+      if (byline.textContent) byline.append(' · ');
+      byline.append(link);
+    }
+    quote.append(byline, text);
+    results.append(quote);
   }
 }
 

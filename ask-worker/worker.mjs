@@ -8,7 +8,7 @@ const allowedOrigins = new Set([
   'http://localhost:8741',
 ]);
 const maxBodyBytes = 4096;
-const projectBranchLimit = 4;
+const projectGroupLimit = 4;
 
 async function rankWithJev(items, judgment, state, apiKey, signal) {
   const questions = Object.fromEntries(items.map((item, i) => [`p${i + 1}`, {
@@ -120,9 +120,9 @@ export default {
       const state = { visitor_question: question, current_date: new Date().toISOString().slice(0, 10) };
       const signal = AbortSignal.timeout(8000);
       let selectedGroups = projectGroups;
-      if (projectGroups.length > projectBranchLimit) {
+      if (projectGroups.length > projectGroupLimit) {
         const routes = await rankWithJev(projectGroups, projectJudgment, state, env.TYPESAFE_API_KEY, signal);
-        selectedGroups = routes.slice(0, projectBranchLimit).map(({ item }) => item);
+        selectedGroups = routes.slice(0, projectGroupLimit).map(({ item }) => item);
       }
       const passages = [...referencePassages, ...selectedGroups.flat()];
       if (!passages.length) throw new Error('Public sources unavailable');

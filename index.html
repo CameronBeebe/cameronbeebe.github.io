@@ -155,10 +155,9 @@
     .ask-panel button { color: var(--phosphor); cursor: pointer; text-align: left; }
     .ask-panel button:hover { border-color: var(--phosphor); }
     .ask-panel button:disabled { opacity: 0.55; cursor: wait; }
-    .ask-samples, .ask-panel [role="status"], .ask-panel details { font-size: 0.85em; }
+    .ask-samples, .ask-panel [role="status"] { font-size: 0.85em; }
     .ask-panel [role="status"] { color: var(--muted); }
     .ask-results blockquote { margin: 0.65rem 0; padding-left: 0.75rem; border-left: 2px solid var(--line); white-space: pre-line; }
-    .ask-panel summary { cursor: pointer; color: var(--link); }
     @media (max-width: 700px) {
       .hero { grid-template-columns: 1fr; }
       .hero-art { justify-self: start; }
@@ -372,7 +371,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/tex-chtml.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <script type="module" src="assets/portrait.js?v=2"></script>
-  <script type="module" src="assets/ask-cameron.js?v=4"></script>
+  <script type="module" src="assets/ask-cameron.js?v=5"></script>
 </head>
 <body>
   <main>
@@ -474,10 +473,6 @@
         </div>
         <p role="status"></p>
         <div class="ask-results"></div>
-        <details hidden>
-          <summary>Sources used</summary>
-          <ul></ul>
-        </details>
       </div>
     </section>
   </div>
