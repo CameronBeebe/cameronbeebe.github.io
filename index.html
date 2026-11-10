@@ -60,6 +60,7 @@
       width: min(100%, 25rem);
       margin: 0;
       justify-self: end;
+      container-type: inline-size;
     }
     .portrait-print, .portrait-terminal {
       display: block;
@@ -91,7 +92,13 @@
     .portrait-actions label { display: inline-flex; align-items: center; gap: 0.4rem; cursor: pointer; }
     .portrait-actions input { accent-color: var(--phosphor); }
     .portrait-actions + .portrait-actions { margin-top: 0.35rem; }
-    .portrait-modes { margin-bottom: 0.65rem; gap: 0.35rem; }
+    .portrait-modes { display: grid; margin-bottom: 0.65rem; gap: 0.35rem; }
+    .portrait-mode-row { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+    .portrait-modes button { padding-inline: clamp(0.25rem, 2cqi, 0.55rem); }
+    @container (max-width: 18rem) {
+      .portrait-modes { display: flex; }
+      .portrait-mode-row { display: contents; }
+    }
     .portrait-modes button[aria-pressed="true"] {
       background: var(--phosphor);
       border-color: var(--phosphor);
@@ -330,7 +337,7 @@
   </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/tex-chtml.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-  <script type="module" src="assets/portrait.js"></script>
+  <script type="module" src="assets/portrait.js?v=2"></script>
 </head>
 <body>
   <main>
@@ -352,15 +359,19 @@
     <canvas class="portrait-terminal" width="600" height="600" role="img" aria-label="Hacker-green ASCII portrait of a frog samurai under a pine." aria-describedby="portrait-instructions" hidden></canvas>
     <figcaption class="portrait-controls" hidden>
       <div class="portrait-actions portrait-modes" role="group" aria-label="ASCII experiments">
-        <button type="button" data-experiment="sort" aria-pressed="true">Sort</button>
-        <button type="button" data-experiment="repair" aria-pressed="false">Repair</button>
-        <button type="button" data-experiment="trace" aria-pressed="false">Trace</button>
-        <button type="button" data-experiment="alphabet" aria-pressed="false">Alphabet</button>
-        <button type="button" data-experiment="life" aria-pressed="false">Life</button>
-        <button type="button" data-experiment="gravity" aria-pressed="false">Gravity</button>
-        <button type="button" data-experiment="descent" aria-pressed="false">Descent</button>
-        <button type="button" data-experiment="edges" aria-pressed="false">Edges</button>
-        <button type="button" data-experiment="flow" aria-pressed="false">Percolation</button>
+        <div class="portrait-mode-row">
+          <button type="button" data-experiment="sort" aria-pressed="true">Sort</button>
+          <button type="button" data-experiment="repair" aria-pressed="false">Repair</button>
+          <button type="button" data-experiment="trace" aria-pressed="false">Trace</button>
+          <button type="button" data-experiment="alphabet" aria-pressed="false">Alphabet</button>
+          <button type="button" data-experiment="life" aria-pressed="false">Life</button>
+        </div>
+        <div class="portrait-mode-row">
+          <button type="button" data-experiment="gravity" aria-pressed="false">Gravity</button>
+          <button type="button" data-experiment="descent" aria-pressed="false">Descent</button>
+          <button type="button" data-experiment="edges" aria-pressed="false">Edges</button>
+          <button type="button" data-experiment="flow" aria-pressed="false">Percolation</button>
+        </div>
       </div>
       <strong class="portrait-title" id="portrait-title"></strong>
       <p id="portrait-instructions"></p>
@@ -515,7 +526,7 @@
   </main>
 
 <script type="module">
-import { columns, rows, createLandscape } from './assets/playground-landscape.js';
+import { columns, rows, createLandscape } from './assets/playground-landscape.js?v=2';
 import { createAgent, distanceBetween } from './assets/playground-agent.js?v=7';
 
 (function () {
