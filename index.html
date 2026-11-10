@@ -137,7 +137,60 @@
       color: var(--muted);
       font-size: 0.9em;
     }
-    .bio-section .project-context { margin-bottom: 0.35rem; }
+    .ask-panel [hidden] { display: none; }
+    .ask-panel p + p { margin-top: 0.5rem; }
+    .ask-panel form {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+      margin: 0.6rem 0;
+    }
+    .ask-panel :is(input, button) {
+      border: 1px solid var(--line);
+      background: var(--well);
+      padding: 0.4rem 0.6rem;
+      font: inherit;
+    }
+    .ask-panel button { color: var(--phosphor); cursor: pointer; text-align: left; }
+    .ask-panel button:hover { border-color: var(--phosphor); }
+    .ask-panel button:disabled { opacity: 0.55; cursor: wait; }
+    .ask-field {
+      position: relative;
+      display: flex;
+      flex: 1 1 12rem;
+      min-width: 0;
+      border: 1px solid var(--line);
+      background: var(--well);
+    }
+    .ask-field:focus-within { outline: 2px solid var(--phosphor); outline-offset: 2px; }
+    .ask-field input { flex: 1; min-width: 0; border: 0; background: transparent; color: var(--link); }
+    .ask-field input:focus-visible { outline: none; }
+    .ask-suggestions summary {
+      display: grid;
+      place-items: center;
+      width: 2.5rem;
+      height: 100%;
+      list-style: none;
+      color: var(--link);
+      cursor: pointer;
+    }
+    .ask-suggestions summary::-webkit-details-marker { display: none; }
+    .ask-suggestions summary:focus-visible { outline: none; background: var(--panel); color: var(--phosphor); }
+    .ask-suggestions summary:hover, .ask-suggestions[open] summary { color: var(--phosphor); }
+    .ask-suggestions-list {
+      position: absolute;
+      z-index: 2;
+      inset: calc(100% + 0.3rem) -1px auto;
+      border: 1px solid var(--line);
+      background: var(--well);
+    }
+    .ask-suggestions-list button { display: block; width: 100%; border: 0; color: var(--link); }
+    .ask-suggestions-list button:is(:hover, :focus-visible) { background: var(--panel); color: var(--phosphor); }
+    .ask-panel [role="status"], .ask-results summary { font-size: 0.85em; }
+    .ask-panel [role="status"] { color: var(--muted); }
+    .ask-results summary { color: var(--link); cursor: pointer; }
+    .ask-results figure { margin: 0.65rem 0; }
+    .ask-results blockquote { margin: 0.35rem 0 0; padding-left: 0.75rem; border-left: 2px solid var(--line); white-space: pre-line; }
     @media (max-width: 700px) {
       .hero { grid-template-columns: 1fr; }
       .hero-art { justify-self: start; }
@@ -351,6 +404,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/tex-chtml.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <script type="module" src="assets/portrait.js?v=2"></script>
+  <script type="module" src="assets/ask-cameron.js?v=13"></script>
 </head>
 <body>
   <main>
@@ -436,43 +490,30 @@
       <h2 id="about-title">About</h2>
       <p>Agentic product engineer and interdisciplinary philosopher of science. AI research and consulting via the SciPhi Initiative. Co-organizer, Nederland Philosophy Club.</p>
     </section>
-    <section class="bio-section" id="education" aria-labelledby="education-title">
-      <h2 id="education-title">Education</h2>
-      <ul>
-        <li>
-          Ph.D. from the Graduate School of Systemic Neurosciences, LMU Munich
-          <span class="bio-detail">
-            Dissertation <a href="https://edoc.ub.uni-muenchen.de/28655/1/Beebe_Cameron.pdf"><em>Knowledge Transfer in Cognitive Systems Theory</em></a>
-            — knowledge as control via structure mapping, using cybernetics to explain neural networks as error-controlled regulators.
-          </span>
-        </li>
-        <li>Masters from the Munich Center for Mathematical Philosophy, LMU Munich</li>
-      </ul>
-    </section>
-    <section class="bio-section" id="experience" aria-labelledby="experience-title">
-      <h2 id="experience-title">Experience</h2>
-      <ul>
-        <li>
-          <a href="https://appy.ai/about">Appy.AI</a> on the core team developing the multi-agent harness for <em>Violet</em> — an AI Chief of Staff that routes specialist agents with scoped context for real workflows.
-          <span class="bio-detail">Prompts, context, orchestration, steering, agent standards (skills), evals and testing.</span>
-        </li>
-        <li>Cray deep-learning internship.</li>
-        <li>
-          Building and experimentation with agentic tools and new models
-          <span class="bio-detail">Devin, Claude Code, Cursor, Grok Bot, Typesafe's Jev, DSPy, RLMs, etc.</span>
-        </li>
-      </ul>
-    </section>
-    <section class="bio-section" id="projects" aria-labelledby="projects-title">
-      <h2 id="projects-title">Projects</h2>
-      <div>
-        <p class="project-context">From the SciPhi Initiative</p>
-        <ul>
-          <li><a href="https://github.com/CameronBeebe/fungi_fortress">fungi_fortress</a> (generative game harness)</li>
-          <li><a href="https://github.com/CameronBeebe/fungi_chromatic">fungi_chromatic</a> (its Game Boy Color cartridge)</li>
-          <li><a href="https://github.com/CameronBeebe/Structural_Idealism">Structural Idealism</a></li>
-          <li><a href="https://github.com/CameronBeebe/scipfs">scipfs</a></li>
-        </ul>
+    <section class="bio-section" id="ask-cameron" aria-labelledby="ask-title" data-endpoint="https://cameron-portfolio-ask.cameronbeebe.workers.dev/ask">
+      <h2 id="ask-title">Ask more</h2>
+      <div class="ask-panel">
+        <p>Search my <a href="cv.md">CV</a>, <a href="https://github.com/CameronBeebe?tab=repositories">GitHub projects</a>, <a href="https://edoc.ub.uni-muenchen.de/28655/">dissertation</a>, and selected papers.</p>
+        <p class="ask-preview bio-detail" hidden>Preview mode. Choose a suggested question.</p>
+        <p class="ask-live bio-detail" id="ask-service-note">Hierarchical semantic search over context. Ask a specific question for best results.</p>
+        <form>
+          <div class="ask-field">
+            <input name="question" type="text" autocomplete="off" aria-label="Question about Cameron" aria-describedby="ask-service-note" placeholder="What would you like to know?" maxlength="280" required />
+            <details class="ask-suggestions">
+              <summary aria-label="Suggested questions"><span aria-hidden="true">▾</span></summary>
+              <div class="ask-suggestions-list">
+                <button type="button" data-cv-sample="appy">What did Cameron do at Appy.AI?</button>
+                <button type="button" class="ask-live">What is fungi_chromatic?</button>
+                <button type="button" class="ask-live">What kind of harness mod is Intent Controller?</button>
+                <button type="button" data-cv-sample="phd">What was Cameron’s Ph.D. research about?</button>
+                <button type="button" class="ask-live">Why does Cameron say analog computing is about analogy?</button>
+              </div>
+            </details>
+          </div>
+          <button type="submit">Ask</button>
+        </form>
+        <p role="status"></p>
+        <div class="ask-results"></div>
       </div>
     </section>
   </div>
