@@ -2,6 +2,7 @@ const maxSpeed = 1.5;
 const spring = 0.0024;
 const damping = 0.978;
 const still = { x: 0, y: 0 };
+const goalSensorRange = 52;
 
 export const arrivalRadius = 8;
 
@@ -22,10 +23,53 @@ export function createAgent(width, height) {
   }
 
   function advance(point, current, strength) {
+    return boundPoint(
+      point.x + velocity.x + current.x * strength,
+      point.y + velocity.y + current.y * strength,
+    );
+  }
+
+  function boundPoint(x, y) {
     return {
-      x: Math.max(12, Math.min(width - 12, point.x + velocity.x + current.x * strength)),
-      y: Math.max(12, Math.min(height - 12, point.y + velocity.y + current.y * strength)),
+      x: Math.max(12, Math.min(width - 12, x)),
+      y: Math.max(12, Math.min(height - 12, y)),
     };
+  }
+
+  function readPosition() {
+    const { x, y } = state.position;
+    return boundPoint(x + 1.1 + 3.4 * Math.sin((x + 2 * y) / 47),
+      y - 0.7 + 3.1 * Math.cos((2 * x - y) / 49));
+  }
+
+  function goalBias({ x, y }) {
+    return { x: 20 + 7 * Math.sin(y / 42), y: -14 + 7 * Math.cos(x / 57) };
+  }
+
+  function observeGoal(target, scale) {
+    const bias = goalBias(target);
+    const reading = { x: target.x + scale * bias.x, y: target.y + scale * bias.y };
+    // Planning approximately inverts the distortion in the goal reading.
+    const correction = goalBias(reading);
+    return {
+      reported: { ...boundPoint(reading.x, reading.y), radius: Math.ceil(scale * 35) },
+      planned: {
+        ...boundPoint(reading.x - 0.8 * scale * correction.x, reading.y - 0.8 * scale * correction.y),
+        // Bound the residual from the partial correction and the spatial variation in goalBias.
+        radius: Math.ceil(scale * 11),
+      },
+    };
+  }
+
+  function addGoal(target, life) {
+    target.observation = observeGoal(target, 1);
+    state.goals = state.goals.filter(goal => goal.target.cell !== target.cell);
+    state.goals.push({ target, life });
+  }
+
+  function estimateGoal(target, plan) {
+    const observation = target.localReading ?? target.observation;
+    return target.verified ?? (plan ? observation.planned : observation.reported);
   }
 
   function currentAt({ x, y }, scale = 1) {
@@ -48,7 +92,7 @@ export function createAgent(width, height) {
     const strength = Math.min(1, Math.hypot(velocity.x, velocity.y) / 2);
     state.position = advance(state.position, slip, strength);
     if (feedback) {
-      state.estimate = state.position;
+      state.estimate = readPosition();
       if (memory) {
         // Use recent readings to anticipate the current as it changes across the print.
         rememberedCurrent = {
@@ -63,20 +107,25 @@ export function createAgent(width, height) {
   }
 
   function step(options, visibleTargets) {
+    const { tools: feedback, memory, plan } = options;
     for (const target of visibleTargets) {
-      if (target.reached || distanceBetween(target, state.position) > arrivalRadius) continue;
-      target.reached = true;
-      state.done++;
+      const actualDistance = distanceBetween(target, state.position);
+      if (feedback && !target.localReading && actualDistance <= goalSensorRange) {
+        target.localReading = observeGoal(target, 0.22);
+      }
+      if (!target.reached && actualDistance <= arrivalRadius) {
+        target.reached = true;
+        state.done++;
+      }
     }
 
-    const { tools: feedback, memory, plan } = options;
-    if (feedback) state.estimate = state.position;
+    if (feedback) state.estimate = readPosition();
 
     state.goals = state.goals.filter(goal => --goal.life > 0);
     let pending;
     let distance = Infinity;
     for (const goal of state.goals) {
-      const gap = distanceBetween(goal.target, state.estimate);
+      const gap = distanceBetween(estimateGoal(goal.target, plan), state.estimate);
       if (gap < distance) {
         pending = goal;
         distance = gap;
@@ -89,15 +138,19 @@ export function createAgent(width, height) {
       velocity = still;
       return;
     }
-    const dx = target.x - state.estimate.x;
-    const dy = target.y - state.estimate.y;
+    const aim = estimateGoal(target, plan);
+    const dx = aim.x - state.estimate.x;
+    const dy = aim.y - state.estimate.y;
 
-    if (pending && distance <= arrivalRadius) {
+    // After a failed check, aim closer to the verified center before stopping again.
+    if (pending && distance <= (target.verified ? 2 : arrivalRadius)) {
       if (!target.reached) {
+        target.falseArrival = true;
         state.misses++;
         if (options.verifier) {
-          // Check the actual position on arrival and retry from that reading.
+          // The independent arrival check supplies a fix for both positions.
           state.estimate = state.position;
+          target.verified = { x: target.x, y: target.y, radius: 0 };
           velocity = still;
           return;
         }
@@ -133,5 +186,5 @@ export function createAgent(width, height) {
   }
 
   reset();
-  return { state, step, reset };
+  return { state, step, reset, addGoal, estimateGoal };
 }

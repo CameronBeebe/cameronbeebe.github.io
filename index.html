@@ -302,16 +302,8 @@
     .agent-key, .agent-demo .scores b { color: var(--agent-ink); }
     .agent-estimate { color: var(--agent-estimate); }
     .agent-metrics {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      align-items: start;
-      gap: 0.5rem;
       max-width: 680px;
       margin: 0.6rem auto;
-    }
-    .agent-metrics figure {
-      min-width: 0;
-      margin: 0;
       padding: 0.4rem 0.55rem;
       border: 1px solid var(--line);
       background: var(--well);
@@ -320,17 +312,14 @@
     }
     .agent-metrics figcaption { color: var(--link); }
     .agent-metrics small { display: block; font-size: 0.9em; }
-    .agent-meter { display: grid; grid-template-columns: max-content 5ch; gap: 0.6ch; align-items: baseline; }
+    .agent-meter { display: grid; grid-template-columns: 4ch max-content 5ch; gap: 0.6ch; align-items: baseline; }
     .agent-meter code { color: var(--line); font: inherit; white-space: nowrap; }
     .agent-meter .reading { text-align: right; }
-    #target-distance .agent-meter { grid-template-columns: 6ch max-content 5ch; }
-    .goal-gap { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 0.7ch; }
-    .goal-gap .reading { color: var(--link); }
+    .goal-confidence { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 1ch; }
     .false-arrival { padding: 0 0.4ch; color: var(--danger); background: #3d2d12; }
-    @media (max-width: 620px) { .agent-metrics { grid-template-columns: minmax(0, 1fr); } }
     .agent-legend {
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 0.35rem 0.8rem;
       max-width: 680px;
       margin: 0.65rem auto 0.45rem;
@@ -339,7 +328,6 @@
       color: var(--muted);
       font-size: 0.82em;
     }
-    @media (max-width: 620px) { .agent-legend { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
     .agent-legend div { display: flex; align-items: baseline; gap: 0.55rem; }
     .agent-legend dd { margin: 0; }
     .agent-legend code { display: inline-block; padding: 0 0.25em; font: inherit; font-weight: 700; }
@@ -456,17 +444,17 @@
 
   <h3 class="experiment-title">01 · Brain in a vat vs harness</h3>
   <p class="demo-note">
-    Click the print to set a target. With every harness switch off, the agent imagines a straight
-    route and drifts with the current. Plan predicts drift. Tools read the actual position.
+    Click the print to set a target. The agent steers by its estimates of where it is and where
+    the goal is. Plan narrows the goal estimate, tools give local readings, and the verifier checks arrival.
   </p>
   <div class="demo agent-demo" data-mode="harness">
     <div class="controls" role="group" aria-label="Agent settings and simulation controls">
       <div class="sim-controls">
         <span>Harness:</span>
-        <label title="Use a rough model of the current to predict drift"><input type="checkbox" id="optPlan" /> plan</label>
-        <label title="Read the agent’s actual position while moving"><input type="checkbox" id="optTools" checked /> tools</label>
+        <label title="Refine the goal reading and use a rough model of the current to predict drift"><input type="checkbox" id="optPlan" /> plan</label>
+        <label title="Read an imperfect self position and get a closer goal reading within range"><input type="checkbox" id="optTools" checked /> tools</label>
         <label title="Use recent readings to predict the current"><input type="checkbox" id="optMemory" checked /> memory</label>
-        <label title="Check the actual position when the agent thinks it has arrived and retry after a miss"><input type="checkbox" id="optVerifier" checked /> verifier</label>
+        <label title="Check arrival and confirm the goal location after a miss"><input type="checkbox" id="optVerifier" checked /> verifier</label>
         <label title="Release the last target once the harness settles near it"><input type="checkbox" id="optStop" checked /> stop condition</label>
         <label title="Reduce momentum during feedback corrections so oscillations shrink"><input type="checkbox" id="optDamp" checked /> damp</label>
       </div>
@@ -478,25 +466,20 @@
       <strong class="agent-key" id="agent-mode">Harness enabled</strong>
       <span>hits: <b id="agent-hits">0</b> · misses: <b id="agent-misses">0</b></span>
     </div>
-    <div class="agent-metrics">
-      <figure id="position-error" aria-labelledby="position-error-label">
-        <figcaption id="position-error-label">Position error <small>Actual to estimate · ~5 units per #</small></figcaption>
-        <div class="agent-meter"><code aria-hidden="true">[<span class="agent-key"></span><span>....................</span>]</code><span class="reading">0.0</span></div>
-      </figure>
-      <figure id="target-distance" aria-labelledby="target-distance-label">
-        <figcaption id="target-distance-label">Distance to latest target [*] <small>~15 units per # · arrival within <span id="arrival-radius"></span> units</small></figcaption>
-        <div class="agent-meter" data-distance="actual"><span>actual</span><code aria-hidden="true">[<span class="agent-key"></span><span>..............</span>]</code><span class="reading">—</span></div>
-        <div class="agent-meter" data-distance="estimated"><span>est.</span><code aria-hidden="true">[<span class="agent-estimate"></span><span>..............</span>]</code><span class="reading">—</span></div>
-        <div class="goal-gap"><span>abs. gap</span><span class="reading">—</span><span class="false-arrival" hidden>! False arrival</span></div>
-      </figure>
-    </div>
+    <figure class="agent-metrics" aria-labelledby="estimate-error-label">
+      <figcaption id="estimate-error-label">Estimation error <small>Actual to estimate · ~5 units per #</small></figcaption>
+      <div class="agent-meter" id="position-error"><span>self</span><code aria-hidden="true">[<span class="agent-key"></span><span>................</span>]</code><span class="reading">0.0</span></div>
+      <div class="agent-meter" id="goal-error"><span>goal</span><code aria-hidden="true">[<span class="legend-target"></span><span>................</span>]</code><span class="reading">—</span></div>
+      <div class="goal-confidence"><span id="goal-confidence">Goal uncertainty —</span><span class="false-arrival" hidden>! False arrival</span></div>
+    </figure>
     <dl class="agent-legend" aria-label="ASCII marker legend">
       <div><dt><code class="legend-agent">&lt;A&gt;</code></dt><dd>Agent position</dd></div>
-      <div><dt><code class="agent-estimate">&lt;a&gt;</code></dt><dd>Agent estimate</dd></div>
-      <div><dt><code class="legend-target">[+]</code></dt><dd>Target</dd></div>
+      <div><dt><code class="agent-estimate">&lt;a&gt;</code></dt><dd>Self estimate</dd></div>
+      <div><dt><code class="legend-target">[*]</code></dt><dd>Latest target</dd></div>
+      <div><dt><code class="legend-target">[g]</code></dt><dd>Estimated goal and uncertainty ring</dd></div>
     </dl>
     <p class="demo-note">Shaded trails show actual paths. Dots trace estimates. A separate estimate appears when its cell differs from the actual position.</p>
-    <p class="demo-note"><code class="legend-target">[+]</code> marks a target. <code class="legend-target">[*]</code> is the latest target and stays in the distance readout after the first physical arrival clears its marker.</p>
+    <p class="demo-note">The goal readout follows the latest target. The target clears when the agent physically arrives.</p>
   </div>
 
   <h3 class="experiment-title">02 · Send a task to the right specialist</h3>
@@ -543,7 +526,7 @@
 
 <script type="module">
 import { columns, rows, createLandscape } from './assets/playground-landscape.js';
-import { arrivalRadius, createAgent, distanceBetween } from './assets/playground-agent.js?v=2';
+import { createAgent, distanceBetween } from './assets/playground-agent.js?v=4';
 
 (function () {
   function opts() {
@@ -586,18 +569,15 @@ import { arrivalRadius, createAgent, distanceBetween } from './assets/playground
   const { state } = agent;
   const targets = new Map();
   let latestTarget;
-  document.getElementById('arrival-radius').textContent = arrivalRadius;
 
   function meterParts(row) {
     const [filled, empty] = row.querySelectorAll('code span');
     return { filled, empty, reading: row.querySelector('.reading'), length: empty.textContent.length };
   }
-  const goalReadout = document.getElementById('target-distance');
-  const errorBar = meterParts(document.querySelector('#position-error .agent-meter'));
-  const actualBar = meterParts(goalReadout.querySelector('[data-distance="actual"]'));
-  const estimatedBar = meterParts(goalReadout.querySelector('[data-distance="estimated"]'));
-  const gap = goalReadout.querySelector('.goal-gap .reading');
-  const warning = goalReadout.querySelector('.false-arrival');
+  const errorBar = meterParts(document.getElementById('position-error'));
+  const goalBar = meterParts(document.getElementById('goal-error'));
+  const confidence = document.getElementById('goal-confidence');
+  const warning = demo.querySelector('.false-arrival');
 
   function syncMeter({ filled, empty, reading, length }, distance, units) {
     const text = distance === null ? '—' : distance.toFixed(1);
@@ -608,16 +588,13 @@ import { arrivalRadius, createAgent, distanceBetween } from './assets/playground
     reading.textContent = text;
   }
 
-  function syncReadouts() {
+  function syncReadouts(goal) {
     const { position, estimate } = state;
     syncMeter(errorBar, distanceBetween(position, estimate), 5);
-    const actual = latestTarget ? distanceBetween(position, latestTarget) : null;
-    const estimated = latestTarget ? distanceBetween(estimate, latestTarget) : null;
-    syncMeter(actualBar, actual, 15);
-    syncMeter(estimatedBar, estimated, 15);
-    const gapText = latestTarget ? Math.abs(actual - estimated).toFixed(1) : '—';
-    if (gap.textContent !== gapText) gap.textContent = gapText;
-    warning.hidden = !latestTarget || estimated > arrivalRadius || actual <= arrivalRadius;
+    syncMeter(goalBar, goal ? distanceBetween(latestTarget, goal) : null, 5);
+    const text = goal ? `Goal uncertainty radius · ${goal.radius} units` : 'Goal uncertainty —';
+    if (confidence.textContent !== text) confidence.textContent = text;
+    warning.hidden = !latestTarget?.falseArrival || latestTarget.reached;
   }
 
   function plantGoal(x, y) {
@@ -632,8 +609,7 @@ import { arrivalRadius, createAgent, distanceBetween } from './assets/playground
     const life = 1000 + Math.random() * 500;
     targets.set(cell, target);
     latestTarget = target;
-    state.goals = state.goals.filter(goal => goal.target.cell !== cell);
-    state.goals.push({ target, life });
+    agent.addGoal(target, life);
   }
 
   canvas.addEventListener('click', event => {
@@ -648,7 +624,7 @@ import { arrivalRadius, createAgent, distanceBetween } from './assets/playground
       + Math.min(columns - 1, Math.floor(x / cellWidth));
   }
 
-  function drawWorld() {
+  function drawWorld(goal) {
     const frame = landscape.cells.slice();
     function mark(cell, glyph, ink, backdrop) { frame[cell] = { glyph, ink, backdrop }; }
     for (const { actual, estimated } of state.trail) {
@@ -657,6 +633,15 @@ import { arrivalRadius, createAgent, distanceBetween } from './assets/playground
     for (const { actual: cell } of state.trail) {
       const { glyph } = landscape.cells[cell];
       mark(cell, glyph === ' ' ? ':' : glyph, colors.ink, colors.trail);
+    }
+    if (goal?.radius && !latestTarget.reached) {
+      const points = Math.ceil(goal.radius * Math.PI / 2);
+      for (let i = 0; i < points; i++) {
+        const angle = 2 * Math.PI * i / points;
+        const x = goal.x + goal.radius * Math.cos(angle);
+        const y = goal.y + goal.radius * Math.sin(angle);
+        if (x >= 0 && x < W && y >= 0 && y < H) mark(cellFor({ x, y }), '.', '#ffdf76', '#493417');
+      }
     }
     for (const cell of targets.keys()) {
       for (const [offset, pattern] of [[-columns, '\\v/'], [columns, '/^\\']]) {
@@ -667,15 +652,20 @@ import { arrivalRadius, createAgent, distanceBetween } from './assets/playground
       mark(cell + 1, ']', '#ffdf76');
     }
 
-    function cursor(cell, neighbor, glyph, ink, backdrop) {
-      if (cell - 1 !== neighbor) mark(cell - 1, '<', ink, backdrop);
-      mark(cell, glyph, ink, backdrop);
-      if (cell + 1 !== neighbor) mark(cell + 1, '>', ink, backdrop);
-    }
     const actual = cellFor(state.position);
     const estimated = cellFor(state.estimate);
-    if (actual !== estimated) cursor(estimated, actual, 'a', colors.estimate);
-    cursor(actual, estimated, 'A', colors.ink, colors.backdrop);
+    let guessed = goal?.radius && !latestTarget.reached ? cellFor(goal) : -1;
+    if (guessed === latestTarget?.cell) guessed = -1;
+    while (guessed === actual || guessed === estimated) guessed -= columns;
+    function cursor(cell, glyph, ink, backdrop, left, right) {
+      const occupied = index => index === actual || index === estimated || index === guessed;
+      if (!occupied(cell - 1)) mark(cell - 1, left, ink, backdrop);
+      mark(cell, glyph, ink, backdrop);
+      if (!occupied(cell + 1)) mark(cell + 1, right, ink, backdrop);
+    }
+    if (guessed >= 0) cursor(guessed, 'g', '#ffdf76', '#332511', '[', ']');
+    if (actual !== estimated) cursor(estimated, 'a', colors.estimate, undefined, '<', '>');
+    cursor(actual, 'A', colors.ink, colors.backdrop, '<', '>');
     landscape.draw(frame);
   }
 
@@ -687,8 +677,7 @@ import { arrivalRadius, createAgent, distanceBetween } from './assets/playground
     colors = markerColors();
   }
 
-  function tick() {
-    const options = opts();
+  function tick(options) {
     syncMode(options);
     agent.step(options, targets.values());
     const { trail, position, estimate } = state;
@@ -703,14 +692,16 @@ import { arrivalRadius, createAgent, distanceBetween } from './assets/playground
     elapsed += Math.min(100, now - (lastFrame ?? now));
     lastFrame = now;
     if (elapsed >= tickMs) {
+      const options = opts();
       while (elapsed >= tickMs) {
-        tick();
+        tick(options);
         elapsed -= tickMs;
       }
-      drawWorld();
+      const goal = latestTarget && agent.estimateGoal(latestTarget, options.plan);
+      drawWorld(goal);
       if (hits.textContent !== String(state.done)) hits.textContent = state.done;
       if (misses.textContent !== String(state.misses)) misses.textContent = state.misses;
-      syncReadouts();
+      syncReadouts(goal);
     }
     requestAnimationFrame(loop);
   }
