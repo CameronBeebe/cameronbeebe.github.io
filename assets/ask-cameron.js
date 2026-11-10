@@ -128,4 +128,4 @@ form.addEventListener('submit', event => {
 });
 
 panel.querySelector('.ask-preview').hidden = Boolean(endpoint);
-panel.querySelector('.ask-live').hidden = !endpoint;
+for (const liveElement of panel.querySelectorAll('.ask-live')) liveElement.hidden = !endpoint;
