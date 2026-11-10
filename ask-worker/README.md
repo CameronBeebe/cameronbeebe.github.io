@@ -14,28 +14,8 @@ Jev routes across repository previews and the complete extracted text of each PD
 
 Chapter 3 of the dissertation is the expanded version of Model-Based Computation. It provides an open source for that work.
 
-From the repository root, run `uv run --with pymupdf python ask-worker/index-research.py` before testing or deploying. It downloads the listed PDFs with curl and writes `research-index.generated.json`, which Wrangler bundles into the Worker. The generated corpus stays out of Git and GitHub Pages. To build from local PDFs, pass one `--pdf FILE PDF_URL LABEL TITLE` argument group per document. Ranked PDF passages are capped at 750 characters and cite the page where each passage begins.
+The generated corpus is bundled into the Worker and stays out of Git. Ranked PDF passages are capped at 750 characters and cite the page where each passage begins.
 
-## Local development
-
-Run the tests from the repository root with `node --test ask-worker/worker.test.mjs`. The local homepage uses the deployed Worker by default when an endpoint is configured.
-
-To test against a local Worker, put `TYPESAFE_API_KEY` in a private environment file outside the repository and the directory served by the preview. Run Wrangler and open the localhost page with `?live-ask#ask-cameron` to override the deployed endpoint.
-
-```sh
-npx wrangler dev --config ask-worker/wrangler.toml --port 8787 --env-file /path/to/private/ask-worker.env
-```
-
-## Enable live questions on GitHub Pages
-
-1. Create a dedicated TypeSafe API key. Use prepaid credits with auto-recharge off to bound inference spend.
-2. Deploy the Worker from the repository root and add the key as a Worker secret. Wrangler prompts for the value.
-
-   ```sh
-   npx wrangler deploy --config ask-worker/wrangler.toml
-   npx wrangler secret put TYPESAFE_API_KEY --config ask-worker/wrangler.toml
-   ```
-
-3. Set `data-endpoint` in `index.html` to the Worker URL with `/ask` appended, then publish the static page.
+The [portfolio Ask skill](../.agents/skills/maintain-portfolio-ask/SKILL.md) covers rebuilding, testing, and deploying the Worker.
 
 The endpoint accepts only short JSON questions and rate-limits calls using Cloudflare’s visitor IP header. Cloudflare’s limiter applies per location. The Worker forwards the question and selected public passages to TypeSafe. Source URLs are fixed in `sources.mjs`, which also defines the featured README list. Fetches use a 15-minute cache on Cloudflare. The Worker can rank available passages when a source fails to load or yields no passages.
