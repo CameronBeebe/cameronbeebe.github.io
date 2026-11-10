@@ -21,6 +21,9 @@ function publicSource(url, options) {
     { name: 'fungi_chromatic', description: 'A Game Boy Color cartridge.', pushed_at: '2026-11-07T00:00:00Z', archived: false },
     { name: 'old-game', pushed_at: '2026-11-07T00:00:00Z', archived: true },
   ]);
+  if (url === 'https://raw.githubusercontent.com/CameronBeebe/intent-controller/HEAD/README.md') {
+    return new Response('# Intent Controller\n\nThe fork requires a declared objective before reading a file when the feature is enabled.');
+  }
   if (url === 'https://raw.githubusercontent.com/CameronBeebe/Structural_Idealism/HEAD/README.md') {
     return new Response(null, { status: 404 });
   }
@@ -124,6 +127,23 @@ test('routes GitHub repository groups before ranking their excerpts alongside LM
   assert.deepEqual(excerpts.slice(0, 2).map(p => p.source.url), [lmuUrl, 'https://github.com/CameronBeebe/fungi_chromatic#readme']);
   assert.equal(excerpts[0].heading, 'Knowledge transfer & control');
   assert.match(excerpts[1].text, /experimental Game Boy Color game/);
+});
+
+test('finds a passage from the Intent Controller README', async t => {
+  t.mock.method(globalThis, 'fetch', async (url, options) => {
+    if (url !== 'https://api.typesafe.ai/v1/systemone') return publicSource(url, options);
+    const { questions } = JSON.parse(options.body);
+    const answers = Object.fromEntries(Object.entries(questions).map(([id, { instructions }]) => {
+      const candidate = instructions.source ?? instructions.excerpt;
+      return [id, { type: 'noul', noul: candidate.heading === 'intent-controller' ? 0.95 : 0.1 }];
+    }));
+    return Response.json({ answers });
+  });
+  const response = await worker.fetch(post({ question: 'What kind of harness mod is Intent Controller?' }), env);
+  assert.equal(response.status, 200);
+  const { excerpts } = await response.json();
+  assert.match(excerpts[0].text, /declared objective before reading/);
+  assert.equal(excerpts[0].source.url, 'https://github.com/CameronBeebe/intent-controller#readme');
 });
 
 test('routes a paper chapter and returns a passage with a PDF page citation', async t => {

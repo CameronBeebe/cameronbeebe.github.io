@@ -4,7 +4,7 @@ import researchChapters from './research-index.generated.json' with { type: 'jso
 const lmuUrl = 'https://edoc.ub.uni-muenchen.de/28655/';
 const githubApi = 'https://api.github.com';
 const githubProfile = 'https://github.com/CameronBeebe';
-const featuredRepos = ['fungi_chromatic', 'fungi_fortress', 'scipfs', 'Structural_Idealism', 'diaspy', 'transfer_keras'];
+const featuredRepos = ['fungi_chromatic', 'fungi_fortress', 'intent-controller', 'scipfs', 'Structural_Idealism', 'diaspy', 'transfer_keras'];
 const chapterPartLength = 75000;
 const passageLength = 750;
 const passageOverlap = 120;
