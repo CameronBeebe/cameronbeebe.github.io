@@ -1,0 +1,764 @@
+[
+  [
+    {
+      "heading": "Knowledge Transfer in Cognitive Systems Theory · Introduction",
+      "section": "Introduction",
+      "text": "Without the criterion of ‘control’ we have no objective reason for rejecting witchcraft, or astrology, or dianetics, or any other system that claims to be ‘real knowledge’. Ashby, 2008, p. 4303 Knowledge transfer in cognitive systems can be explicated through the effective mapping of structure from a model, which enables control in a target. I argue this from the point of view of a systems theorist, which is consistent with a mechanistic philosophy of science. However, I have one crucial objection to mechanists like Craver, 2007, who combines a systems theory perspective with what I think is an untenable notion of explanation. It is an objection in good faith, since I believe there to be much more agreement than disagreement overall.",
+      "source": {
+        "label": "LMU dissertation",
+        "url": "https://edoc.ub.uni-muenchen.de/28655/1/Beebe_Cameron.pdf#page=11"
+      }
+    },
+    {
+      "heading": "Knowledge Transfer in Cognitive Systems Theory · Introduction",
+      "section": "Overview",
+      "text": "Each chapter in this dissertation was written to be as self contained as possible, although I have tried to reduce any redundancies. The order in which they appear tries to weave together the most coherent story about knowledge transfer in cognitive systems theory. I have also added transitions, where appropriate, to chapters that were originally written as stand-alone papers. Chapter 2 provides important background on systems theory, cybernetics, and an associated view of explanation. I relate these to prominent mechanistic views in recent philosophy of science, noting how their ontic notion of explanation differs. Most crucial to an analysis of cognitive systems is arguably the characterization of a cognitive system as computational.",
+      "source": {
+        "label": "LMU dissertation",
+        "url": "https://edoc.ub.uni-muenchen.de/28655/1/Beebe_Cameron.pdf#page=20"
+      }
+    }
+  ],
+  [
+    {
+      "heading": "Knowledge Transfer in Cognitive Systems Theory · Cybernetic Systems, Representation, and Explanation",
+      "section": "Cybernetic Systems, Representation, and Explanation",
+      "text": "[There] is no such thing as an ‘absolute system’ in the ‘objective’ world, i.e. one devoid of an observer or experimenter: there is only a vast mass of That Which Is, behaving. [. . . ] We can also see that the essence of absoluteness is not that it is something that I discovered in the world, as Curie discovered radium, but that it is a way by which information can be got out of a machine, or control exerted over it (the two mean the same). Ashby, 2008, p. 4043 The class of systems of most interest presently is one in which we assume some computational purpose determined by a user. In many cases, for example the embodied human nervous system, the user is presumed to be the system itself.",
+      "source": {
+        "label": "LMU dissertation",
+        "url": "https://edoc.ub.uni-muenchen.de/28655/1/Beebe_Cameron.pdf#page=23"
+      }
+    },
+    {
+      "heading": "Knowledge Transfer in Cognitive Systems Theory · Cybernetic Systems, Representation, and Explanation",
+      "section": "Structure Mapping",
+      "text": "Structural systems theory (SST) is a minor refinement on the ideas already present in Bertalanffy’s GST and Ashby’s cybernetics. At the risk of oversimplification, I can offer a slogan and hasty summary of the premises I take to be central to regulatory systems in SST: A Machine is a Mapping. There are perhaps historically three ways to cash out this slogan, or three filters to interpret it through, which are unlikely to be exclusive of each other. First, a filter of Shannon’s communication theory, where states are put into and come out of a communication channel.",
+      "source": {
+        "label": "LMU dissertation",
+        "url": "https://edoc.ub.uni-muenchen.de/28655/1/Beebe_Cameron.pdf#page=24"
+      }
+    },
+    {
+      "heading": "Knowledge Transfer in Cognitive Systems Theory · Cybernetic Systems, Representation, and Explanation",
+      "section": "From Cause to Control",
+      "text": "As a recap of the neo-mechanist picture, Craver (2007) puts forward a causalmechanistic account of multi-level causal explanation in neuroscience. Multilevel causal mechanisms are constrained by parts and behaviors in each level, and our explanations are mosaics of these mechanisms. Importantly, explanations for Craver are ontic in the sense that they are identified with the causal mechanism in the world and are not represented in any way formally or linguistically. Explanations represented so are deemed by Craver to be explanatory texts and not of primary concern to explanatory analyses for systems in neuroscience. Similarly, Piccinini (2015) argues for a notion of computation without representation.",
+      "source": {
+        "label": "LMU dissertation",
+        "url": "https://edoc.ub.uni-muenchen.de/28655/1/Beebe_Cameron.pdf#page=26"
+      }
+    },
+    {
+      "heading": "Knowledge Transfer in Cognitive Systems Theory · Cybernetic Systems, Representation, and Explanation",
+      "section": "Computation with Representation",
+      "text": "A spiritual successor to Craver’s project is Piccinini’s book Physical Computation. (Piccinini, 2015) Comparing slogans again: if Craver says explanation does not require representation, then Piccinini says computation does not require representation. The idea is that there is some way to metaphysically distinguish computation (and computational systems), by pointing to causal mechanisms. An earlier paper by Trenholme (1994) also attempts to dispense with representations, in what seems to me to be a similar metaphysical attempt to define “naturalistic” analog simulation. I disagree with Piccinini and Trenholme for similar reasons to why I have dismissed Craver’s ontic notion of explanation without representation.",
+      "source": {
+        "label": "LMU dissertation",
+        "url": "https://edoc.ub.uni-muenchen.de/28655/1/Beebe_Cameron.pdf#page=29"
+      }
+    },
+    {
+      "heading": "Knowledge Transfer in Cognitive Systems Theory · Cybernetic Systems, Representation, and Explanation",
+      "section": "Knowledge as Control",
+      "text": "The conception of knowledge most relevant to the topic of this dissertation is that of control. Knowledge is nothing more than the ability to control a system. While there might be some other sense of knowledge which doesn’t need to exhibit control, it may be of little use for scientists. Demonstrating control is a part of experimentation, explanation, and a scientific methodology. I outline this view by citing specific passages in W. Ross Ashby’s journal compilation, where he makes it explicitly clear.",
+      "source": {
+        "label": "LMU dissertation",
+        "url": "https://edoc.ub.uni-muenchen.de/28655/1/Beebe_Cameron.pdf#page=30"
+      }
+    },
+    {
+      "heading": "Knowledge Transfer in Cognitive Systems Theory · Cybernetic Systems, Representation, and Explanation",
+      "section": "The Foundation for Structural Mechanists",
+      "text": "We start by finding a curious object, a so-called ‘brain’, and we apply scientific methods to find out how it works. When we have succeeded in laying bare the mechanism and the principles of its working we find, as we are bound to find, that these ‘objectively discovered’ principles are intimately related to the scientific methods that we have used for its study. Ashby, 2008, p. 4306 Ashby was influenced by Eddington’s philosophy of science, including his essay on The Concept of Structure, and the idea of scientific knowledge as structural knowledge (e.g. group structures). See for example the dated sections of his journal in Ashby (2008, p. 0345-0351,0371-0377).",
+      "source": {
+        "label": "LMU dissertation",
+        "url": "https://edoc.ub.uni-muenchen.de/28655/1/Beebe_Cameron.pdf#page=33"
+      }
+    },
+    {
+      "heading": "Knowledge Transfer in Cognitive Systems Theory · Cybernetic Systems, Representation, and Explanation",
+      "section": "The Taxonomy Problem",
+      "text": "The taxonomy problem for computational systems is the problem of distinguishing true computational systems from non-computational ones. We are pretty sure that calculators are systems which perform computations, and not rocks. How do we do this? Piccinini (2015) has a very good discussion on the history of this problem in the foundations of computation, the issues with previous attempts at solving the problem. In his take he ultimately appeals to a mechanistic account of computation (similar of course to Craver (2007)) for individuating computational systems by their functional properties. The details of this account are plenty, and cannot be gone into here.",
+      "source": {
+        "label": "LMU dissertation",
+        "url": "https://edoc.ub.uni-muenchen.de/28655/1/Beebe_Cameron.pdf#page=34"
+      }
+    }
+  ],
+  [
+    {
+      "heading": "Knowledge Transfer in Cognitive Systems Theory · Model-Based Computation",
+      "section": "Model-Based Computation",
+      "text": "Thus the act of “designing” or “making” a machine is essentially an act of communication from Maker to Made, and the principles of communication theory apply to it. Ashby, 1958, p. 253 This chapter attempts to outline a remedy to what I view as a confusion in the conceptual framework used to characterize computational devices.1 This confusion is present in some influential literature concerning analog computation, where analog devices are taken to be synonymous with devices which compute using continuous valued variables. Through an analysis of this confusion and the wider computational landscape, I hope to contribute to our understanding of some recent claims by introducing what I call model-based computation.",
+      "source": {
+        "label": "LMU dissertation",
+        "url": "https://edoc.ub.uni-muenchen.de/28655/1/Beebe_Cameron.pdf#page=39"
+      }
+    },
+    {
+      "heading": "Knowledge Transfer in Cognitive Systems Theory · Model-Based Computation",
+      "section": "What is Analog Computation?",
+      "text": "Rather than being defined by the continuity of parameters, an analog computer can be defined through a literal treatment of the word analogy—and in fact Neumann (1963, p. 293) among others even refers to two classes of computing machines, analogy and digital machines. The term analogy machines sounds much different to our modern ears than analog computer, but I argue it more accurately represents this area in the landscape of computation. Particularly in modern computer science where alternative or specialized computing devices have become more common, it is arguably worthwhile to have a clearer conceptual overview of this landscape.",
+      "source": {
+        "label": "LMU dissertation",
+        "url": "https://edoc.ub.uni-muenchen.de/28655/1/Beebe_Cameron.pdf#page=42"
+      }
+    },
+    {
+      "heading": "Knowledge Transfer in Cognitive Systems Theory · Model-Based Computation",
+      "section": "Model-Based Computation",
+      "text": "The notion of model-based computation is easily inferred from those definitions already provided for analog computation by Ulmann. The notion is just slightly more general, in that the model used may or may not incorporate similarities or analogies to the extent that analog models do.8 That is, even if there are similarities in the device, these similarities may not be sufficient by themselves to form a useful model of the target problem class. Some other parameters might, for example, be invoked to make the model work even though it is unknown whether such a parameter corresponds to the target. It could even be that the parameter is known to be dissimilar to the target, but the model is sufficient nonetheless for our uses.",
+      "source": {
+        "label": "LMU dissertation",
+        "url": "https://edoc.ub.uni-muenchen.de/28655/1/Beebe_Cameron.pdf#page=46"
+      }
+    },
+    {
+      "heading": "Knowledge Transfer in Cognitive Systems Theory · Model-Based Computation",
+      "section": "Benefits?",
+      "text": "In the present work I am remaining relatively qualitative in my analysis of the ‘computational landscape’, however some general comments may be of interest concerning any formal results associated with analogy machines or model-based computation. If there is any genuine ‘speed-up’ to be found compared to classical computation, I think it is primarily the result of two sources. The first potential source is simply due to the architecture and type of values processed in the given system.",
+      "source": {
+        "label": "LMU dissertation",
+        "url": "https://edoc.ub.uni-muenchen.de/28655/1/Beebe_Cameron.pdf#page=48"
+      }
+    },
+    {
+      "heading": "Knowledge Transfer in Cognitive Systems Theory · Model-Based Computation",
+      "section": "Computational Claims about the Brain",
+      "text": "I would like to now draw attention to a few important areas of debate, and offer some preliminary thoughts on how they might be viewed differently under the reframing of the computational landscape offered here. The first area 10Piccinini (2015, p. 203) also notes that we should distinguish between ‘general purpose’ as referencing computational universality (i.e. a Universal Turing machine for digital computation), and ‘general purpose’ in the sense that we can do many things with the same device. A model-based computer in the account offered here might be neither universal nor useful for many different things. concerns computational claims about the brain.",
+      "source": {
+        "label": "LMU dissertation",
+        "url": "https://edoc.ub.uni-muenchen.de/28655/1/Beebe_Cameron.pdf#page=49"
+      }
+    },
+    {
+      "heading": "Knowledge Transfer in Cognitive Systems Theory · Model-Based Computation",
+      "section": "Bayesian Brain and Generative Modeling",
+      "text": "There is a growing use of Bayesian probabilistic methods and hierarchical generative models (HGM) in cognitive science. See e.g. Friston (2010) and Clark (2013). Some of this literature can be taken as arguing that the brain be considered a model-based computer as we have defined it here: that it is a device whose evolution in time effectively performs computations based on a model. Take Friston’s description as an example: The Bayesian brain hypothesis uses Bayesian probability theory to formulate perception as a constructive process based on internal or generative models.",
+      "source": {
+        "label": "LMU dissertation",
+        "url": "https://edoc.ub.uni-muenchen.de/28655/1/Beebe_Cameron.pdf#page=51"
+      }
+    },
+    {
+      "heading": "Knowledge Transfer in Cognitive Systems Theory · Model-Based Computation",
+      "section": "Analog Simulation in Physics",
+      "text": "For the second kind of computational claim to be discussed, I move to modeling in physics. A few recent publications in the physical sciences (along with some philosophy of physics) have drawn attention to the use of analog models in scientific reasoning. One notable example is that of fluid systems displaying analogous phenomena to Hawking radiation (the phenomena of photons escaping the event horizon of a black hole). See Unruh (2008). These models have been argued, under strict conditions, to be performing analog simulation by Dardashti, Thébault, and Winsberg (2017). Importantly, these systems seem to allow us more access to black hole phenomena than would otherwise be possible.",
+      "source": {
+        "label": "LMU dissertation",
+        "url": "https://edoc.ub.uni-muenchen.de/28655/1/Beebe_Cameron.pdf#page=53"
+      }
+    },
+    {
+      "heading": "Knowledge Transfer in Cognitive Systems Theory · Model-Based Computation",
+      "section": "Model-Based Reasoning in Science",
+      "text": "The literature concerning model-based reasoning is divided among a few contexts. In philosophy of science, model-based reasoning is discussed in the sense of using a scientific model to make inferences about a target system (which the model represents). See e.g. Frigg and Hartmann (2012, §3). The systems discussed in the previous section are good examples. The scientist may, for example, use the model to justify a theory of Hawking radiation or to suggest new experimental questions. Inferences are carried from the domain of a model to assert information or knowledge about the target system. The model is assumed to have some relevant similarity to the target system.",
+      "source": {
+        "label": "LMU dissertation",
+        "url": "https://edoc.ub.uni-muenchen.de/28655/1/Beebe_Cameron.pdf#page=54"
+      }
+    },
+    {
+      "heading": "Knowledge Transfer in Cognitive Systems Theory · Model-Based Computation",
+      "section": "Conclusion",
+      "text": "At this stage, I offer a preliminary framework in Fig. 3.1 of computation to reflect model-based computation as discussed in this present work. I suggest that, at the very least, we should think of computation as consisting of two dimensions. One dimension represents the characteristics of physical devices and computational organs—or, our characterization of the dynamics or behavior of such components. The other dimension has to do with the status of representation in a model—ranging from a model which is totally dissimilar to a target problem, to very similar (like in analog simulation).",
+      "source": {
+        "label": "LMU dissertation",
+        "url": "https://edoc.ub.uni-muenchen.de/28655/1/Beebe_Cameron.pdf#page=55"
+      }
+    }
+  ],
+  [
+    {
+      "heading": "Knowledge Transfer in Cognitive Systems Theory · Neural Networks as Cybernetic Regulators",
+      "section": "Neural Networks as Cybernetic Regulators",
+      "text": "The same point of view may be applied to the brain, and we can see how one part of a brain can show towards another part the objective behavioral relationship of designer to machine. We can begin to see how one part—a basal structure perhaps—can act as “designer” towards a part it dominates, towards a neural network, say. Ashby, 1958, p. 255 Cybernetics provides a useful conceptual framework for characterizing artificial neural networks (ANNs).",
+      "source": {
+        "label": "LMU dissertation",
+        "url": "https://edoc.ub.uni-muenchen.de/28655/1/Beebe_Cameron.pdf#page=61"
+      }
+    },
+    {
+      "heading": "Knowledge Transfer in Cognitive Systems Theory · Neural Networks as Cybernetic Regulators",
+      "section": "Some Basics",
+      "text": "Perhaps the most well known examples of cybernetic regulators are mechanical governors, for example centrifugal governors (see e.g. Maxwell, 1868). The mechanical feedback in a governor controls, for example, the amount of fluid propellant for an engine. A crucial machine in the subsequent history of cybernetics was Ashby’s table top device called a homeostat. The purpose of the homeostat was to be demonstrative of core principles: it showed how a simple system could control, through feedback, environmental disturbances and ‘adapt’ to a stable state. See Ashby (1958, §5/14), and also Asaro (2008) and Cordeschi (2002, §4, §5) for some context on the homeostat.",
+      "source": {
+        "label": "LMU dissertation",
+        "url": "https://edoc.ub.uni-muenchen.de/28655/1/Beebe_Cameron.pdf#page=63"
+      }
+    },
+    {
+      "heading": "Knowledge Transfer in Cognitive Systems Theory · Neural Networks as Cybernetic Regulators",
+      "section": "What Exactly is a Cybernetic Regulator?",
+      "text": "A cybernetic regulator is part of, or interacts with, a complex system. It controls environmental disturbances by appropriate actions, resulting in a state of the world aligning with a regulatory goal. We call the system to be regulated the reguland. Ashby (1958, §11) outlines the idea with a very simple decision game between two players. Take the very simple case of a thermostat above. This example is widely used historically in the literature in and around the development of cybernetic ideas, and Cordeschi (2002) details many influential arguments using thermostats. We can represent the ‘thermostat game’ in table form, at first just considering a broken thermostat which only regulates into two classes of states.",
+      "source": {
+        "label": "LMU dissertation",
+        "url": "https://edoc.ub.uni-muenchen.de/28655/1/Beebe_Cameron.pdf#page=65"
+      }
+    },
+    {
+      "heading": "Knowledge Transfer in Cognitive Systems Theory · Neural Networks as Cybernetic Regulators",
+      "section": "Error-Controlled Regulator and Feedback",
+      "text": "One way in which a regulator can improve its performance is by learning. Imagine that the plays available to R are chosen from a uniformly random distribution in response to the input. Its regulatory performance would not be good, but by equipping R with a mechanism which reports the errors back into the regulator we might be able to take advantage of that information. We could use it to make improvements for future attempts to control similar environmental disturbances. We could adjust or update the distribution from which plays are chosen. A simple example of reinforcement learning treats the distribution as a bag of colored marbles. We choose plays by picking marbles at random from the bag.",
+      "source": {
+        "label": "LMU dissertation",
+        "url": "https://edoc.ub.uni-muenchen.de/28655/1/Beebe_Cameron.pdf#page=67"
+      }
+    },
+    {
+      "heading": "Knowledge Transfer in Cognitive Systems Theory · Neural Networks as Cybernetic Regulators",
+      "section": "Shattering and the VC Dimension",
+      "text": "We are on our way to characterize artificial neural networks as cybernetic regulators. First, we make a pit stop to discuss an important mathematical concept called shattering which underlies formal analyses of machine learning techniques. If we conceptualize shattering in game theoretic terms as above, then shattering is just another regulatory game. In set theoretic terms, class R shatters set E if we can construct the power set like so: P(E) = {r ∩E | r ∈R} (4.2) R can be thought of as a set of plays r (themselves sets), E a set of environmental disturbances, and P(E) is all combinations of disturbances in E. When each member of the power set P(E) can be captured or controlled by an appropriate play r, we say that R shatters E.",
+      "source": {
+        "label": "LMU dissertation",
+        "url": "https://edoc.ub.uni-muenchen.de/28655/1/Beebe_Cameron.pdf#page=68"
+      }
+    },
+    {
+      "heading": "Knowledge Transfer in Cognitive Systems Theory · Neural Networks as Cybernetic Regulators",
+      "section": "Restating the Good Regulator Theorem",
+      "text": "In getting a grip on the kinds of objects that ANNs are, I have discussed so far how regulatory capacity can be thought of in game-theoretic terms, and introduced the VC dimension as a better measure than the number of parameters. It is furthermore pragmatically useful to think of (trained) ANNs as regulatory models.3 For present purposes, it is important to outline how we can distinguish the important features of these models, and how we measure their effectiveness. If we can get a sense of what a good ANN model looks like, we can reduce our sense of epistemic opacity about how they function. This brings me now to what is known as the Good Regulator Theorem (GRT) from Conant and Ashby (1970): Definition 3.",
+      "source": {
+        "label": "LMU dissertation",
+        "url": "https://edoc.ub.uni-muenchen.de/28655/1/Beebe_Cameron.pdf#page=71"
+      }
+    },
+    {
+      "heading": "Knowledge Transfer in Cognitive Systems Theory · Neural Networks as Cybernetic Regulators",
+      "section": "Regularization",
+      "text": "The foundations of cybernetics provides an accessible picture of how systems like ANNs achieve what they can, and why they can. We can now cash out the above argument, and see how the picture provided helps us grasp some techniques which are common in data science when utilizing ANNs. Training an ANN can be thought of in terms of constraint. It aims to reduce the variety of outputs flowing from variety in input signals (disturbances, data examples). We feed in, for example, thousands of distinct images of cats and dogs—but to be an effective regulator it needs to squeeze the output into a much smaller set of desired outcomes (two classes).",
+      "source": {
+        "label": "LMU dissertation",
+        "url": "https://edoc.ub.uni-muenchen.de/28655/1/Beebe_Cameron.pdf#page=74"
+      }
+    },
+    {
+      "heading": "Knowledge Transfer in Cognitive Systems Theory · Neural Networks as Cybernetic Regulators",
+      "section": "Retaining and Managing Learned Structures",
+      "text": "This final section provides a short transition to the topic of the next chapter on transfer learning. I mentioned that Ashby built a mechanical system to illustrate how a cybernetic regulator can be implemented in practice, adjusting its internal structure in response to disturbing stimuli in order to remain stable. Behaviorally, we can understand the system as ‘learning’ or adapting. This was called a homeostat. As a follow-up to Ashby’s homeostat, his Dispersive and Multi-Stable System (DAMS) intended to scale up the table top experiment with the ability to freeze successful internal adaptations in order that they may not be lost by subsequent changes of the system.",
+      "source": {
+        "label": "LMU dissertation",
+        "url": "https://edoc.ub.uni-muenchen.de/28655/1/Beebe_Cameron.pdf#page=77"
+      }
+    }
+  ],
+  [
+    {
+      "heading": "Knowledge Transfer in Cognitive Systems Theory · Transfer Learning and Artificial General Intelligence",
+      "section": "Transfer Learning and Artificial General Intelligence",
+      "text": "The “designer” of a machine is simply the origin of certain parameter values. Ashby, 2008, p. 4448 This article is an attempt at sketching an approach to artificial general intelligence (AGI) based on transfer learning. The automation of current transfer learning methods have the potential to make significant progress towards robust AGI. I am specifically concerned with the automation of transfer learning methods using artificial neural network (ANN) models, and I will build on the basics of ANNs presented in the previous chapter. The sketch provided here can be taken to provide a rough vision for the kind of engineering tasks involved in creating a meaningful AGI with these methods.",
+      "source": {
+        "label": "LMU dissertation",
+        "url": "https://edoc.ub.uni-muenchen.de/28655/1/Beebe_Cameron.pdf#page=79"
+      }
+    },
+    {
+      "heading": "Knowledge Transfer in Cognitive Systems Theory · Transfer Learning and Artificial General Intelligence",
+      "section": "Computational Associationism",
+      "text": "As a framework for understanding concepts and human cognition, associationism has been around in various forms from Aristotle to Locke.4 Associationism, for our purposes, is the assumption that a cognitive system has the capacity to ‘associate’, or group together, different experiences relevant for cognitive tasks. It is the capacity to draw connections or comparisons between different perceptions, situations, or problems. Most importantly, we are here concerned with the association of new perceptions, or new tasks, with old experiences. It does not need to be perfect, or an in principle mechanism that draws the correct connection. A pragmatic sense of association is just that it is an effective mechanism.",
+      "source": {
+        "label": "LMU dissertation",
+        "url": "https://edoc.ub.uni-muenchen.de/28655/1/Beebe_Cameron.pdf#page=83"
+      }
+    },
+    {
+      "heading": "Knowledge Transfer in Cognitive Systems Theory · Transfer Learning and Artificial General Intelligence",
+      "section": "Analogy in Cognition",
+      "text": "Analogical relations are perhaps the most notorious associative relations. Analogy in the context of reasoning encompasses a wide range of claims. For example, claims concerning perceptions and judgments of similarity, about cognitive and computational tasks, and also claims regarding the ability to transfer situational and methodological solutions to new (i.e. novel and previously unencountered) problems. Analogical reasoning, from an associationist perspective, can be seen as fundamental to human cognition since it is one way to cash out the associative function. That is, an analogical relation is one candidate for the relation R(I, I′) mentioned above.",
+      "source": {
+        "label": "LMU dissertation",
+        "url": "https://edoc.ub.uni-muenchen.de/28655/1/Beebe_Cameron.pdf#page=85"
+      }
+    },
+    {
+      "heading": "Knowledge Transfer in Cognitive Systems Theory · Transfer Learning and Artificial General Intelligence",
+      "section": "Transfer Learning",
+      "text": "While transfer learning may be a general concept in cognition, I am mainly concerned in this paper with the implementation of the concept in machine learning—particularly with artificial neural networks. Transfer learning protocols utilize a learned neural network as a model for application to another learning problem. This has also been called adaptive generalization by Sharkey and Sharkey (1993, p. 314), where the main question is “understanding when knowledge can be transferred between nets: identifying the circumstances under which pre-training on one task will assist (or interfere) with the performance of a subsequent task.”.",
+      "source": {
+        "label": "LMU dissertation",
+        "url": "https://edoc.ub.uni-muenchen.de/28655/1/Beebe_Cameron.pdf#page=87"
+      }
+    },
+    {
+      "heading": "Knowledge Transfer in Cognitive Systems Theory · Transfer Learning and Artificial General Intelligence",
+      "section": "Artificial General Intelligence",
+      "text": "We are not yet at the stage of having robust artificial general intelligence (AGI), but data scientists increasingly generalize results and models in machine learning. The current state of the art still involves the interactions between a data scientist, her perceptions of a machine learning problem, and automated machine learning techniques. There are still many aspects which need to be manually done by the data scientist. For example, in a transfer learning problem, this involves the perception of similarity between the domain a pre-learned network was intended to perform on (i.e. the distribution of data that the network was trained on), and the domain for a problem.",
+      "source": {
+        "label": "LMU dissertation",
+        "url": "https://edoc.ub.uni-muenchen.de/28655/1/Beebe_Cameron.pdf#page=91"
+      }
+    },
+    {
+      "heading": "Knowledge Transfer in Cognitive Systems Theory · Transfer Learning and Artificial General Intelligence",
+      "section": "Machine Analogies",
+      "text": "Transfer learning via pre-trained artificial neural networks might be a way for philosophers to get a handle on forms of inter-domain reasoning like analogy. From the literature discussed earlier, I sketched a picture of analogies which is closely linked with the notion of structural transfer. It is perhaps the most intuitive way to visualize what transfer learning can do. Analogies are, in a sense, the prototypical way we transfer knowledge from one domain to another. Turning this on its head, we can take the story of transfer learning in ANNs to inform a philosophical account of analogy.",
+      "source": {
+        "label": "LMU dissertation",
+        "url": "https://edoc.ub.uni-muenchen.de/28655/1/Beebe_Cameron.pdf#page=92"
+      }
+    },
+    {
+      "heading": "Knowledge Transfer in Cognitive Systems Theory · Transfer Learning and Artificial General Intelligence",
+      "section": "A Methodology for Robust Transfer",
+      "text": "Above, I have alluded to some of the extra bits and pieces that are required for robust transfer learning to be automated. Since it is achieving the robustness that will provide the largest hurdle for technical implementation and software development, some further discussion is warranted. Additionally, we may want to guard against bad transfer, and recover some of the normative intuitions that philosophers have. Is there a rigorous enough way to rule bad transfer out such that a machine protocol could also achieve normative classifications of domain comparisons and transfer? Does there already exist a methodology which might provide a framework for solving these problems for robust transfer learning?",
+      "source": {
+        "label": "LMU dissertation",
+        "url": "https://edoc.ub.uni-muenchen.de/28655/1/Beebe_Cameron.pdf#page=95"
+      }
+    },
+    {
+      "heading": "Knowledge Transfer in Cognitive Systems Theory · Transfer Learning and Artificial General Intelligence",
+      "section": "A New Logic of Discovery?",
+      "text": "To wrap up, I would like to connect the present discussion with previous work on the logic of discovery. Analogical reasoning, and by extension transfer reasoning, is many times associated with discovery. That is, an agent learns something new through some (not always straightforward) procedure. In the philosophical discussion, the debate is whether we as philosophers can characterize a logic of discovery. Is there a way to formalize the process of discovery—and how does this relate to creativity and revolutionary thought especially in scientific reasoning? Of particular interest is whether such a procedure is deductive. One might think that, by definition, certain revolutionary discoveries are not deductive.",
+      "source": {
+        "label": "LMU dissertation",
+        "url": "https://edoc.ub.uni-muenchen.de/28655/1/Beebe_Cameron.pdf#page=98"
+      }
+    }
+  ],
+  [
+    {
+      "heading": "Knowledge Transfer in Cognitive Systems Theory · Bayesian Confirmation from Analog Models",
+      "section": "Analogy and confirmation",
+      "text": "Probabilities are subjective degrees of belief. Theory confirmation in science is represented in the Bayesian framework by confirmatory probabilities—that is, a theory obtains higher probability given confirming evidence compared to the theory without this evidence. Hypotheses and Evidence are considered to be random variables, visualized as nodes in a network. These variables and their epistemic relations are represented in DAGs—Directed Acyclic Graphs. For nodes H and E, we say that E confirms H when P(H | E) > P(H). If H is a hypothesis and E some evidence for the hypothesis, we would expect our subjective degree of belief in H to be positively influenced by an observation of relevant evidence.",
+      "source": {
+        "label": "LMU dissertation",
+        "url": "https://edoc.ub.uni-muenchen.de/28655/1/Beebe_Cameron.pdf#page=102"
+      }
+    },
+    {
+      "heading": "Knowledge Transfer in Cognitive Systems Theory · Bayesian Confirmation from Analog Models",
+      "section": "Analog simulation",
+      "text": "First, we provide some background on the kinds of cases motivating our analysis. In a recent paper on analogical inference in physics, Dardashti, Thébault, and Winsberg, 2017 discuss an analogy between an accessible table top fluid system (the model or source) and a less accessible target system we want to gain insights about, namely black holes. The source system is prepared, manipulated, and observed. It is built not just to verify and exhibit control, but to make predictions and justify inferences about the target system.2 The authors introduce the formal concept of analog simulation, explicating the intuition that the model can make predictions relevant for confirming the target theory.",
+      "source": {
+        "label": "LMU dissertation",
+        "url": "https://edoc.ub.uni-muenchen.de/28655/1/Beebe_Cameron.pdf#page=104"
+      }
+    },
+    {
+      "heading": "Knowledge Transfer in Cognitive Systems Theory · Bayesian Confirmation from Analog Models",
+      "section": "Water wave analog of the Casimir effect",
+      "text": "The example of an analog model we will consider here is the table-top fluid model of the Casimir Effect investigated by Denardo, Puda, and Larraza, 2009. The model is a physical or material analogy. The quantum Casimir effect is produced between two very small (and very thin) uncharged parallel metal plates that are placed close together in a vacuum. At certain distances d the plates are pushed together, at others they are pushed apart. How do we explain this? In quantum theory there is a non-zero energy associated with the ground state of each mode in the quantum vacuum hf/2 (where f is the frequency of the harmonic oscillator associated with the mode and h is Planck’s constant).",
+      "source": {
+        "label": "LMU dissertation",
+        "url": "https://edoc.ub.uni-muenchen.de/28655/1/Beebe_Cameron.pdf#page=106"
+      }
+    },
+    {
+      "heading": "Knowledge Transfer in Cognitive Systems Theory · Bayesian Confirmation from Analog Models",
+      "section": "Bridging models",
+      "text": "The above network fails to capture the epistemic information required of an analog relation based on similarity between target and model systems. It represents, if you will, only half of a superposition of two Bayesian networks, each yielding answers to queries for different inferential directions—if BF and BQ behave analogously, evidence for either side should inform the other side in a symmetric way. The purpose of the present work is to show that such a case should be admitted as normal into the Bayesian formal framework. The structural similarities between these domains is a matter of course and not an exception to the probabilistic reasoning Bayesian epistemology aims to reconstruct.",
+      "source": {
+        "label": "LMU dissertation",
+        "url": "https://edoc.ub.uni-muenchen.de/28655/1/Beebe_Cameron.pdf#page=110"
+      }
+    },
+    {
+      "heading": "Knowledge Transfer in Cognitive Systems Theory · Bayesian Confirmation from Analog Models",
+      "section": "Directed and undirected relations",
+      "text": "Our choice to direct the edge from BQ to BF in Fig. 6.3 is rooted in the epistemic status and goals of a scientist (or philosopher) in a particular situation. Simply put, we want to confirm TQ, not TF. If we wanted to confirm TF we would switch the arrow the other way around.5 So, EF and BF must be descendants. If the arrow pointed in the other direction and they weren’t descendants, the collider structure at BQ would d-separate TQ from BF and EF, giving us TQ ⊥⊥BF, EF. In other words, if the collider were present then P(TQ | BF ) = P(TQ), where instead we want that P(TQ | BF ) > P(TQ).6 For a specific inquiry, confirmation from an analog model can be represented in a DAG.",
+      "source": {
+        "label": "LMU dissertation",
+        "url": "https://edoc.ub.uni-muenchen.de/28655/1/Beebe_Cameron.pdf#page=111"
+      }
+    },
+    {
+      "heading": "Knowledge Transfer in Cognitive Systems Theory · Bayesian Confirmation from Analog Models",
+      "section": "Analogical inference across symmetric links",
+      "text": "In our proposal, the model-external postulate (or assumption, or also perception) “BQ is similar to BF (in certain known respects)” prompts the inclusion of a translation relation rather than the insertion of a new node. Analogical reasoning begins with a domain comparison which we characterize as the insertion of an inter-theoretical bridge.9 Figure 6.4 is a rendition of the Casimir effect example discussed above with the contour i marking the analogical relationship between the frames at the level of systems BQ and BF. AuxQ TQ TF AuxF i BQ BF EQ EF Figure 6.4: System-level analogy as epistemic contour i with the intertheoretical bridge i between BQ and BF .",
+      "source": {
+        "label": "LMU dissertation",
+        "url": "https://edoc.ub.uni-muenchen.de/28655/1/Beebe_Cameron.pdf#page=113"
+      }
+    },
+    {
+      "heading": "Knowledge Transfer in Cognitive Systems Theory · Bayesian Confirmation from Analog Models",
+      "section": "Translation via relevant sub-isomorphisms",
+      "text": "We take analog contours to be an expression of a modeling relationship between frameworks. It can be thought of formally as a translation relation based on a relevant sub-isomorphism, which has been anticipated in the literature on models and representations in science, cf. Frigg and Hartmann, 2012: One version of the semantic view, one that builds on a mathematical notion of models, posits that a model and its target have to be isomorphic (van Fraassen, 1980; Suppes, 2002) or partially isomorphic (Da Costa and French, 2003) to each other. Formal requirements weaker than these have been discussed by Mundy, 1986 and Swoyer, 1991.",
+      "source": {
+        "label": "LMU dissertation",
+        "url": "https://edoc.ub.uni-muenchen.de/28655/1/Beebe_Cameron.pdf#page=114"
+      }
+    },
+    {
+      "heading": "Knowledge Transfer in Cognitive Systems Theory · Bayesian Confirmation from Analog Models",
+      "section": "Analogy and (pre-)unification",
+      "text": "In her structure-mapping account of analogical reasoning, Dedre Gentner makes an important distinction between mere similarity, analogy, and abstract generalities or law-like statements. These represent different stages of learning about the relationship between two domains, moving from early similarity comparisons, to analogies, to generalizations: This sequence can be understood in terms of the kinds of differences in predicate overlap discussed in this paper. In the structuremapping framework, we can suggest reasons that the accessibility and the explanatory usefulness of a match may be negatively related.",
+      "source": {
+        "label": "LMU dissertation",
+        "url": "https://edoc.ub.uni-muenchen.de/28655/1/Beebe_Cameron.pdf#page=116"
+      }
+    },
+    {
+      "heading": "Knowledge Transfer in Cognitive Systems Theory · Bayesian Confirmation from Analog Models",
+      "section": "Conclusion",
+      "text": "The extended subjective Bayesian network presented here is able to account for confirmation from analog models and analog simulation. Thus, slightly modified, Bayesian confirmation theory is able to meet the challenge offered in Dardashti, Thébault, and Winsberg, 2017. Importantly, our account preserves the informational symmetries involved in analogical reasoning, as demonstrated in an application to a case study from philosophy of physics, the Casimir effect.",
+      "source": {
+        "label": "LMU dissertation",
+        "url": "https://edoc.ub.uni-muenchen.de/28655/1/Beebe_Cameron.pdf#page=118"
+      }
+    }
+  ],
+  [
+    {
+      "heading": "Knowledge Transfer in Cognitive Systems Theory · Decoherence and Survival",
+      "section": "Decoherence and Survival",
+      "text": "The existence of laws of similar structure in different fields makes possible the use of models which are simpler or better known, for more complicated and less manageable phenomena. Therefore general system theory should be, methodologically, an important means of controlling and instigating the transfer of principles from one field to another, and it will no longer be necessary to duplicate or triplicate the discovery of the same principles in different fields isolated from each other. At the same time, by formulating exact criteria, general system theory will guard against superficial analogies which are useless in science and harmful in their practical consequences.",
+      "source": {
+        "label": "LMU dissertation",
+        "url": "https://edoc.ub.uni-muenchen.de/28655/1/Beebe_Cameron.pdf#page=119"
+      }
+    },
+    {
+      "heading": "Knowledge Transfer in Cognitive Systems Theory · Decoherence and Survival",
+      "section": "Classical Bayesianism",
+      "text": "Bayesianism provides a strong story for what a human agent should compute, and why. It is, essentially, supposing that cognition is classical in its logical structure to reflect the classical structure of typical stimuli in the environment. If it weren’t, the mismatch with reality would result in certain losses which could be avoided by modeling the world appropriately (classically). In a Bayesian decision theory, one interprets probabilities as subjective degrees of belief, and update in accordance with Bayesian updating.",
+      "source": {
+        "label": "LMU dissertation",
+        "url": "https://edoc.ub.uni-muenchen.de/28655/1/Beebe_Cameron.pdf#page=121"
+      }
+    },
+    {
+      "heading": "Knowledge Transfer in Cognitive Systems Theory · Decoherence and Survival",
+      "section": "Quantum Basics",
+      "text": "The quantum formalism begins with the concept of a vector space. Consider a plane as a two dimensional vector space, V . Let V be a set such that vectors v, w ∈V , represented visually by arrows, can be identified with a pair of coordinates [x, y]T from an origin (where T represents the transpose operation, making the in-line row into a column vector). We can concatenate elements of V to form a new element of V . That is, v + w = u ∈V . The ‘+’ symbol could be thought of as addition, but it is more precise to just think of it as a linear combination of the two vectors. The dimensions of the space are determined by the number of basis vectors required to span the space.",
+      "source": {
+        "label": "LMU dissertation",
+        "url": "https://edoc.ub.uni-muenchen.de/28655/1/Beebe_Cameron.pdf#page=125"
+      }
+    },
+    {
+      "heading": "Knowledge Transfer in Cognitive Systems Theory · Decoherence and Survival",
+      "section": "Quantum Conjunction Effect",
+      "text": "Quantum like models of cognition consist of a ‘belief’ state-vector |ψ⟩, which can be written as a linear combination in an infinite number of orthogonal (spanning) bases. A pure state will be a point (in this two-dimensional example) on the circumference of the unit circle. Proponents use this to analyze results in psychology such as the famous Linda Problem, where agents seem to process information irrationally from the perspective of Bayesian norms of rationality. In these cases of a “conjunction fallacy”, respondents in an experiment will judge conjunctions as more likely than one of the conjuncts, which violates Bayesian norms.",
+      "source": {
+        "label": "LMU dissertation",
+        "url": "https://edoc.ub.uni-muenchen.de/28655/1/Beebe_Cameron.pdf#page=127"
+      }
+    },
+    {
+      "heading": "Knowledge Transfer in Cognitive Systems Theory · Decoherence and Survival",
+      "section": "Quantum-like Decoherence",
+      "text": "Quantum-like modeling proponents seem to take their models to possibly be a general computational level analysis of cognition, akin to Bayesian cognitive science. They acknowledge that in order to avoid decoherence objections which have been leveled against hardware level theories, they must be at such an abstract level. Otherwise, if the belief states were to exist somehow as physical states, the question of decoherence would rear its ugly head. The reason decoherence is so devastating for quantum theories at the hardware level, is that the brain is noisy. Any coherent quantum state would effectively be measured by the noise (thermal or otherwise) and subsequently decohere. What would it decohere into?",
+      "source": {
+        "label": "LMU dissertation",
+        "url": "https://edoc.ub.uni-muenchen.de/28655/1/Beebe_Cameron.pdf#page=130"
+      }
+    },
+    {
+      "heading": "Knowledge Transfer in Cognitive Systems Theory · Decoherence and Survival",
+      "section": "Classical Norms for the Classical World",
+      "text": "Classical (Bayesian) norms stay intact even in quantum like models, since one still ought to represent events compatibly. Decoherence still should occur. The conjunction fallacy is still an error. There are issues with the way proponents anticipate this exact issue: “Bayesian models of cognition are claimed to be founded on a rational basis (Oaksford & Chater, 2009). In fact, Bayes’ rule is derived from Kolmogorov’s axioms for classic probability theory. Quantum models of cognition are based on von Neumann’s axioms, which reduce to classic theory when all the variables are assumed to be compatible. So why do we need to use incompatible events, and is this not irrational?",
+      "source": {
+        "label": "LMU dissertation",
+        "url": "https://edoc.ub.uni-muenchen.de/28655/1/Beebe_Cameron.pdf#page=134"
+      }
+    },
+    {
+      "heading": "Knowledge Transfer in Cognitive Systems Theory · Decoherence and Survival",
+      "section": "Algorithmic Comparison",
+      "text": "The focus on sequences of steps by the authors indicates strongly that the proper level for QLMs is algorithmic: “A compatible representation requires us to assume that it is meaningful to assign probabilities to conjunctions of events, and an incompatible representation assumes that this cannot be done, and instead we need to assign probabilities to ordered sequences of events.”Busemeyer and Bruza, 2012, p. 37 In this section I compare the kinds of steps found in QLMs as well as algorithmic level accounts implementing BDT.",
+      "source": {
+        "label": "LMU dissertation",
+        "url": "https://edoc.ub.uni-muenchen.de/28655/1/Beebe_Cameron.pdf#page=135"
+      }
+    },
+    {
+      "heading": "Knowledge Transfer in Cognitive Systems Theory · Decoherence and Survival",
+      "section": "A Quantum Agent Should Have Compatible Beliefs When Possible",
+      "text": "One could say that the only difference in a normative story for QLM is that normal Bayesian normativity only holds in the special cases where events are compatible. But one could go a step further and reconstruct the Bayesian norms by requiring that an agent should represent events compatibly wherever possible. Their beliefs should decohere. In my exposure to proponents of quantum like models, I have not found sufficiently clear and emphasized statements of their view on rational normativity in their model.",
+      "source": {
+        "label": "LMU dissertation",
+        "url": "https://edoc.ub.uni-muenchen.de/28655/1/Beebe_Cameron.pdf#page=137"
+      }
+    },
+    {
+      "heading": "Knowledge Transfer in Cognitive Systems Theory · Decoherence and Survival",
+      "section": "Decoherence and Survival",
+      "text": "Proponents of QLM try to avoid the decoherence objections that plague hardware level claims of quantum processing in cognition, since they seem to see themselves at the computational level where there is no quantum mechanisms involved (and thus no interactions which could lead to decoherence). A decoherence objection is still possible for an agent which processes information in a quantum-like manner at the algorithmic level. Decoherence illustrates the improper (or incomplete) mapping of quantum theory involved in the modeling procedure by QLM proponents, and where traditional assumptions about typicality in cognitive tasks break down.",
+      "source": {
+        "label": "LMU dissertation",
+        "url": "https://edoc.ub.uni-muenchen.de/28655/1/Beebe_Cameron.pdf#page=139"
+      }
+    },
+    {
+      "heading": "Knowledge Transfer in Cognitive Systems Theory · Decoherence and Survival",
+      "section": "Conclusion",
+      "text": "The structure of quantum theory implies that a decoherence interpretation (and objection) can also apply to quantum-like processing models. This can actually be construed to support the appropriateness of classical norms at the computational level. In short, it is difficult to make evolutionary sense out of the idea that our cognitive system minimizes uncertainty about quantum-like objects— the effective regulation of classical inputs would likely be compromised, due to unnecessary complexity or assured losses, and effective regulation is what it means to survive.",
+      "source": {
+        "label": "LMU dissertation",
+        "url": "https://edoc.ub.uni-muenchen.de/28655/1/Beebe_Cameron.pdf#page=143"
+      }
+    }
+  ],
+  [
+    {
+      "heading": "Knowledge Transfer in Cognitive Systems Theory · Towards a Structural Systems Theory",
+      "section": "Towards a Structural Systems Theory",
+      "text": "What is “structure”? Bourbaki has undoubtedly given the answer, but what does it mean in my terms? Ashby, 2008, p. 5305 I began this dissertation by introducing cybernetics as a systems theory framework focused on models and structure and which sees knowledge transfer as the transfer of control capacity. I followed the thread of model-based transfer from computation to connectionist networks. Then I noticed how artificial general intelligence is like the automation of a general systems methodology. In the end I brought the discussion back up to the level of scientific reasoning with examples knowledge transfer (structural mapping).",
+      "source": {
+        "label": "LMU dissertation",
+        "url": "https://edoc.ub.uni-muenchen.de/28655/1/Beebe_Cameron.pdf#page=145"
+      }
+    },
+    {
+      "heading": "Knowledge Transfer in Cognitive Systems Theory · Towards a Structural Systems Theory",
+      "section": "How Explanations Enable Control",
+      "text": "Thus science works, in a sense, uphill; for it persistently rejects the primary, vivid, knowledge and seeks the colourless, complicated, patterned knowledge that is communicable. Ashby, 2008, p. 5282 Finally, this dissertation is about knowledge transfer, and began with a discussion of a prominent account of explanation. Perhaps the structural systems view, and the account of knowledge transfer as transfer of control, can shed some light on the debate over explanation. Explanation in neuroscience and cognitive systems theory may involve several levels of explanation from multi-level causal mechanisms, as has been argued by Craver (2007).",
+      "source": {
+        "label": "LMU dissertation",
+        "url": "https://edoc.ub.uni-muenchen.de/28655/1/Beebe_Cameron.pdf#page=149"
+      }
+    },
+    {
+      "heading": "Knowledge Transfer in Cognitive Systems Theory · Towards a Structural Systems Theory",
+      "section": "Summary",
+      "text": "To conclude, I have argued for a model-based notion of computation in cognitive systems, which bolsters a structure mapping account of knowledge transfer. While originally intended to apply to high-level analogical reasoning, this structure mapping account makes sense at lower mechanistic levels for cognitive processes. To explain (and study) such interesting cases, I argue, it is necessary to abandon the ontic sense of explanation. Furthermore, there are abundant reasons to resist the anti-representational notions of characterizing relevant systems. Rather, a systems theory concerned with knowledge transfer in cognitive systems must be grounded on a robust notion of representation and structure.",
+      "source": {
+        "label": "LMU dissertation",
+        "url": "https://edoc.ub.uni-muenchen.de/28655/1/Beebe_Cameron.pdf#page=151"
+      }
+    }
+  ],
+  [
+    {
+      "heading": "Sequent Calculus Representations for Quantum Circuits · 1 Introduction",
+      "section": "1 Introduction",
+      "text": "In Gentzen-style sequents for structural proof theory, for example the system G1cp, elements in the antecedent (represented by the multi-set Γ) are interpreted as having a conjuctive relationship to one another, whereas elements in the succedent (the multi-set ∆) are interpreted as having a disjunctive relationship between one another. In other words, on the ‘meta-level’ we read the sequent Γ ⇒∆classically1 as ^(Γ) → _(∆). (1) When writing out some particular proof of an argument, the elements of Γ and ∆are separated by commas (i.e. Σ,A,A →B ⇒B,Θ). These ‘structural’ commas between the terms are read in the metalanguage as ‘∧’ on the left side, and as ‘∨’ on the right side.",
+      "source": {
+        "label": "arXiv paper",
+        "url": "https://arxiv.org/pdf/1606.06799#page=1"
+      }
+    },
+    {
+      "heading": "Sequent Calculus Representations for Quantum Circuits · 1 Introduction",
+      "section": "1.1 Motivation for a Logic of Quantum Programs",
+      "text": "Using the terms algorithm and program as loosely equivalent, a quantum algorithm is an explicit step by step procedure using the formalism of quantum mechanics5 to achieve some computational task. Some famous examples of quantum algorithms are the Deutsch-Josza and Shor algorithms—the purpose of the latter is to factor products of two large prime numbers efficiently through period finding, potentially enabling us to break for example the widely-used RSA cryptosystem. The possible implementation of these type of powerful tasks on some physical architecture creates a demand for deeper philosophical analysis and practical development of quantum programs.",
+      "source": {
+        "label": "arXiv paper",
+        "url": "https://arxiv.org/pdf/1606.06799#page=3"
+      }
+    },
+    {
+      "heading": "Sequent Calculus Representations for Quantum Circuits · 1 Introduction",
+      "section": "1.2 What are we Talking About?",
+      "text": "Before entering into a discussion, where formal sequent calculus will primarily be used, we need to first establish what kind of notation to use—and determine what exactly the notation should be representing. It seems that the former is in some ways more difficult than the latter. It would be very nice to be able to write quantum algorithms6 down without calculus, linear algebra, or vector notation (even though Dirac notation is quite nice). However even then we would still like to have representations of phase and measurement probabilities, since these may be important aspects of the procedure—either for practical implementation or for theoretical understanding.",
+      "source": {
+        "label": "arXiv paper",
+        "url": "https://arxiv.org/pdf/1606.06799#page=4"
+      }
+    }
+  ],
+  [
+    {
+      "heading": "Sequent Calculus Representations for Quantum Circuits · 2 Reading Sequents as Quantum Computations",
+      "section": "2 Reading Sequents as Quantum Computations",
+      "text": "In the field of theoretical quantum computation, the following expression represents the quantum analogue of a binary digit or bit, the qubit: |ψ⟩= α |0⟩+β |1⟩. (2) Here, |ψ⟩(read as “ket psi” in what is known as Dirac notation) is a superposition, i.e. a linear combination represented by the addition sign, of the two basis states |0⟩and |1⟩. Kets are taken to be column vectors whose entries are complex numbers, whereas ‘bras’ ⟨·| are row vectors whose entries are the complex conjugates of the corresponding ket.",
+      "source": {
+        "label": "arXiv paper",
+        "url": "https://arxiv.org/pdf/1606.06799#page=5"
+      }
+    },
+    {
+      "heading": "Sequent Calculus Representations for Quantum Circuits · 2 Reading Sequents as Quantum Computations",
+      "section": "2.1 Quantum Circuits",
+      "text": "The primary goal for the sequent system to be discussed in the following sections is to represent the quantum circuit model of quantum computation. In this model, protocols are represented diagrammatically in ‘circuits’. As an example, consider the following ‘circuit’:7 ❴❴❴❴❴❴❴❴ H ❴❴❴❴❴❴❴❴ ❴❴❴❴❴❴❴❴L✙✙✙✙✙✙ ❴❴❴❴❴❴❴❴ ❴❴❴❴❴❴❴❴L✙✙✙✙✙✙ ❴❴❴❴❴❴❴❴L✙✙✙✙✙✙ (4) |x⟩|y⟩|0⟩ • ❴❴❴❴❴❴❴❴L✙✙✙✙✙✙ |0⟩ ⊕ ❴❴❴❴❴❴❴❴ Where |x⟩and |y⟩are unknown states of single qubits, put through a measurement (represented by the box with the arrow). Say both of these detectors display 0. Then, as discussed in more detail shortly, we can assign the state |0⟩to both of these qubits.",
+      "source": {
+        "label": "arXiv paper",
+        "url": "https://arxiv.org/pdf/1606.06799#page=5"
+      }
+    }
+  ],
+  [
+    {
+      "heading": "Sequent Calculus Representations for Quantum Circuits · 3 Building a Sequent Calculus for Single Quantum Circuits",
+      "section": "3.1 Axiom and State Preparation",
+      "text": "Given an unknown qubit state we can subject it to measurement in an appropriate basis, and by noting whether or not our measurement device shows a ‘0’ or ‘1’, we can assign the post-measurement state to either the basis state |0⟩or |1⟩(see Mermin [8, §1.10]). We can apply the X gate to the qubits in state |1⟩and thus prepare all of our states uniformly into |0⟩states. This initialization procedure can be seen as giving us the ‘premises’ of our sequent proofs, i.e. the leaf nodes will be initialized into the |0⟩state. The following pure state can be considered effectively as an axiom in our system: |0⟩⇒ Although, given the above statements, such a state may be the conclusion of a measurement in a sub-derivation higher up in our proof tree.",
+      "source": {
+        "label": "arXiv paper",
+        "url": "https://arxiv.org/pdf/1606.06799#page=6"
+      }
+    },
+    {
+      "heading": "Sequent Calculus Representations for Quantum Circuits · 3 Building a Sequent Calculus for Single Quantum Circuits",
+      "section": "3.2 Terms in the Antecedent",
+      "text": "If Γ (i.e. the entire antecedent) were non-empty with more than one Σ, how would we ‘read’ the antecedent of the sequent? Suppose we wrote the following: |0⟩,|0⟩⇒ How would we interpret the structural comma for a logic whose purpose is to describe or represent computational procedures in a quantum protocol—specifically a single circuit? In other words, what state is the ‘computer’ in? For a constructivist account of the antecedent above, how did we arrive at |0⟩,|0⟩? The commas will not play a role in a single circuit calculus, but return to denote the separation between multiple circuits in a multiple circuit calculus (which will not be fully presented in this present short article).",
+      "source": {
+        "label": "arXiv paper",
+        "url": "https://arxiv.org/pdf/1606.06799#page=7"
+      }
+    },
+    {
+      "heading": "Sequent Calculus Representations for Quantum Circuits · 3 Building a Sequent Calculus for Single Quantum Circuits",
+      "section": "3.2.1 Multiplicative vs. Additive AND",
+      "text": "The following is the intuitionistic rule (in G1ip, the same rule as G1cp but restricted in the succedent) for introducing ∧in the antecedent: Γ,Ai ⇒C Γ,A0 (L∧)(i ∈{0,1}) ∧A1 ⇒C In a system like G1ip with left weakening (and left contraction), the above ‘additive’ rule can be shown equivalent to its ‘multiplicative’ counterpart: Γ,A0,A1 ⇒C Γ,A0 (L∧′) ∧A1 ⇒C This multiplicative conjunction is obviously the type of conjunction that can help us create a single circuit from |0⟩,|0⟩simply because both circuits must be present in order to combine them.",
+      "source": {
+        "label": "arXiv paper",
+        "url": "https://arxiv.org/pdf/1606.06799#page=8"
+      }
+    },
+    {
+      "heading": "Sequent Calculus Representations for Quantum Circuits · 3 Building a Sequent Calculus for Single Quantum Circuits",
+      "section": "3.3 Measurement as the Sequent Arrow",
+      "text": "Hughes [6, p. 303] discusses the notion of a “measurement conditional”, formulated in terms of the probability of a quantum observable A. This is to be read “If an ideal measurement M of A is made, then the result will lie within some range ∆.” MA →(A,∆). (9) However, for the purposes here it will be helpful to instead formulate measurement as a proof rule rather than a predicate associated with a connective. In other words, there will not be an arrow connective in QMC. Rather, the sequent arrow will be read in the way that the above measurement conditional arrow is read.",
+      "source": {
+        "label": "arXiv paper",
+        "url": "https://arxiv.org/pdf/1606.06799#page=9"
+      }
+    },
+    {
+      "heading": "Sequent Calculus Representations for Quantum Circuits · 3 Building a Sequent Calculus for Single Quantum Circuits",
+      "section": "3.4 Updating the Born Rule and Disjunction in the Succedent",
+      "text": "To make sense of quantum measurements, Max Born famously proposed we take the complex-valued amplitudes α,β of wave components in a state and calculate the modulus squared of each such that, to put it simply, |α|2 +|β|2 = 1. In the measurement of, for example, the state α |0⟩+β |1⟩, we will only observe either the state represented by |0⟩or the state represented by |1⟩—but with corresponding probabilities determined by the Born Rule process. Since will only observe one of the possible components in the superposition, I take this to be an exclusive sense of the disjunction. In the project here, two types of calculations in particular are relegated to background sub-routines (i.e. the formalism here abstracts away from them).",
+      "source": {
+        "label": "arXiv paper",
+        "url": "https://arxiv.org/pdf/1606.06799#page=10"
+      }
+    }
+  ],
+  [
+    {
+      "heading": "Sequent Calculus Representations for Quantum Circuits · 4 Interference and Non-monotonicity",
+      "section": "4 Interference and Non-monotonicity",
+      "text": "The addition of a new state during our computation will interfere with the other states in a superposition. This can be viewed as a desirable representational feature of the calculus. One of the primary features of a quantum computer, acknowledged in the literature as a potential mechanism or resource enabling so-called quantum speed up, is quantum interference (see e.g. Fortnow [4]). Interference allows certain ‘computational paths’ to destructively interfere (i.e. two equal, oppositely signed amplitudes of the same state will make a term disappear).",
+      "source": {
+        "label": "arXiv paper",
+        "url": "https://arxiv.org/pdf/1606.06799#page=10"
+      }
+    }
+  ],
+  [
+    {
+      "heading": "Sequent Calculus Representations for Quantum Circuits · 5 Examples and Results",
+      "section": "5 Examples and Results",
+      "text": "In addition to the proof-theoretic rules that have so far been discussed, we can add a universal set of unitary transformations. That is, there is a group of left rules U, where U is ideally some universal set of unitary operators. These rules are more difficult to represent in a general form, and in multi-partite operations their applications to specific qubits requires care. The form of the Hadamard gate for example, for x in the basis states {0,1}, is: (H) |x⟩⇒ (−1)x 1 2 √2 |x⟩+ √ |1−x⟩⇒ 12Following this note, one can see that unlike in the classical case the set {a,b} is not equivalent as a premise to the conjunction a⊗b.",
+      "source": {
+        "label": "arXiv paper",
+        "url": "https://arxiv.org/pdf/1606.06799#page=11"
+      }
+    },
+    {
+      "heading": "Sequent Calculus Representations for Quantum Circuits · 5 Examples and Results",
+      "section": "5.1 Interference as a Resource in Quantum Computation",
+      "text": "Interference, while acknowledged in the literature, seems to be seen as less important of a resource than entanglement. Both entanglement and interference seem to be important, since we see that entangled states are constructed (i.e. not primitive). Another example will help to show a case in which interference is prominent. Two applications of the Hadamard gate H creates two oppositely phased components of the same state in the superposition. (H) |0⟩⇒ 2 √12 |0⟩+ √1 |1⟩⇒ (12) (H) 1 1 1 2 2 2 2 |0⟩+ |1⟩+ |0⟩−1 |1⟩⇒ Again, background calculations have been performed by a sub-routine (in this case, by hand).",
+      "source": {
+        "label": "arXiv paper",
+        "url": "https://arxiv.org/pdf/1606.06799#page=12"
+      }
+    }
+  ],
+  [
+    {
+      "heading": "Bayesian Confirmation from Analog Models · Introduction",
+      "section": "Introduction",
+      "text": "A recent argument by Dardashti et al. (2017) introduces the notion of analog simulation under certain syntactic isomorphisms to justify the claim that analogous phenomena in fluid ‘dumb hole’ simulations can confirm the hypothesis of black hole Hawking radiation. The authors distinguish the notion of analog reasoning in general from analog simulation and assert that a good theory of confirmation will be able to incorporate confirmation from analog simulation: It should be noted that here we are using confirmation in the most general and intuitive sense of the term, and not making a specific claim regarding the possibility of characterizing certain cases of analogue simulation in terms of a particular philosophical model of confirmation.",
+      "source": {
+        "label": "PhilSci preprint",
+        "url": "https://philsci-archive.pitt.edu/23020/1/Beebe%20%26%20Poellinger%20%282017%29%20Bayesian%20Confirmation%20from%20Analog%20Models%20-%20Version%202017-08-08%20FORMATTED.pdf#page=2"
+      }
+    }
+  ],
+  [
+    {
+      "heading": "Bayesian Confirmation from Analog Models · Analogical reasoning",
+      "section": "Analogical reasoning",
+      "text": "The word analogy comes from the greek ἀναλογία, meaning proportion. Following the treatment found in Hesse (1966), an analogical argument can be understood as very similar to solving proportion problems in mathematics. We are given the relationships between two terms, and one more term from a second relationship. From these three terms we can determine the fourth term. Using fractional notation such problems are of the form A C :: (2.1) B x For simple mathematical ratios, we could have for example 2 x :: (2.2) 3 9 where we read out “two is to three, as x is to nine”. Solving for x = 6 involves interpreting the :: as an equality, and we simply multiply the diagonals getting 3x = 18.",
+      "source": {
+        "label": "PhilSci preprint",
+        "url": "https://philsci-archive.pitt.edu/23020/1/Beebe%20%26%20Poellinger%20%282017%29%20Bayesian%20Confirmation%20from%20Analog%20Models%20-%20Version%202017-08-08%20FORMATTED.pdf#page=3"
+      }
+    }
+  ],
+  [
+    {
+      "heading": "Bayesian Confirmation from Analog Models · Analogy and confirmation",
+      "section": "Analogy and confirmation",
+      "text": "The notion of theory confirmation in science is represented in the Bayesian framework by confirmatory probabilities—that is, a theory obtains higher probability given confirming evidence compared to the theory without this evidence. Hypothesis and evidence are considered to be random variables, visualized as nodes in a network representation of these variables and their epistemic connections, so called DAGs—Directed Acyclic Graphs. For nodes H and E, we say that E confirms H when P(H | E) > P(H). If H is a hypothesis and E some evidence for the hypothesis, we would expect our subjective degree of belief1 in H to be positively influenced by an observation of relevant evidence.",
+      "source": {
+        "label": "PhilSci preprint",
+        "url": "https://philsci-archive.pitt.edu/23020/1/Beebe%20%26%20Poellinger%20%282017%29%20Bayesian%20Confirmation%20from%20Analog%20Models%20-%20Version%202017-08-08%20FORMATTED.pdf#page=4"
+      }
+    }
+  ],
+  [
+    {
+      "heading": "Bayesian Confirmation from Analog Models · Analog simulation",
+      "section": "Analog simulation",
+      "text": "In a recent paper on analogical inference in physics, Dardashti et al. (2017) discuss analogies between experimentally accessible test setups and potentially less accessible target system we want to gain insights about. The authors introduce the formal concept of analog simulation for this purpose which shall be introduced briefly in the following before it is applied for our case study. Analog simulation bridges two basic frames: The source system is prepared, manipulated, and observed to make inferences about the target system. Let us introduce some terminology first to relate all concepts in a formal way:2 1. The target system T (a class of situations of interest) is to be modeled as MT in a suitably chosen modeling framework LT; 2.",
+      "source": {
+        "label": "PhilSci preprint",
+        "url": "https://philsci-archive.pitt.edu/23020/1/Beebe%20%26%20Poellinger%20%282017%29%20Bayesian%20Confirmation%20from%20Analog%20Models%20-%20Version%202017-08-08%20FORMATTED.pdf#page=5"
+      }
+    }
+  ],
+  [
+    {
+      "heading": "Bayesian Confirmation from Analog Models · Water wave analog of the Casimir effect",
+      "section": "Water wave analog of the Casimir effect",
+      "text": "The example of an analog model we will consider here is the table-top fluid model of the Casimir Effect investigated by Denardo et al. (2009), a physical or material analogy: The Casimir effect is produced between two very small (and very thin) uncharged parallel metal plates that are placed close together in a vacuum. At certain distances d the plates are pushed together, at others they are pushed apart. In quantum theory there is a non-zero energy associated with the ground state of each mode in the quantum vacuum hf/2 (where f is the frequency of the harmonic oscillator associated with the mode and h is Planck’s constant).",
+      "source": {
+        "label": "PhilSci preprint",
+        "url": "https://philsci-archive.pitt.edu/23020/1/Beebe%20%26%20Poellinger%20%282017%29%20Bayesian%20Confirmation%20from%20Analog%20Models%20-%20Version%202017-08-08%20FORMATTED.pdf#page=7"
+      }
+    }
+  ],
+  [
+    {
+      "heading": "Bayesian Confirmation from Analog Models · Bridging models",
+      "section": "Bridging models",
+      "text": "The above network fails to capture the symmetry required of an analog relation. It represents, if you will, only half of a superposition of two Bayesian networks, 10 each yielding answers to queries for different inferential directions—if BF and BQ behave analogously, evidence for either side should inform the respective other side in a symmetric way.",
+      "source": {
+        "label": "PhilSci preprint",
+        "url": "https://philsci-archive.pitt.edu/23020/1/Beebe%20%26%20Poellinger%20%282017%29%20Bayesian%20Confirmation%20from%20Analog%20Models%20-%20Version%202017-08-08%20FORMATTED.pdf#page=10"
+      }
+    },
+    {
+      "heading": "Bayesian Confirmation from Analog Models · Bridging models",
+      "section": "Directed and undirected relations",
+      "text": "Our choice to direct the edge from BQ to BF in Fig. 3 is rooted in the epistemic status and goals of a scientist (or philosopher) in a particular situation. Simply put, we want to confirm TQ, not TF. If we wanted to confirm TF we would switch the arrow the other way around. 5 So, EF and BF must be descendants. If the arrow pointed in the other direction and they weren’t descendants, the collider structure at BQ would d-separate TQ from BF and EF, giving us TQ ⊥⊥BF, EF. In other words, if the collider were present then P(TQ | BF) = P(TQ), where instead we want that P(TQ | BF) > P(TQ).6 For a specific inquiry, confirmation from an analog model can be represented in a DAG.",
+      "source": {
+        "label": "PhilSci preprint",
+        "url": "https://philsci-archive.pitt.edu/23020/1/Beebe%20%26%20Poellinger%20%282017%29%20Bayesian%20Confirmation%20from%20Analog%20Models%20-%20Version%202017-08-08%20FORMATTED.pdf#page=11"
+      }
+    },
+    {
+      "heading": "Bayesian Confirmation from Analog Models · Bridging models",
+      "section": "Analogical inference across symmetric links",
+      "text": "In our proposal, the model-external postulate (or assumption, or also perception) “BQ is similar to BF (in certain known respects)” prompts the inclusion of a translation relation rather than the insertion of a new node. Analogical reasoning begins with a consciously initiated domain comparison which we characterize as the insertion of an inter-theoretical bridge.9 Figure 4 is a rendition of the Casimir effect example discussed above with the contour i marking the analogical relationship between the frames at the level of models BQ and BF. AuxQ TQ TF AuxF i BQ BF EQ EF Figure 4: Model-level analogy as epistemic contour i with the intertheoretical bridge i between BQ and BF.",
+      "source": {
+        "label": "PhilSci preprint",
+        "url": "https://philsci-archive.pitt.edu/23020/1/Beebe%20%26%20Poellinger%20%282017%29%20Bayesian%20Confirmation%20from%20Analog%20Models%20-%20Version%202017-08-08%20FORMATTED.pdf#page=13"
+      }
+    },
+    {
+      "heading": "Bayesian Confirmation from Analog Models · Bridging models",
+      "section": "Translation via relevant sub-isomorphisms",
+      "text": "We take analog contours to be an expression of a modeling relationship between frameworks. It can be thought of formally as a translation relation based on a relevant sub-isomorphism, which has been anticipated in the literature on models and representations in science, cf. Frigg and Hartmann (2012):11 One version of the semantic view, one that builds on a mathematical notion of models (see Sec. 2), posits that a model and its target have 11We have included in our bibliography the complete references cited in this quote for completeness. 14 to be isomorphic (van Fraassen 1980; Suppes 2002) or partially isomorphic (Da Costa and French 2003) to each other.",
+      "source": {
+        "label": "PhilSci preprint",
+        "url": "https://philsci-archive.pitt.edu/23020/1/Beebe%20%26%20Poellinger%20%282017%29%20Bayesian%20Confirmation%20from%20Analog%20Models%20-%20Version%202017-08-08%20FORMATTED.pdf#page=14"
+      }
+    }
+  ],
+  [
+    {
+      "heading": "Bayesian Confirmation from Analog Models · Analogy and (pre-)unification",
+      "section": "Analogy and (pre-)unification",
+      "text": "In her structure-mapping account of analogical reasoning, Dedre Gentner makes an important distinction between mere similarity, analogy, and abstract generalities or law-like statements. These represent different stages of learning about the relationship between two domains, moving from early similarity comparisons, to analogies, to generalizations: This sequence can be understood in terms of the kinds of differences in predicate overlap discussed in this paper. In the structuremapping framework, we can suggest reasons that the accessibility and the explanatory usefulness of a match may be negatively related.",
+      "source": {
+        "label": "PhilSci preprint",
+        "url": "https://philsci-archive.pitt.edu/23020/1/Beebe%20%26%20Poellinger%20%282017%29%20Bayesian%20Confirmation%20from%20Analog%20Models%20-%20Version%202017-08-08%20FORMATTED.pdf#page=16"
+      }
+    }
+  ],
+  [
+    {
+      "heading": "Bayesian Confirmation from Analog Models · Conclusion",
+      "section": "Conclusion",
+      "text": "The extended subjective Bayesian network presented here is able to account for confirmation from analog models and analog simulation. Thus, slightly modified, Bayesian confirmation theory is able to meet the challenge offered in Dardashti et al. (2017). Importantly, our account preserves the informational symmetries involved in analogical reasoning, as demonstrated in an application to a case study from philosophy of physics, the Casimir effect. It should be reemphasized that, in this case, what is inaccessible about the target system is not the phenomenon—both the target and analog systems have shown the plates moving closer together—but rather the theoretical and ontological explanation of why the target system produces the phenomenon.",
+      "source": {
+        "label": "PhilSci preprint",
+        "url": "https://philsci-archive.pitt.edu/23020/1/Beebe%20%26%20Poellinger%20%282017%29%20Bayesian%20Confirmation%20from%20Analog%20Models%20-%20Version%202017-08-08%20FORMATTED.pdf#page=17"
+      }
+    }
+  ]
+]

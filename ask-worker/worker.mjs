@@ -8,7 +8,7 @@ const allowedOrigins = new Set([
   'http://localhost:8741',
 ]);
 const maxBodyBytes = 4096;
-const projectGroupLimit = 4;
+const sourceGroupLimit = 4;
 
 async function rankWithJev(items, judgment, state, apiKey, signal) {
   const questions = Object.fromEntries(items.map((item, i) => [`p${i + 1}`, {
@@ -34,15 +34,18 @@ async function rankWithJev(items, judgment, state, apiKey, signal) {
   }).sort((a, b) => b.relevance - a.relevance);
 }
 
-function projectJudgment(group) {
+function sourceJudgment(group) {
   return {
     instructions: {
-      task: 'Could this public GitHub source contain evidence that answers part of the visitor question about Cameron Beebe?',
-      source: { heading: group[0].heading, preview: group.map(({ text }) => text.slice(0, 240)) },
+      task: 'Could this public source contain evidence that answers part of the visitor question about Cameron Beebe or his work?',
+      source: {
+        heading: group[0].heading,
+        preview: group.map(({ section, text }) => section ? section + ' — ' + text.slice(0, 120) : text.slice(0, 240)),
+      },
     },
     criteria: {
-      true: 'The source title or previews suggest the project or repository list could answer the question, even when it uses different words.',
-      false: 'This source concerns a different project or subject and is unlikely to answer the question.',
+      true: 'The source title, section headings, or previews suggest the source could answer the question, even when it uses different words.',
+      false: 'This source concerns a different work or subject and is unlikely to answer the question.',
     },
   };
 }
@@ -118,14 +121,14 @@ export default {
       }
 
       phase = 'source lookup';
-      const { referencePassages, projectGroups, unavailableSources } = await publicPassages();
+      const { referencePassages, sourceGroups, unavailableSources } = await publicPassages();
       const state = { visitor_question: question, current_date: new Date().toISOString().slice(0, 10) };
       const signal = AbortSignal.timeout(8000);
-      let selectedGroups = projectGroups;
-      if (projectGroups.length > projectGroupLimit) {
-        phase = 'repository routing';
-        const routes = await rankWithJev(projectGroups, projectJudgment, state, env.TYPESAFE_API_KEY, signal);
-        selectedGroups = routes.slice(0, projectGroupLimit).map(({ item }) => item);
+      let selectedGroups = sourceGroups;
+      if (sourceGroups.length > sourceGroupLimit) {
+        phase = 'source routing';
+        const routes = await rankWithJev(sourceGroups, sourceJudgment, state, env.TYPESAFE_API_KEY, signal);
+        selectedGroups = routes.slice(0, sourceGroupLimit).map(({ item }) => item);
       }
       const passages = [...referencePassages, ...selectedGroups.flat()];
       if (!passages.length) throw new Error('Public sources unavailable');

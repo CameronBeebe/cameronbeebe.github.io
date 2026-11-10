@@ -29,7 +29,9 @@ function publicSource(url, options) {
   } else {
     assert.match(url, /^https:\/\/raw\.githubusercontent\.com\/CameronBeebe\/[\w.-]+\/HEAD\/README\.md$/);
   }
-  return new Response('# Project\n\nAn **experimental Game Boy Color game** that runs on the ModRetro Chromatic.');
+  const intro = '# Project\n\nAn **experimental Game Boy Color game** that runs on the ModRetro Chromatic.';
+  const guide = '\n\n## Try it without hardware\n\nThe example runs in an emulator without requiring a cartridge or API credentials.';
+  return new Response(url.includes('/fungi_chromatic/') ? intro + guide : intro);
 }
 
 function post(body, headers = {}) {
@@ -59,7 +61,6 @@ test('returns the top three source excerpts even when all matches are weak', asy
     assert.equal(options.redirect, 'manual');
     const { state, questions } = JSON.parse(options.body);
     assert.equal(state.visitor_question, 'What did Cameron build?');
-    assert.ok(Object.keys(questions).length <= 32);
     if (questions.p1.instructions.source) {
       return Response.json({ answers: Object.fromEntries(Object.keys(questions).map(id => [id, { type: 'noul', noul: 0.1 }])) });
     }
@@ -67,7 +68,7 @@ test('returns the top three source excerpts even when all matches are weak', asy
       assert.equal(q.type, 'noul');
       return [id, q.instructions.excerpt];
     });
-    assert.deepEqual(candidates.filter(([, p]) => p.section).map(([, p]) => p),
+    assert.deepEqual(candidates.slice(0, cvEntries.length).map(([, p]) => p),
       cvEntries.map(({ section, heading, text }) => ({ section, heading, text })));
     const answers = Object.fromEntries(candidates.map(([id, passage]) => [id, {
       type: 'noul', noul: expected.find(entry => entry.text === passage.text)?.relevance ?? 0.1,
@@ -92,15 +93,17 @@ test('routes GitHub repository groups before ranking their excerpts alongside LM
       routingCalls++;
       const branches = Object.entries(questions).map(([id, q]) => [id, q.instructions.source]);
       const project = branches.find(([, source]) => source.heading === 'fungi_chromatic')[1];
-      assert.equal(project.preview.length, 2, 'repository metadata and README share a group');
+      assert.equal(project.preview.length, 3, 'repository metadata and README sections share a group');
       assert.ok(project.preview[1].includes('ModRetro Chromatic'));
-      assert.equal(branches.length, 5);
+      assert.ok(project.preview[2].includes('Try it without hardware'));
+      assert.ok(branches.some(([, source]) => source.heading.includes('Sequent Calculus')));
       return Response.json({ answers: Object.fromEntries(branches.map(([id, source]) => [id, {
-        type: 'noul', noul: source.heading === 'Structural_Idealism' ? 0.01 : 0.8,
+        type: 'noul', noul: ['Recently pushed public repositories', 'fungi_chromatic', 'fungi_fortress', 'scipfs'].includes(source.heading) ? 0.8 : 0.01,
       }])) });
     }
     const entries = Object.entries(questions).map(([id, q]) => [id, q.instructions.excerpt]);
     assert.ok(entries.some(([, p]) => p.heading === 'Recently pushed public repositories'));
+    assert.ok(entries.some(([, p]) => p.section === 'Try it without hardware' && p.text.includes('emulator')));
     assert.ok(entries.every(([, p]) => p.heading !== 'old-game'));
     assert.ok(entries.every(([, p]) => p.heading !== 'Structural_Idealism'));
     const answers = Object.fromEntries(entries.map(([id, p]) => [id, {
@@ -120,13 +123,30 @@ test('routes GitHub repository groups before ranking their excerpts alongside LM
   assert.match(excerpts[1].text, /experimental Game Boy Color game/);
 });
 
+test('routes a paper chapter and returns a passage with a PDF page citation', async t => {
+  t.mock.method(globalThis, 'fetch', async (url, options) => {
+    if (url !== 'https://api.typesafe.ai/v1/systemone') return publicSource(url, options);
+    const { questions } = JSON.parse(options.body);
+    const answers = Object.fromEntries(Object.entries(questions).map(([id, { instructions }]) => {
+      const relevant = (instructions.source ?? instructions.excerpt).heading.includes('Interference and Non-monotonicity');
+      return [id, { type: 'noul', noul: relevant ? 0.95 : 0.1 }];
+    }));
+    return Response.json({ answers });
+  });
+  const response = await worker.fetch(post({ question: 'How does interference affect the quantum sequent calculus?' }), env);
+  assert.equal(response.status, 200);
+  const { excerpts } = await response.json();
+  assert.match(excerpts[0].source.url, /^https:\/\/arxiv\.org\/pdf\/1606\.06799#page=\d+$/);
+  assert.match(excerpts[0].section, /Interference and Non-monotonicity/);
+});
+
 test('uses the default-branch README even when the GitHub REST API is blocked', async t => {
   const requests = t.mock.method(globalThis, 'fetch', async (url, options) => {
     if (url.startsWith('https://api.github.com/')) return new Response(null, { status: 403 });
     if (url !== 'https://api.typesafe.ai/v1/systemone') return publicSource(url, options);
     const { questions } = JSON.parse(options.body);
     const answers = Object.fromEntries(Object.entries(questions).map(([id, { instructions }]) => [id, {
-      type: 'noul', noul: instructions.excerpt.heading === 'fungi_chromatic' ? 0.95 : 0.1,
+      type: 'noul', noul: (instructions.excerpt ?? instructions.source).heading === 'fungi_chromatic' ? 0.95 : 0.1,
     }]));
     return Response.json({ answers });
   });

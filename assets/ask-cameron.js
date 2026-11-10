@@ -6,18 +6,24 @@ const input = form.elements.question;
 const submit = form.querySelector('button');
 const status = panel.querySelector('[role="status"]');
 const results = panel.querySelector('.ask-results');
-const samples = [...panel.querySelectorAll('[data-cv-sample]')];
 const localLive = ['127.0.0.1', 'localhost'].includes(location.hostname)
   && new URLSearchParams(location.search).has('live-ask');
 const endpoint = localLive ? 'http://127.0.0.1:8787/ask' : panel.dataset.endpoint;
 const sampleHeadings = { appy: /Appy\.AI/i, phd: /PhD at GSN/i };
-const sourceHosts = new Set(['cameronbeebe.github.io', 'edoc.ub.uni-muenchen.de', 'github.com']);
+const sourceHosts = new Set([
+  'arxiv.org', 'cameronbeebe.github.io', 'doi.org', 'edoc.ub.uni-muenchen.de', 'github.com',
+  'link.springer.com', 'philsci-archive.pitt.edu', 'www.researchgate.net',
+]);
 const percentage = value => `${Math.round(value * 100)}%`;
 
 function renderExcerpts(excerpts) {
   results.replaceChildren();
+  const more = document.createElement('details');
+  const summary = document.createElement('summary');
+  summary.textContent = `Show ${excerpts.length - 1} more ${excerpts.length === 2 ? 'match' : 'matches'}`;
+  more.append(summary);
 
-  for (const { text, heading, source, relevance } of excerpts) {
+  for (const [index, { text, heading, section, source, relevance }] of excerpts.entries()) {
     const quote = document.createElement('blockquote');
     const byline = document.createElement('span');
     byline.className = 'bio-detail';
@@ -29,25 +35,32 @@ function renderExcerpts(excerpts) {
       quote.cite = url.href;
       const link = document.createElement('a');
       link.href = url.href;
-      link.textContent = `${source.label} · ${heading}`;
+      const showSection = section && source.label !== 'CV' && heading !== section && !heading.endsWith(' · ' + section);
+      link.textContent = [source.label, heading, showSection ? section : undefined]
+        .filter(Boolean).join(' · ');
       if (byline.textContent) byline.append(' · ');
       byline.append(link);
     }
     quote.append(byline, text);
-    results.append(quote);
+    (index === 0 ? results : more).append(quote);
   }
+  if (excerpts.length > 1) results.append(more);
 }
 
-async function ask(question, sample) {
+async function ask(question) {
   if (submit.disabled) return;
   question = question.trim();
   if (!question || question.length > maxQuestionLength) {
     status.textContent = `Enter a question of up to ${maxQuestionLength} characters.`;
     return;
   }
+  const sample = endpoint ? undefined : [...input.list.options].find(option => option.value === question)?.dataset.cvSample;
+  if (!endpoint && !sample) {
+    status.textContent = 'Choose a suggested question in preview mode.';
+    return;
+  }
 
   submit.disabled = true;
-  for (const button of samples) button.disabled = true;
   renderExcerpts([]);
   status.textContent = endpoint ? 'Checking public sources…' : 'Loading sample excerpts…';
   try {
@@ -76,7 +89,6 @@ async function ask(question, sample) {
       ? error.message : 'Public source lookup is unavailable. Try again shortly.';
   } finally {
     submit.disabled = false;
-    for (const button of samples) button.disabled = false;
   }
 }
 
@@ -84,13 +96,6 @@ form.addEventListener('submit', event => {
   event.preventDefault();
   ask(input.value);
 });
-for (const button of samples) {
-  button.addEventListener('click', () => {
-    input.value = button.textContent.trim();
-    ask(input.value, button.dataset.cvSample);
-  });
-}
 
-form.hidden = !endpoint;
 panel.querySelector('.ask-preview').hidden = Boolean(endpoint);
 panel.querySelector('.ask-live').hidden = !endpoint;
