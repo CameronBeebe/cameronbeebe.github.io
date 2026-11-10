@@ -445,7 +445,8 @@
   <h3 class="experiment-title">01 · Brain in a vat vs harness</h3>
   <p class="demo-note">
     Click the print to set a target. The agent steers by its estimates of where it is and where
-    the goal is. Plan narrows the goal estimate, tools give local readings, and the verifier checks arrival.
+    the goal is. Plan refines the goal estimate. Tools let the agent correct its course using live
+    readings. The verifier checks arrival.
   </p>
   <div class="demo agent-demo" data-mode="harness">
     <div class="controls" role="group" aria-label="Agent settings and simulation controls">
@@ -475,11 +476,11 @@
     <dl class="agent-legend" aria-label="ASCII marker legend">
       <div><dt><code class="legend-agent">&lt;A&gt;</code></dt><dd>Agent position</dd></div>
       <div><dt><code class="agent-estimate">&lt;a&gt;</code></dt><dd>Self estimate</dd></div>
-      <div><dt><code class="legend-target">[*]</code></dt><dd>Latest target</dd></div>
-      <div><dt><code class="legend-target">[g]</code></dt><dd>Estimated goal and uncertainty ring</dd></div>
+      <div><dt><code class="legend-target">[*]</code></dt><dd>Actual goal you clicked</dd></div>
+      <div><dt><code class="legend-target">[g]</code></dt><dd>Where the agent thinks the goal is</dd></div>
     </dl>
     <p class="demo-note">Shaded trails show actual paths. Dots trace estimates. A separate estimate appears when its cell differs from the actual position.</p>
-    <p class="demo-note">The goal readout follows the latest target. The target clears when the agent physically arrives.</p>
+    <p class="demo-note">The dotted ring shows uncertainty around the latest goal estimate. The target clears when the agent physically arrives.</p>
   </div>
 
   <h3 class="experiment-title">02 · Send a task to the right specialist</h3>
@@ -643,13 +644,11 @@ import { createAgent, distanceBetween } from './assets/playground-agent.js?v=4';
         if (x >= 0 && x < W && y >= 0 && y < H) mark(cellFor({ x, y }), '.', '#ffdf76', '#493417');
       }
     }
+    const targetBackdrop = '#332511';
     for (const cell of targets.keys()) {
-      for (const [offset, pattern] of [[-columns, '\\v/'], [columns, '/^\\']]) {
-        for (let i = 0; i < pattern.length; i++) mark(cell + offset + i - 1, pattern[i], '#ffdf76');
-      }
-      mark(cell - 1, '[', '#ffdf76');
-      mark(cell, cell === latestTarget?.cell ? '*' : '+', '#fff6a0');
-      mark(cell + 1, ']', '#ffdf76');
+      mark(cell - 1, '[', '#ffdf76', targetBackdrop);
+      mark(cell, cell === latestTarget?.cell ? '*' : '+', '#fff6a0', targetBackdrop);
+      mark(cell + 1, ']', '#ffdf76', targetBackdrop);
     }
 
     const actual = cellFor(state.position);
@@ -663,7 +662,7 @@ import { createAgent, distanceBetween } from './assets/playground-agent.js?v=4';
       mark(cell, glyph, ink, backdrop);
       if (!occupied(cell + 1)) mark(cell + 1, right, ink, backdrop);
     }
-    if (guessed >= 0) cursor(guessed, 'g', '#ffdf76', '#332511', '[', ']');
+    if (guessed >= 0) cursor(guessed, 'g', '#ffdf76', targetBackdrop, '[', ']');
     if (actual !== estimated) cursor(estimated, 'a', colors.estimate, undefined, '<', '>');
     cursor(actual, 'A', colors.ink, colors.backdrop, '<', '>');
     landscape.draw(frame);
