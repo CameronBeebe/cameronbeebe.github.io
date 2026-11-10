@@ -1,12 +1,12 @@
 # Cameron Beebe’s portfolio
 
-A portfolio for philosophy of science and agent engineering, with a CV, research, and interactive experiments. [Visit the site](https://cameronbeebe.github.io/) · [Read the CV](cv.md) · [Download the résumé](Beebe_Resume_SciPhi.pdf)
+A portfolio for philosophy of science and agent engineering, with a CV, research, and interactive experiments. [Visit the site](https://cameronbeebe.github.io/) · CV ([Markdown](cv.md) or [PDF](Beebe_Resume_SciPhi.pdf))
 
 ## ASCII portrait
 
 An interactive frog samurai rendered as a grid of characters. Sort or repair the portrait, change its glyph palette, or explore simulations such as gravity, gradient descent, and percolation. The screenshot shows a completed descent across the glyphs.
 
-![ASCII frog samurai with gradient descent selected and a density readout](docs/screenshots/ascii-portrait.jpg)
+![ASCII frog samurai with gradient descent selected and a path through the glyphs](docs/screenshots/ascii-portrait.jpg)
 
 ## Ask more
 
