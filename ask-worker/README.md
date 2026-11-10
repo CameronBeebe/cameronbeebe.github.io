@@ -2,9 +2,11 @@
 
 The GitHub Pages panel shows two labeled sample answers using the public `cv.md`. Set the panel’s `data-endpoint` in `index.html` to a deployed Worker’s HTTPS `/ask` URL to enable free-form questions.
 
-The Worker reads the published CV on each lookup, subject to the source cache. It groups Markdown subheadings with their body text and splits top-level section content into paragraphs and bullets. All those passages go to Jev. The Worker also selects up to four passages from the LMU dissertation abstract and nine from GitHub repository metadata and README intros, using keyword overlap for those shortlists.
+The Worker reads the published CV on each lookup, subject to the source cache. It groups Markdown subheadings with their body text and splits top-level section content into paragraphs and bullets. All structured CV passages and the LMU dissertation abstract go to Jev.
 
-Jev judges each passage against the question in one batch. The page shows the top three excerpts with links and Jev’s estimated match probabilities, even when the scores are low. The displayed text comes from the sources.
+GitHub metadata and README passages are grouped by repository, with the recent repository list in its own group. If more than four groups are available, Jev scores each group using its heading and short text previews. The Worker keeps the four highest-scoring groups, then asks Jev to rank their full passages alongside the CV and abstract. With four or fewer groups, the Worker goes directly to passage ranking.
+
+The page shows the top three excerpts with links and their passage-level match probabilities, even when the scores are low. The displayed text comes from the sources.
 
 ## Local development
 

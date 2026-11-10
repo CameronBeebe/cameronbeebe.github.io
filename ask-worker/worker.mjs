@@ -8,6 +8,57 @@ const allowedOrigins = new Set([
   'http://localhost:8741',
 ]);
 const maxBodyBytes = 4096;
+const projectBranchLimit = 4;
+
+async function rankWithJev(items, judgment, state, apiKey, signal) {
+  const questions = Object.fromEntries(items.map((item, i) => [`p${i + 1}`, {
+    type: 'noul',
+    ...judgment(item),
+  }]));
+  const response = await fetch(typeSafeUrl, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model: 'jev-latest', state, questions }),
+    signal,
+    redirect: 'error',
+  });
+  if (!response.ok) throw new Error('Jev unavailable');
+  const { answers } = await response.json();
+  return items.map((item, i) => {
+    const answer = answers?.[`p${i + 1}`];
+    const relevance = answer?.noul;
+    if (answer?.type !== 'noul' || !Number.isFinite(relevance) || relevance < 0 || relevance > 1) {
+      throw new Error('Unexpected Jev answer');
+    }
+    return { item, relevance };
+  }).sort((a, b) => b.relevance - a.relevance);
+}
+
+function projectJudgment(group) {
+  return {
+    instructions: {
+      task: 'Could this public GitHub source contain evidence that answers part of the visitor question about Cameron Beebe?',
+      source: { heading: group[0].heading, preview: group.map(({ text }) => text.slice(0, 240)) },
+    },
+    criteria: {
+      true: 'The source title or previews suggest the project or repository list could answer the question, even when it uses different words.',
+      false: 'This source concerns a different project or subject and is unlikely to answer the question.',
+    },
+  };
+}
+
+function excerptJudgment({ section, heading, text }) {
+  return {
+    instructions: {
+      task: 'Does the excerpt directly answer part of the visitor question about Cameron Beebe? Use its heading and section to resolve what it refers to.',
+      excerpt: { section, heading, text },
+    },
+    criteria: {
+      true: 'The text supplies a specific answer about the entity, event, or time asked about, including when the question uses different wording.',
+      false: 'The text only shares a topic, supplies the fact for a different entity, event, or time, or would require speculation.',
+    },
+  };
+}
 
 async function readBody(request) {
   const decoder = new TextDecoder();
@@ -65,40 +116,19 @@ export default {
         return json({ error: 'Too many questions. Try again in a minute.' }, 429);
       }
 
-      const { passages, unavailableSources } = await publicPassages(question);
+      const { referencePassages, projectGroups, unavailableSources } = await publicPassages();
+      const state = { visitor_question: question, current_date: new Date().toISOString().slice(0, 10) };
+      const signal = AbortSignal.timeout(8000);
+      let selectedGroups = projectGroups;
+      if (projectGroups.length > projectBranchLimit) {
+        const routes = await rankWithJev(projectGroups, projectJudgment, state, env.TYPESAFE_API_KEY, signal);
+        selectedGroups = routes.slice(0, projectBranchLimit).map(({ item }) => item);
+      }
+      const passages = [...referencePassages, ...selectedGroups.flat()];
       if (!passages.length) throw new Error('Public sources unavailable');
 
-      const candidates = Object.fromEntries(passages.map((passage, i) => [`p${i + 1}`, passage]));
-      const questions = Object.fromEntries(Object.entries(candidates).map(([id, { section, heading, text }]) => [id, {
-        type: 'noul',
-        instructions: {
-          task: 'Does the excerpt directly answer part of the visitor question about Cameron Beebe? Use its heading and section to resolve what it refers to.',
-          excerpt: { section, heading, text },
-        },
-        criteria: {
-          true: 'The text supplies a specific answer about the entity, event, or time asked about, including when the question uses different wording.',
-          false: 'The text only shares a topic, supplies the fact for a different entity, event, or time, or would require speculation.',
-        },
-      }]));
-      const response = await fetch(typeSafeUrl, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${env.TYPESAFE_API_KEY}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ model: 'jev-latest', state: { visitor_question: question, current_date: new Date().toISOString().slice(0, 10) }, questions }),
-        signal: AbortSignal.timeout(8000),
-        redirect: 'error',
-      });
-      if (!response.ok) throw new Error('Jev unavailable');
-      const { answers } = await response.json();
-      const ranked = Object.entries(candidates).map(([id, passage]) => {
-        const answer = answers?.[id];
-        const relevance = answer?.noul;
-        if (answer?.type !== 'noul' || !Number.isFinite(relevance) || relevance < 0 || relevance > 1) {
-          throw new Error('Unexpected Jev answer');
-        }
-        return { passage, relevance };
-      });
-      ranked.sort((a, b) => b.relevance - a.relevance);
-      const excerpts = ranked.slice(0, 3).map(({ passage, relevance }) => ({ ...passage, relevance }));
+      const ranked = await rankWithJev(passages, excerptJudgment, state, env.TYPESAFE_API_KEY, signal);
+      const excerpts = ranked.slice(0, 3).map(({ item, relevance }) => ({ ...item, relevance }));
       return json({ excerpts, unavailableSources });
     } catch {
       return json({ error: 'Public source lookup is temporarily unavailable. Try again shortly.' }, 503);

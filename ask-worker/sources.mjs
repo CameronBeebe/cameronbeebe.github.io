@@ -89,20 +89,7 @@ async function projectReadme(repo) {
     .slice(0, 2).map(text => ({ heading: repo, text, source }));
 }
 
-const ignoredWords = new Set(['about', 'beebe', 'cameron', 'did', 'does', 'have', 'his', 'the', 'what', 'which', 'with']);
-const words = text => (text.toLowerCase().match(/[a-z0-9]{3,}/g) ?? []).map(word => word.replace(/s$/, ''));
-
-function shortlist(passages, question, limit) {
-  const terms = [...new Set(words(question))].filter(word => !ignoredWords.has(word));
-  return passages.map(passage => {
-    const title = new Set(words(passage.heading));
-    const content = new Set(words(passage.text));
-    const score = terms.reduce((sum, word) => sum + Number(content.has(word)) + 2 * Number(title.has(word)), 0);
-    return { passage, score };
-  }).sort((a, b) => b.score - a.score).slice(0, limit).map(({ passage }) => passage);
-}
-
-export async function publicPassages(question) {
+export async function publicPassages() {
   const feeds = [
     ['CV', cv], ['LMU dissertation', dissertation], ['GitHub project list', githubProjects],
     ...featuredRepos.map(repo => [`${repo} README`, () => projectReadme(repo)]),
@@ -115,12 +102,15 @@ export async function publicPassages(question) {
     return [];
   });
   const [cvEntries, lmuEntries, ...githubEntries] = collections;
+  const projectGroups = new Map();
+  for (const passage of githubEntries.flat()) {
+    const url = passage.source.url.split('#')[0];
+    if (!projectGroups.has(url)) projectGroups.set(url, []);
+    projectGroups.get(url).push(passage);
+  }
   return {
-    passages: [
-      ...cvEntries,
-      ...shortlist(lmuEntries, question, 4),
-      ...shortlist(githubEntries.flat(), question, 9),
-    ],
+    referencePassages: [...cvEntries, ...lmuEntries],
+    projectGroups: [...projectGroups.values()],
     unavailableSources,
   };
 }

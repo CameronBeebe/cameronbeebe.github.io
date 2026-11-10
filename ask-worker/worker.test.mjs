@@ -52,6 +52,9 @@ test('returns the top three source excerpts even when all matches are weak', asy
     const { state, questions } = JSON.parse(options.body);
     assert.equal(state.visitor_question, 'What did Cameron build?');
     assert.ok(Object.keys(questions).length <= 32);
+    if (questions.p1.instructions.source) {
+      return Response.json({ answers: Object.fromEntries(Object.keys(questions).map(id => [id, { type: 'noul', noul: 0.1 }])) });
+    }
     const candidates = Object.entries(questions).map(([id, q]) => {
       assert.equal(q.type, 'noul');
       return [id, q.instructions.excerpt];
@@ -68,25 +71,40 @@ test('returns the top three source excerpts even when all matches are weak', asy
   const response = await worker.fetch(post({ question: 'What did Cameron build?' }), env);
   assert.equal(response.headers.get('Access-Control-Allow-Origin'), origin);
   assert.deepEqual(await response.json(), { excerpts: expected, unavailableSources: [] });
-  assert.equal(upstream.mock.calls.filter(call => call.arguments[0] === 'https://api.typesafe.ai/v1/systemone').length, 1);
+  assert.equal(upstream.mock.calls.filter(call => call.arguments[0] === 'https://api.typesafe.ai/v1/systemone').length, 2);
 });
 
-test('returns GitHub and LMU links when the CV is unavailable', async t => {
+test('routes GitHub branches before ranking their excerpts alongside LMU', async t => {
+  let routingCalls = 0;
   t.mock.method(globalThis, 'fetch', async (url, options) => {
     if (url === `${origin}/cv.md`) return new Response(null, { status: 503 });
     if (url !== 'https://api.typesafe.ai/v1/systemone') return publicSource(url, options);
     const { questions } = JSON.parse(options.body);
+    if (questions.p1.instructions.source) {
+      routingCalls++;
+      const branches = Object.entries(questions).map(([id, q]) => [id, q.instructions.source]);
+      const project = branches.find(([, source]) => source.heading === 'fungi_chromatic')[1];
+      assert.equal(project.preview.length, 2, 'repository metadata and README share a branch');
+      assert.ok(project.preview[1].includes('ModRetro Chromatic'));
+      assert.equal(branches.length, 5);
+      return Response.json({ answers: Object.fromEntries(branches.map(([id, source]) => [id, {
+        type: 'noul', noul: source.heading === 'Structural_Idealism' ? 0.01 : 0.8,
+      }])) });
+    }
     const entries = Object.entries(questions).map(([id, q]) => [id, q.instructions.excerpt]);
     assert.ok(entries.some(([, p]) => p.heading === 'Recently pushed public repositories'));
     assert.ok(entries.every(([, p]) => p.heading !== 'old-game'));
+    assert.ok(entries.every(([, p]) => p.heading !== 'Structural_Idealism'));
     const answers = Object.fromEntries(entries.map(([id, p]) => [id, {
       type: 'noul',
-      noul: p.text.includes('Knowledge transfer concerns') || p.text.includes('experimental Game Boy Color') ? 0.95 : 0.1,
+      noul: p.text.includes('Knowledge transfer concerns') ||
+        (p.heading === 'fungi_chromatic' && p.text.includes('experimental Game Boy Color')) ? 0.95 : 0.1,
     }]));
     return Response.json({ answers });
   });
-  const response = await worker.fetch(post({ question: 'Where is the dissertation and Game Boy Color project?' }), env);
+  const response = await worker.fetch(post({ question: 'Where can I read his thesis and find the handheld console game?' }), env);
   assert.equal(response.status, 200);
+  assert.equal(routingCalls, 1);
   const { excerpts, unavailableSources } = await response.json();
   assert.deepEqual(unavailableSources, ['CV']);
   assert.deepEqual(excerpts.slice(0, 2).map(p => p.source.url), [lmuUrl, 'https://github.com/CameronBeebe/fungi_chromatic#readme']);
