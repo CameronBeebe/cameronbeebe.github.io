@@ -28,11 +28,12 @@ function renderExcerpts(excerpts) {
   more.append(summary);
 
   for (const [index, { text, heading, section, source, relevance }] of excerpts.entries()) {
+    const match = document.createElement('figure');
     const quote = document.createElement('blockquote');
-    const byline = document.createElement('span');
+    const byline = document.createElement('figcaption');
     byline.className = 'bio-detail';
     if (Number.isFinite(relevance)) {
-      byline.textContent = `${percentage(relevance)} match · Jev`;
+      byline.textContent = `${percentage(relevance)} match`;
     }
     const url = new URL(source.url);
     if (url.protocol === 'https:' && sourceHosts.has(url.hostname)) {
@@ -46,8 +47,9 @@ function renderExcerpts(excerpts) {
       if (byline.textContent) byline.append(' · ');
       byline.append(link);
     }
-    quote.append(byline, text);
-    (index === 0 ? results : more).append(quote);
+    quote.textContent = text;
+    match.append(byline, quote);
+    (index === 0 ? results : more).append(match);
   }
   if (excerpts.length > 1) results.append(more);
 }

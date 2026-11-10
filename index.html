@@ -189,7 +189,8 @@
     .ask-panel [role="status"], .ask-results summary { font-size: 0.85em; }
     .ask-panel [role="status"] { color: var(--muted); }
     .ask-results summary { color: var(--link); cursor: pointer; }
-    .ask-results blockquote { margin: 0.65rem 0; padding-left: 0.75rem; border-left: 2px solid var(--line); white-space: pre-line; }
+    .ask-results figure { margin: 0.65rem 0; }
+    .ask-results blockquote { margin: 0.35rem 0 0; padding-left: 0.75rem; border-left: 2px solid var(--line); white-space: pre-line; }
     @media (max-width: 700px) {
       .hero { grid-template-columns: 1fr; }
       .hero-art { justify-self: start; }
@@ -403,7 +404,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/tex-chtml.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <script type="module" src="assets/portrait.js?v=2"></script>
-  <script type="module" src="assets/ask-cameron.js?v=11"></script>
+  <script type="module" src="assets/ask-cameron.js?v=12"></script>
 </head>
 <body>
   <main>
@@ -494,7 +495,7 @@
       <div class="ask-panel">
         <p>Search my <a href="cv.md">CV</a>, <a href="https://github.com/CameronBeebe?tab=repositories">GitHub projects</a>, <a href="https://edoc.ub.uni-muenchen.de/28655/">dissertation</a>, and selected papers.</p>
         <p class="ask-preview bio-detail" hidden>Preview mode. Choose a suggested question.</p>
-        <p class="ask-live bio-detail" id="ask-service-note">Hierarchical semantic search over context using Jev.</p>
+        <p class="ask-live bio-detail" id="ask-service-note">Hierarchical semantic search over context.</p>
         <form>
           <div class="ask-field">
             <input name="question" type="text" autocomplete="off" aria-label="Question about Cameron" aria-describedby="ask-service-note" placeholder="What would you like to know?" maxlength="280" required />
