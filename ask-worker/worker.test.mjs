@@ -15,6 +15,7 @@ function publicSource(url, options) {
   if (url === `${origin}/cv.md`) return new Response(cv);
   if (url === lmuUrl) return new Response(
     '<meta name="DC.title" content="Knowledge transfer &amp; control" />\n'
+    + '<meta name="DC.date" content="2021-01-22" />\n'
     + '<meta name="eprints.abstract_name" content="Knowledge transfer concerns models and adaptive control." />',
   );
   if (url.startsWith('https://api.github.com/users/CameronBeebe/repos?')) return Response.json([
@@ -126,6 +127,7 @@ test('routes GitHub repository groups before ranking their excerpts alongside LM
   assert.deepEqual(unavailableSources, ['CV']);
   assert.deepEqual(excerpts.slice(0, 2).map(p => p.source.url), [lmuUrl, 'https://github.com/CameronBeebe/fungi_chromatic#readme']);
   assert.equal(excerpts[0].heading, 'Knowledge transfer & control');
+  assert.equal(excerpts[0].source.year, 2021);
   assert.match(excerpts[1].text, /experimental Game Boy Color game/);
 });
 
@@ -161,6 +163,7 @@ test('routes a paper chapter and returns a passage with a PDF page citation', as
   const { excerpts } = await response.json();
   assert.match(excerpts[0].source.url, /^https:\/\/arxiv\.org\/pdf\/1606\.06799#page=\d+$/);
   assert.match(excerpts[0].section, /Interference and Non-monotonicity/);
+  assert.equal(excerpts[0].source.year, 2016);
 });
 
 test('routes the full dissertation chapter and finds a short passage deep in it', async t => {
@@ -190,6 +193,7 @@ test('routes the full dissertation chapter and finds a short passage deep in it'
   assert.ok(excerpts[0].text.length <= 750);
   assert.equal(excerpts[0].section, 'Bayesian Brain and Generative Modeling');
   assert.match(excerpts[0].source.url, /Beebe_Cameron\.pdf#page=5[12]$/);
+  assert.equal(excerpts[0].source.year, 2021);
 });
 
 test('uses the default-branch README even when the GitHub REST API is blocked', async t => {

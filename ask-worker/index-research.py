@@ -95,7 +95,7 @@ def abstract_pages(pages, first_chapter):
     return []
 
 
-def index_pdf(document, url, label, title):
+def index_pdf(document, url, label, title, year=None):
     if not document.is_pdf:
         raise ValueError(f"{title} did not return a PDF")
     pages = [clean(page.get_text(sort=True)) for page in document]
@@ -108,6 +108,8 @@ def index_pdf(document, url, label, title):
                       if chapter.lower() not in BACK_MATTER), (0, 0))
     end = back_matter_start(pages, last_body)
     source = {"label": label, "url": url}
+    if year is not None:
+        source["year"] = year
     groups = []
     if chapters[0][0].lower() != "abstract":
         abstract = abstract_pages(pages, chapters[0][1][0][:2])
@@ -153,7 +155,7 @@ def main():
     groups = []
     for source in sources:
         with open_pdf(source) as document:
-            groups.extend(index_pdf(document, source["url"], source["label"], source["title"]))
+            groups.extend(index_pdf(document, source["url"], source["label"], source["title"], source.get("year")))
     args.output.write_text(json.dumps(groups, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     characters = sum(len(page["text"]) for chapter in groups for section in chapter["sections"] for page in section["pages"])
     print(f"Indexed {characters:,} characters across {len(groups)} chapters")

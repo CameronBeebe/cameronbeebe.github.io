@@ -2,21 +2,25 @@
   {
     "title": "Knowledge Transfer in Cognitive Systems Theory",
     "label": "LMU dissertation",
+    "year": 2021,
     "url": "https://edoc.ub.uni-muenchen.de/28655/1/Beebe_Cameron.pdf"
   },
   {
     "title": "Sequent Calculus Representations for Quantum Circuits",
     "label": "arXiv paper",
+    "year": 2016,
     "url": "https://arxiv.org/pdf/1606.06799"
   },
   {
     "title": "Bayesian Confirmation from Analog Models",
     "label": "PhilSci preprint",
+    "year": 2017,
     "url": "https://philsci-archive.pitt.edu/23020/1/Beebe%20&%20Poellinger%20(2017)%20Bayesian%20Confirmation%20from%20Analog%20Models%20-%20Version%202017-08-08%20FORMATTED.pdf"
   },
   {
     "title": "Fluid Mechanical Models in Physical and Computational Contexts",
     "label": "Master's thesis",
+    "year": 2015,
     "url": "https://github.com/CameronBeebe/analog_physics/blob/main/BeebeFMMPCC.pdf",
     "download": "https://raw.githubusercontent.com/CameronBeebe/analog_physics/main/BeebeFMMPCC.pdf"
   }
