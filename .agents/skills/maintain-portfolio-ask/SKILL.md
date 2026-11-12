@@ -1,6 +1,6 @@
 ---
 name: maintain-portfolio-ask
-description: Maintain the Ask more search on cameronbeebe.github.io. Use for changes to its question panel, indexed PDFs, GitHub sources, or Cloudflare Worker, including testing and deployment.
+description: Maintain Ask more and the Perceive portrait experiment on cameronbeebe.github.io. Use for changes to search, visual judgments, indexed sources, or the Cloudflare Worker, including testing and deployment.
 ---
 
 # Maintain portfolio Ask
@@ -24,7 +24,7 @@ This downloads the listed PDFs with curl and writes `ask-worker/research-index.g
 Run the Worker tests after backend or corpus changes. Validate the build before deploying.
 
 ```sh
-node --test ask-worker/worker.test.mjs
+node --test ask-worker/*.test.mjs
 npx wrangler deploy --config ask-worker/wrangler.toml --dry-run
 ```
 
@@ -46,3 +46,9 @@ curl -fsS https://cameron-portfolio-ask.cameronbeebe.workers.dev/ask \
 ```
 
 For a local live test, run `npx wrangler dev --config ask-worker/wrangler.toml --port 8787 --env-file /path/to/private/ask-worker.env` and open the local site with `?live-ask#ask-cameron`. Keep the environment file outside both the repository and the preview server's directory.
+
+## Portrait perception
+
+The Perceive mode uses `assets/portrait-perception.js` and the portrait bridge in `assets/portrait.js`. The same Worker serves `/portrait` through `ask-worker/portrait.mjs`, using the existing secret and rate limiter. Run both Worker test files after changes.
+
+The browser sends the current rendered ASCII or raw grid, optional reference/context, and bounded demo interactions only when the visitor requests a judgment. Human marks and model overlays stay out of the captured image. Patch scores represent regions, and image/Box judgments are experimental. Check comparison, crop, prediction/erasure/restore, next-action outlines, and mobile panel placement in the preview.

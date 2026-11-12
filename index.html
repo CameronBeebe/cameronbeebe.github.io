@@ -107,6 +107,35 @@
     .portrait-actions button:disabled { opacity: 0.55; cursor: default; }
     #trace-tolerance, #flow-threshold { width: 5rem; }
     #portrait-status { min-height: 2.9em; color: var(--ink); }
+    .perception-panel { border-top: 1px solid var(--line); padding-top: 0.65rem; font: 0.78rem/1.5 var(--mono); }
+    .perception-panel [hidden] { display: none; }
+    .hero-copy > .perception-panel { margin-top: 1.5rem; }
+    .perception-panel input[type="text"], .perception-panel select {
+      min-width: 0; max-width: 100%; border: 1px solid var(--line); padding: 0.35rem;
+      background: var(--well); color: var(--link); font: inherit;
+    }
+    .perception-panel .perception-target { display: flex; gap: 0.4rem; margin-bottom: 0.5rem; }
+    .perception-target input { flex: 1; width: 6rem; }
+    .perception-panel .perception-options { display: grid; gap: 0.45rem; margin: 0.55rem 0; }
+    .perception-options > label { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+    .perception-options input[type="text"] { width: 65%; }
+    .perception-panel details { margin: 0.6rem 0; }
+    .perception-panel summary { cursor: pointer; color: var(--link); }
+    .perception-panel output { color: var(--link); }
+    .perception-evidence img { display: block; max-width: 100%; height: auto; }
+    .perception-evidence pre { max-width: 100%; overflow: auto; font-size: 0.5rem; line-height: 1; }
+    .perception-panel input[type="range"] { width: 6rem; accent-color: var(--phosphor); }
+    .perception-legend { display: flex; flex-wrap: wrap; gap: 0.7rem; }
+    .perception-human { color: #edc984; }
+    .perception-model { color: #7fdfe0; }
+    .perception-shared { color: #f6f1d3; }
+    .perception-result { white-space: pre-line; }
+    .portrait-guide { border-top: 1px solid var(--line); margin-top: 0.5rem; padding-top: 0.4rem; }
+    .hero .jev-suggested { outline: 2px solid #7fdfe0; outline-offset: 4px; }
+    .hero:has([data-experiment="perceive"][aria-pressed="true"]) { align-items: start; }
+    @media (min-width: 701px) {
+      .hero:has([data-experiment="perceive"][aria-pressed="true"]) .hero-art { position: sticky; top: 1rem; align-self: start; }
+    }
     .eyebrow { color: var(--link); margin: 0; }
     .hero .icons { display: flex; flex-wrap: wrap; gap: 0.45rem; margin-top: 1.5rem; }
     .hero .icons a {
@@ -403,7 +432,7 @@
   </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/tex-chtml.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-  <script type="module" src="assets/portrait.js?v=2"></script>
+  <script type="module" src="assets/portrait.js?v=3"></script>
   <script type="module" src="assets/ask-cameron.js?v=14"></script>
 </head>
 <body>
@@ -438,6 +467,7 @@
           <button type="button" data-experiment="descent" aria-pressed="false">Descent</button>
           <button type="button" data-experiment="edges" aria-pressed="false">Edges</button>
           <button type="button" data-experiment="flow" aria-pressed="false">Percolation</button>
+          <button type="button" data-experiment="perceive" aria-pressed="false">Perceive</button>
         </div>
       </div>
       <strong class="portrait-title" id="portrait-title"></strong>
@@ -477,10 +507,65 @@
         <button type="button" id="flow-run">Release ink</button>
         <label>Max density <input type="range" id="flow-threshold" min="0" max="100" value="40" /> <output id="flow-level" for="flow-threshold">40</output></label>
       </div>
+      <div class="perception-panel" data-controls="perceive" data-endpoint="https://cameron-portfolio-ask.cameronbeebe.workers.dev/portrait" hidden>
+        <div class="perception-target">
+          <input id="perception-target" type="text" value="frog" maxlength="100" list="perception-targets" aria-label="What should we look for?" />
+          <datalist id="perception-targets"><option value="frog"></option><option value="sword"></option><option value="tree"></option><option value="face"></option></datalist>
+        </div>
+        <div class="portrait-actions">
+          <label>Your probability <input id="perception-belief" type="range" min="0" max="100" value="50" /> <output for="perception-belief" id="perception-belief-value">50%</output></label>
+        </div>
+        <p>Paint the characters you think belong to the target, then compare.</p>
+        <div class="portrait-actions">
+          <label>Brush <select id="perception-brush"><option value="mark">Mark yours</option><option value="unmark">Unmark</option></select></label>
+          <button type="button" id="perception-clear">Clear marks</button>
+          <button type="button" id="perception-compare">Compare</button>
+        </div>
+        <div class="perception-legend"><span class="perception-human">You</span><span class="perception-model">Jev</span><span class="perception-shared">Both</span></div>
+        <p id="perception-result" class="perception-result" role="status">Set your probability before revealing Jev’s.</p>
+        <details id="perception-history" hidden><summary>Recent comparisons</summary><ol></ol></details>
+        <div class="portrait-actions">
+          <label>Show <select id="perception-overlay"><option value="overlap">Both interpretations</option><option value="difference">Disagreement</option><option value="model">Jev only</option><option value="human">You only</option></select></label>
+          <label>Cutoff <input id="perception-cutoff" type="range" min="10" max="90" value="50" /> <output id="perception-cutoff-value" for="perception-cutoff">50%</output></label>
+        </div>
+        <p id="perception-hover">Jev scores regions of the grid. Color follows the cutoff.</p>
+        <details>
+          <summary>Change the harness</summary>
+          <div class="perception-options">
+            <label>View <select id="perception-view"><option value="image">Rendered ASCII</option><option value="grid">Raw character grid</option></select></label>
+            <label>Model <select id="perception-model"><option value="jev-latest">Jev latest</option><option value="jev-1.14.0">Jev 1.14</option></select></label>
+            <label>Artwork description <input id="perception-context" type="checkbox" /></label>
+            <label>Original ASCII reference <input id="perception-reference" type="checkbox" /></label>
+            <label>Crop tool <input id="perception-tools" type="checkbox" checked /></label>
+            <label>Boost glyph contrast <input id="perception-contrast" type="checkbox" /></label>
+            <label>Share my marks as context <input id="perception-share" type="checkbox" /></label>
+            <label>Guidance <input id="perception-guidance" type="text" maxlength="300" placeholder="What counts as recognizable?" /></label>
+          </div>
+          <div class="portrait-actions">
+            <button type="button" id="perception-focus">Inspect marked region</button>
+            <button type="button" id="perception-whole" hidden>Whole portrait</button>
+          </div>
+        </details>
+        <details id="perception-evidence" class="perception-evidence" hidden><summary>Last view sent to Jev</summary><p></p><img width="750" height="750" alt="The ASCII image sent to Jev, without interpretation overlays" hidden /><pre hidden></pre></details>
+        <div class="portrait-actions">
+          <button type="button" id="perception-predict">Predict an edit</button>
+          <button type="button" id="perception-test" hidden>Erase &amp; check</button>
+        </div>
+        <p id="perception-prediction"></p>
+        <details>
+          <summary>What am I exploring?</summary>
+          <div class="perception-options">
+            <label>My intention <select id="perception-goal"><option value="">Let Jev infer it</option><option value="recognition">Recognition</option><option value="recovery">Recovering the portrait</option><option value="mechanics">How the algorithms work</option><option value="comparison">Human/model agreement</option><option value="exploration">Just exploring</option></select></label>
+          </div>
+          <div class="portrait-actions"><button type="button" id="perception-next">Suggest what’s next</button></div>
+        </details>
+        <p class="bio-detail">Jev vision prototype. Your selected view and recent demo actions are sent when you ask.</p>
+      </div>
       <div class="portrait-actions">
         <button type="button" id="portrait-restore">Restore portrait</button>
       </div>
       <p id="portrait-status" role="status"></p>
+      <div class="portrait-guide" hidden><p id="perception-suggestion" role="status"></p><div class="portrait-actions"><button type="button" id="perception-follow">Try it</button><button type="button" id="perception-dismiss">Dismiss</button></div></div>
     </figcaption>
   </figure>
   </header>

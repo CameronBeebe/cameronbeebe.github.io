@@ -1,5 +1,6 @@
 import { cvUrl, maxQuestionLength } from '../assets/cv-passages.mjs';
 import { chapterPassages, publicPassages } from './sources.mjs';
+import { portraitRequest } from './portrait.mjs';
 
 const typeSafeUrl = 'https://api.typesafe.ai/v1/systemone';
 const allowedOrigins = new Set([
@@ -118,7 +119,8 @@ export default {
     const headers = new Headers({ Vary: 'Origin', 'Cache-Control': 'no-store' });
     if (allowedOrigins.has(origin)) headers.set('Access-Control-Allow-Origin', origin);
     const json = (body, status = 200) => Response.json(body, { status, headers });
-    if (new URL(request.url).pathname !== '/ask') return json({ error: 'Unknown endpoint.' }, 404);
+    const path = new URL(request.url).pathname;
+    if (!['/ask', '/portrait'].includes(path)) return json({ error: 'Unknown endpoint.' }, 404);
     if (!allowedOrigins.has(origin)) return json({ error: 'Origin is not allowed.' }, 403);
     if (request.method === 'OPTIONS') {
       headers.set('Access-Control-Allow-Methods', 'POST');
@@ -132,6 +134,7 @@ export default {
     if (request.headers.get('Content-Type')?.split(';')[0].trim().toLowerCase() !== 'application/json') {
       return json({ error: 'Send a JSON question.' }, 415);
     }
+    if (path === '/portrait') return portraitRequest(request, env, json, headers);
 
     let body;
     try {

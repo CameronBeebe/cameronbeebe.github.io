@@ -1,6 +1,7 @@
 import { createSimulations, simulationDescriptions } from './portrait-simulations.js';
 import { swapCells, sortPass, neighbors, repairPass, quantizeRow } from './portrait-grid.js';
 import { glyphs, sampleImageTones } from './ascii-image.js?v=2';
+import { createPerception } from './portrait-perception.js';
 
 const portrait = document.querySelector('.portrait-print');
 const terminal = document.querySelector('.portrait-terminal');
@@ -20,10 +21,10 @@ function makeCell(tone) {
 }
 
 function drawTerminal(ctx, cells) {
-  const cellWidth = terminal.width / columns;
-  const cellHeight = terminal.height / rows;
+  const cellWidth = ctx.canvas.width / columns;
+  const cellHeight = ctx.canvas.height / rows;
   ctx.fillStyle = '#031803';
-  ctx.fillRect(0, 0, terminal.width, terminal.height);
+  ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
   ctx.font = `${cellHeight * 13 / 12}px ${font}`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
@@ -67,8 +68,17 @@ function enablePortraitExperiments() {
   let seed = null;
   let alphabet = 4;
   let preview = null;
+  let perception;
+  let revision = 0;
 
-  function draw() { drawTerminal(ctx, working); }
+  function draw() {
+    drawTerminal(ctx, working);
+    perception?.draw(ctx, working);
+  }
+  function gridChanged() {
+    revision++;
+    perception?.gridChanged();
+  }
   function fitCanvas() {
     const scale = window.devicePixelRatio || 1;
     const width = Math.round(terminal.clientWidth * scale);
@@ -91,7 +101,7 @@ function enablePortraitExperiments() {
   }
   function lockControls(locked) {
     rewinding = locked;
-    for (const control of controls.querySelectorAll('button, input')) control.disabled = locked;
+    for (const control of controls.closest('.hero').querySelectorAll('button, input, select')) control.disabled = locked;
     if (!locked) dither.disabled = alphabet === glyphs.length;
   }
 
@@ -100,7 +110,10 @@ function enablePortraitExperiments() {
     next.forEach((cell, index) => {
       if (cell !== working[index]) changes.push(index, working[index]);
     });
-    if (changes.length) history.push({ changes });
+    if (changes.length) {
+      history.push({ changes });
+      gridChanged();
+    }
     working = next;
   }
 
@@ -110,6 +123,7 @@ function enablePortraitExperiments() {
     } else if (!keepCurrent) {
       working = preview.source.slice();
       history.length = preview.historyStart;
+      gridChanged();
     }
     return preview.source;
   }
@@ -137,7 +151,10 @@ function enablePortraitExperiments() {
         finished.add(lane);
       }
     }
-    if (swaps.length) history.push({ swaps });
+    if (swaps.length) {
+      history.push({ swaps });
+      gridChanged();
+    }
     draw();
     const total = vertical ? columns : rows;
     if (pending.size) {
@@ -189,6 +206,7 @@ function enablePortraitExperiments() {
           }
         }
       }
+      gridChanged();
       draw();
       const counts = `${swapsReversed.toLocaleString()} swaps reversed`
         + (onlySorts ? '' : ` · ${cellsRestored.toLocaleString()} cell edits undone`);
@@ -325,6 +343,7 @@ function enablePortraitExperiments() {
     repair: ['Damage & repair', 'Drag to erase characters. Repair estimates each missing cell from its neighbors, one pass at a time.'],
     trace: ['Trace the ink', 'Click a character to rewrite connected cells of similar tone. Change tolerance to see where the fill stops.'],
     alphabet: ['Shrink the alphabet', 'Try 2, 4, or 8 glyphs with optional dithering. Use 12 to restore the grid you entered with. Colored mechanics marks keep their glyphs and ink.'],
+    perceive: ['What do you see?', 'Name a target, paint your interpretation, and compare it with Jev. Edit the portrait in other modes, then come back to look again.'],
   };
 
   for (const button of modeButtons) {
@@ -340,6 +359,7 @@ function enablePortraitExperiments() {
     preview = null;
     seed = null;
     mode = next;
+    perception?.setMode(next);
     pointer = null;
     for (const button of modeButtons) button.setAttribute('aria-pressed', String(button.dataset.experiment === mode));
     for (const panel of panels) panel.hidden = panel.dataset.controls !== mode;
@@ -358,6 +378,7 @@ function enablePortraitExperiments() {
   }
 
   function stroke(from, to) {
+    if (mode === 'perceive') perception.stroke(from, to);
     if (mode === 'repair') eraseStroke(from, to);
     simulations.stroke(mode, from, to);
     if (mode === 'sort') {
@@ -371,13 +392,14 @@ function enablePortraitExperiments() {
     const point = pointAt(event);
     if (mode === 'trace') trace(point[1] * columns + point[0]);
     simulations.pick(mode, point);
-    if (!['repair', 'sort', 'life', 'gravity'].includes(mode)) return;
+    if (!['repair', 'sort', 'life', 'gravity', 'perceive'].includes(mode)) return;
     terminal.setPointerCapture(event.pointerId);
     pointer = { id: event.pointerId, point };
     stroke(point, point);
   });
 
   terminal.addEventListener('pointermove', event => {
+    if (mode === 'perceive') perception.hover(pointAt(event));
     if (pointer?.id !== event.pointerId) return;
     const point = pointAt(event);
     if (point[0] === pointer.point[0] && point[1] === pointer.point[1]) return;
@@ -416,6 +438,36 @@ function enablePortraitExperiments() {
   document.getElementById('alphabet-twelve').addEventListener('click', () => shrink(glyphs.length));
   dither.addEventListener('change', () => shrink(alphabet));
 
+  perception = createPerception({
+    terminal, controls, columns, rows, draw, selectMode,
+    revision: () => revision,
+    locked: () => rewinding,
+    pause: stop,
+    snapshot(reference = false) {
+      const cells = reference ? original : working;
+      const canvas = document.createElement('canvas');
+      canvas.width = 750;
+      canvas.height = 750;
+      drawTerminal(canvas.getContext('2d'), cells);
+      return { canvas, grid: Array.from({ length: rows }, (_, row) =>
+        cells.slice(row * columns, (row + 1) * columns).map(cell => cell?.glyph ?? ' ').join('')) };
+    },
+    eraseRegion([left, top, right, bottom]) {
+      if (rewinding) return false;
+      stop();
+      preview = null;
+      pending.clear();
+      finished.clear();
+      const next = working.slice();
+      for (let y = Math.floor(top * rows); y < Math.ceil(bottom * rows); y++) {
+        for (let x = Math.floor(left * columns); x < Math.ceil(right * columns); x++) next[y * columns + x] = null;
+      }
+      applyGrid(next);
+      draw();
+      report('Region erased for the recognition test. Restore portrait rewinds this edit.');
+      return true;
+    },
+  });
   selectMode('sort');
   portrait.hidden = true;
   terminal.hidden = false;
