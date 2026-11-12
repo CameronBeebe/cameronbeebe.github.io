@@ -6,7 +6,7 @@ A portfolio for philosophy of science and agent engineering, with a CV, research
 
 An interactive frog samurai rendered as a grid of characters. Sort or repair the portrait, change its glyph palette, or explore simulations such as gravity, gradient descent, and percolation. The screenshot shows a completed descent across the glyphs.
 
-Perceive adds a live Jev experiment. Paint your interpretation of a target, compare probabilities and regional highlights, change the model's view or context, and test a predicted erasure. Jev can also suggest a next action from this demo's interaction history and outline its control. Image judgments are experimental.
+Perceive lets visitors name something in the portrait and ask Jev to highlight its interpretation. Viewing settings are collapsed, with human comparisons, predicted edits, and next-action suggestions available as optional experiments. Image judgments are experimental.
 
 <img src="docs/screenshots/ascii-portrait.jpg" width="480" alt="ASCII frog samurai with gradient descent selected and a path through the glyphs">
 

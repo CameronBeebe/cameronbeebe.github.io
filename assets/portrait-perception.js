@@ -79,7 +79,7 @@ export function createPerception(bridge) {
     if (events.length > 20) events.shift();
   }
 
-  function invalidate(message = 'The view changed. Compare again to update Jev’s interpretation.') {
+  function invalidate(message = 'The view changed. Ask Jev again.') {
     generation++;
     controller?.abort();
     reading = null;
@@ -252,6 +252,10 @@ export function createPerception(bridge) {
 
   function updateResult() {
     if (!reading) return;
+    if (!field('experiments').open || !field('human').open) {
+      result.textContent = `Jev’s estimate · ${percent(reading.visible)} recognizable.\nBlue highlights show its interpretation.`;
+      return;
+    }
     const human = Number(field('belief').value);
     const model = reading.visible * 100;
     const probabilities = modelMask();
@@ -305,7 +309,9 @@ export function createPerception(bridge) {
   }
 
   field('compare').addEventListener('click', () => compare());
-  field('target').addEventListener('input', () => { marks.clear(); invalidate('Target changed. Paint your interpretation and compare.'); });
+  field('target').addEventListener('input', () => { marks.clear(); invalidate('Ready. Ask Jev to find it.'); });
+  field('human').addEventListener('toggle', () => { updateResult(); bridge.draw(); });
+  field('experiments').addEventListener('toggle', () => { updateResult(); bridge.draw(); });
   field('target').addEventListener('keydown', event => { if (event.key === 'Enter') { event.preventDefault(); compare(); } });
   field('belief').addEventListener('input', () => {
     field('belief-value').value = `${field('belief').value}%`;
@@ -391,10 +397,11 @@ export function createPerception(bridge) {
   return {
     setMode(next) { mode = next; placePanel(); },
     gridChanged() {
-      if (reading || prediction || busy) invalidate('The grid changed. Compare again to see what remains recognizable.');
+      if (reading || prediction || busy) invalidate('Portrait changed. Ask Jev again.');
       record(`edited portrait in ${mode}`);
     },
     stroke(from, to) {
+      if (!field('experiments').open || !field('human').open) return;
       const steps = Math.max(1, Math.abs(to[0] - from[0]), Math.abs(to[1] - from[1]));
       for (let step = 0; step <= steps; step++) {
         const x = Math.round(from[0] + (to[0] - from[0]) * step / steps);
@@ -407,9 +414,11 @@ export function createPerception(bridge) {
         }
       }
       if (focus || field('share').checked) invalidate('Your marked context changed. Compare again.');
+      field('hover').textContent = `${marks.size} cells marked by you.`;
       updateResult(); bridge.draw(); record('painted human interpretation');
     },
     hover([x, y]) {
+      if (!field('experiments').open || !field('human').open) return;
       const probability = modelMask()[y * columns + x];
       field('hover').textContent = `Cell ${x + 1}, ${y + 1} · ${marks.has(y * columns + x) ? 'marked by you' : 'unmarked'}`
         + (reading ? ` · Jev’s region score ${percent(probability)}` : '');
@@ -419,7 +428,7 @@ export function createPerception(bridge) {
       ctx.save();
       const probabilities = modelMask();
       const cutoff = Number(field('cutoff').value) / 100;
-      const show = field('overlay').value;
+      const show = field('experiments').open && field('human').open ? field('overlay').value : 'model';
       const width = ctx.canvas.width / columns;
       const height = ctx.canvas.height / rows;
       for (let index = 0; index < cells.length; index++) {

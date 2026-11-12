@@ -343,7 +343,7 @@ function enablePortraitExperiments() {
     repair: ['Damage & repair', 'Drag to erase characters. Repair estimates each missing cell from its neighbors, one pass at a time.'],
     trace: ['Trace the ink', 'Click a character to rewrite connected cells of similar tone. Change tolerance to see where the fill stops.'],
     alphabet: ['Shrink the alphabet', 'Try 2, 4, or 8 glyphs with optional dithering. Use 12 to restore the grid you entered with. Colored mechanics marks keep their glyphs and ink.'],
-    perceive: ['What do you see?', 'Name a target, paint your interpretation, and compare it with Jev. Edit the portrait in other modes, then come back to look again.'],
+    perceive: ['What does Jev see?', 'Ask Jev to find something in the portrait. Try an edit, then ask again.'],
   };
 
   for (const button of modeButtons) {

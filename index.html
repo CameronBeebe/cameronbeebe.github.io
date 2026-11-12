@@ -508,58 +508,72 @@
         <label>Max density <input type="range" id="flow-threshold" min="0" max="100" value="40" /> <output id="flow-level" for="flow-threshold">40</output></label>
       </div>
       <div class="perception-panel" data-controls="perceive" data-endpoint="https://cameron-portfolio-ask.cameronbeebe.workers.dev/portrait" hidden>
-        <div class="perception-target">
-          <input id="perception-target" type="text" value="frog" maxlength="100" list="perception-targets" aria-label="What should we look for?" />
+        <div class="perception-target portrait-actions">
+          <input id="perception-target" type="text" value="frog" maxlength="100" list="perception-targets" aria-label="What should Jev look for?" />
           <datalist id="perception-targets"><option value="frog"></option><option value="sword"></option><option value="tree"></option><option value="face"></option></datalist>
+          <button type="button" id="perception-compare">Ask Jev</button>
         </div>
-        <div class="portrait-actions">
-          <label>Your probability <input id="perception-belief" type="range" min="0" max="100" value="50" /> <output for="perception-belief" id="perception-belief-value">50%</output></label>
-        </div>
-        <p>Paint the characters you think belong to the target, then compare.</p>
-        <div class="portrait-actions">
-          <label>Brush <select id="perception-brush"><option value="mark">Mark yours</option><option value="unmark">Unmark</option></select></label>
-          <button type="button" id="perception-clear">Clear marks</button>
-          <button type="button" id="perception-compare">Compare</button>
-        </div>
-        <div class="perception-legend"><span class="perception-human">You</span><span class="perception-model">Jev</span><span class="perception-shared">Both</span></div>
-        <p id="perception-result" class="perception-result" role="status">Set your probability before revealing Jev’s.</p>
-        <details id="perception-history" hidden><summary>Recent comparisons</summary><ol></ol></details>
-        <div class="portrait-actions">
-          <label>Show <select id="perception-overlay"><option value="overlap">Both interpretations</option><option value="difference">Disagreement</option><option value="model">Jev only</option><option value="human">You only</option></select></label>
-          <label>Cutoff <input id="perception-cutoff" type="range" min="10" max="90" value="50" /> <output id="perception-cutoff-value" for="perception-cutoff">50%</output></label>
-        </div>
-        <p id="perception-hover">Jev scores regions of the grid. Color follows the cutoff.</p>
+        <p id="perception-result" class="perception-result" role="status">Name something in the portrait, then ask Jev to find it.</p>
         <details>
-          <summary>Change the harness</summary>
+          <summary>Change how Jev looks</summary>
           <div class="perception-options">
             <label>View <select id="perception-view"><option value="image">Rendered ASCII</option><option value="grid">Raw character grid</option></select></label>
-            <label>Model <select id="perception-model"><option value="jev-latest">Jev latest</option><option value="jev-1.14.0">Jev 1.14</option></select></label>
             <label>Artwork description <input id="perception-context" type="checkbox" /></label>
-            <label>Original ASCII reference <input id="perception-reference" type="checkbox" /></label>
             <label>Crop tool <input id="perception-tools" type="checkbox" checked /></label>
             <label>Boost glyph contrast <input id="perception-contrast" type="checkbox" /></label>
-            <label>Share my marks as context <input id="perception-share" type="checkbox" /></label>
-            <label>Guidance <input id="perception-guidance" type="text" maxlength="300" placeholder="What counts as recognizable?" /></label>
           </div>
-          <div class="portrait-actions">
-            <button type="button" id="perception-focus">Inspect marked region</button>
-            <button type="button" id="perception-whole" hidden>Whole portrait</button>
-          </div>
+          <details>
+            <summary>More settings</summary>
+            <div class="perception-options">
+              <label>Model <select id="perception-model"><option value="jev-latest">Jev latest</option><option value="jev-1.14.0">Jev 1.14</option></select></label>
+              <label>Original ASCII reference <input id="perception-reference" type="checkbox" /></label>
+              <label>Guidance <input id="perception-guidance" type="text" maxlength="300" placeholder="What counts as recognizable?" /></label>
+            </div>
+          </details>
         </details>
-        <details id="perception-evidence" class="perception-evidence" hidden><summary>Last view sent to Jev</summary><p></p><img width="750" height="750" alt="The ASCII image sent to Jev, without interpretation overlays" hidden /><pre hidden></pre></details>
-        <div class="portrait-actions">
-          <button type="button" id="perception-predict">Predict an edit</button>
-          <button type="button" id="perception-test" hidden>Erase &amp; check</button>
-        </div>
-        <p id="perception-prediction"></p>
-        <details>
-          <summary>What am I exploring?</summary>
-          <div class="perception-options">
-            <label>My intention <select id="perception-goal"><option value="">Let Jev infer it</option><option value="recognition">Recognition</option><option value="recovery">Recovering the portrait</option><option value="mechanics">How the algorithms work</option><option value="comparison">Human/model agreement</option><option value="exploration">Just exploring</option></select></label>
-          </div>
-          <div class="portrait-actions"><button type="button" id="perception-next">Suggest what’s next</button></div>
+        <details id="perception-experiments">
+          <summary>Experiments</summary>
+          <details id="perception-human">
+            <summary>Compare your interpretation</summary>
+            <div class="portrait-actions">
+              <label>Your probability <input id="perception-belief" type="range" min="0" max="100" value="50" /> <output for="perception-belief" id="perception-belief-value">50%</output></label>
+            </div>
+            <p>Paint the characters you think belong to the target.</p>
+            <div class="portrait-actions">
+              <label>Brush <select id="perception-brush"><option value="mark">Mark yours</option><option value="unmark">Unmark</option></select></label>
+              <button type="button" id="perception-clear">Clear marks</button>
+            </div>
+            <div class="perception-legend"><span class="perception-human">You</span><span class="perception-model">Jev</span><span class="perception-shared">Both</span></div>
+            <div class="portrait-actions">
+              <label>Show <select id="perception-overlay"><option value="overlap">Both interpretations</option><option value="difference">Disagreement</option><option value="model">Jev only</option><option value="human">You only</option></select></label>
+              <label>Cutoff <input id="perception-cutoff" type="range" min="10" max="90" value="50" /> <output id="perception-cutoff-value" for="perception-cutoff">50%</output></label>
+            </div>
+            <p id="perception-hover">Jev scores regions of the grid.</p>
+            <div class="perception-options"><label>Share my marks as context <input id="perception-share" type="checkbox" /></label></div>
+            <div class="portrait-actions">
+              <button type="button" id="perception-focus">Inspect marked region</button>
+              <button type="button" id="perception-whole" hidden>Whole portrait</button>
+            </div>
+          </details>
+          <details>
+            <summary>Predict an edit</summary>
+            <div class="portrait-actions">
+              <button type="button" id="perception-predict">Suggest an erasure</button>
+              <button type="button" id="perception-test" hidden>Erase &amp; check</button>
+            </div>
+            <p id="perception-prediction"></p>
+          </details>
+          <details>
+            <summary>Suggest what’s next</summary>
+            <div class="perception-options">
+              <label>My intention <select id="perception-goal"><option value="">Let Jev infer it</option><option value="recognition">Recognition</option><option value="recovery">Recovering the portrait</option><option value="mechanics">How the algorithms work</option><option value="comparison">Human/model agreement</option><option value="exploration">Just exploring</option></select></label>
+            </div>
+            <div class="portrait-actions"><button type="button" id="perception-next">Suggest a next step</button></div>
+          </details>
+          <details id="perception-history" hidden><summary>Recent comparisons</summary><ol></ol></details>
+          <details id="perception-evidence" class="perception-evidence" hidden><summary>Last view sent to Jev</summary><p></p><img width="750" height="750" alt="The ASCII image sent to Jev, without interpretation overlays" hidden /><pre hidden></pre></details>
+          <p class="bio-detail">Jev vision is experimental. Your selected view and recent demo actions are sent when you ask.</p>
         </details>
-        <p class="bio-detail">Jev vision prototype. Your selected view and recent demo actions are sent when you ask.</p>
       </div>
       <div class="portrait-actions">
         <button type="button" id="portrait-restore">Restore portrait</button>
