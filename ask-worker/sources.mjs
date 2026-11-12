@@ -106,6 +106,8 @@ async function dissertation() {
 
   const sentences = abstract.split(/(?<=[.!?])\s+(?=[A-Z])/);
   const source = { label: 'LMU dissertation abstract', url: lmuUrl };
+  const year = /^(\d{4})\b/.exec(metadata.get('dc.date') ?? '')?.[1];
+  if (year) source.year = Number(year);
   const passages = [];
   for (let i = 0; i < sentences.length; i += 3) {
     passages.push({ heading, text: sentences.slice(i, i + 3).join(' '), source });

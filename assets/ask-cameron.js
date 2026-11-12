@@ -42,7 +42,7 @@ function renderExcerpts(excerpts) {
       link.href = url.href;
       const showSection = section && source.label !== 'CV' && heading !== section && !heading.endsWith(' · ' + section);
       const pdfPage = /^#page=(\d+)$/.exec(url.hash)?.[1];
-      link.textContent = [source.label, heading, showSection ? section : undefined, pdfPage && `PDF p. ${pdfPage}`]
+      link.textContent = [source.label, source.year, heading, showSection ? section : undefined, pdfPage && `PDF p. ${pdfPage}`]
         .filter(Boolean).join(' · ');
       if (byline.textContent) byline.append(' · ');
       byline.append(link);

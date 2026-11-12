@@ -404,7 +404,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/tex-chtml.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <script type="module" src="assets/portrait.js?v=2"></script>
-  <script type="module" src="assets/ask-cameron.js?v=13"></script>
+  <script type="module" src="assets/ask-cameron.js?v=14"></script>
 </head>
 <body>
   <main>
@@ -495,18 +495,20 @@
       <div class="ask-panel">
         <p>Search my <a href="cv.md">CV</a>, <a href="https://github.com/CameronBeebe?tab=repositories">GitHub projects</a>, <a href="https://edoc.ub.uni-muenchen.de/28655/">dissertation</a>, and selected papers.</p>
         <p class="ask-preview bio-detail" hidden>Preview mode. Choose a suggested question.</p>
-        <p class="ask-live bio-detail" id="ask-service-note">Hierarchical semantic search over context. Ask a specific question for best results.</p>
+        <p class="ask-live bio-detail" id="ask-service-note">Hierarchical semantic search over context. Question, phrase, or keywords.</p>
         <form>
           <div class="ask-field">
             <input name="question" type="text" autocomplete="off" aria-label="Question about Cameron" aria-describedby="ask-service-note" placeholder="What would you like to know?" maxlength="280" required />
             <details class="ask-suggestions">
-              <summary aria-label="Suggested questions"><span aria-hidden="true">▾</span></summary>
+              <summary aria-label="Suggested searches"><span aria-hidden="true">▾</span></summary>
               <div class="ask-suggestions-list">
                 <button type="button" data-cv-sample="appy">What did Cameron do at Appy.AI?</button>
+                <button type="button" class="ask-live">How does Intent Controller keep agents on task?</button>
                 <button type="button" class="ask-live">What is fungi_chromatic?</button>
-                <button type="button" class="ask-live">What kind of harness mod is Intent Controller?</button>
-                <button type="button" data-cv-sample="phd">What was Cameron’s Ph.D. research about?</button>
-                <button type="button" class="ask-live">Why does Cameron say analog computing is about analogy?</button>
+                <button type="button" class="ask-live">simplest optimal regulator</button>
+                <button type="button" class="ask-live">What is a model-based computer?</button>
+                <button type="button" class="ask-live">Are neural networks black boxes?</button>
+                <button type="button" class="ask-live">positive transfer learning</button>
               </div>
             </details>
           </div>
