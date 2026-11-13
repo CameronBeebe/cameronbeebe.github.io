@@ -10,6 +10,8 @@ Fire turns visible glyph density into fuel: drag to ignite cells, watch heat spr
 
 Color lets visitors describe a mood and compare palettes from three inexpensive OpenRouter models. Each result previews the current glyph grid and reports response timing, validation, and usage cost. Selecting a palette progressively recolors the cells; Restore rewinds those edits.
 
+Generate asks a model to write a 75 × 50 ASCII grid directly from a text brief. Code validates every row and character; Jev judges a rendering for brief match and visual coherence. Visitors can request feedback revisions, revisit attempts, download the full run, and apply the existing ASCII mechanics to generated grids. This is a live generation/evaluation demo; DSPy and weight optimization are future experiments.
+
 <img src="docs/screenshots/ascii-portrait.jpg" width="480" alt="ASCII frog samurai with gradient descent selected and a path through the glyphs">
 
 ## Ask more

@@ -22,3 +22,8 @@ simple = { limit = 8, period = 60 }
 name = "PALETTE_LIMIT"
 namespace_id = "74102"
 simple = { limit = 3, period = 60 }
+
+[[ratelimits]]
+name = "ASCII_LIMIT"
+namespace_id = "74103"
+simple = { limit = 3, period = 60 }

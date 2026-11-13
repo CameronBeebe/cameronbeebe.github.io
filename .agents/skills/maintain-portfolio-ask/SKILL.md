@@ -1,6 +1,6 @@
 ---
 name: maintain-portfolio-ask
-description: Maintain Ask more and the Color portrait experiment on cameronbeebe.github.io. Use for changes to search, model comparisons, indexed sources, or the Cloudflare Worker, including testing and deployment.
+description: Maintain Ask more and the Color/Generate portrait experiments on cameronbeebe.github.io. Use for changes to search, model comparisons, indexed sources, or the Cloudflare Worker, including testing and deployment.
 ---
 
 # Maintain portfolio Ask
@@ -56,3 +56,15 @@ The endpoint streams three fixed, parallel model results as NDJSON. It limits mo
 The server limits each IP to three comparisons per minute. There is no lifetime tab limit. Keep existing palettes available when a new comparison is rate-limited. Use an OpenRouter key budget for the owner's overall spend ceiling.
 
 After backend changes, run `node --test ask-worker/*.test.mjs` and the Worker build. For a direct API deployment preserve existing secrets and include both `ASK_LIMIT` and `PALETTE_LIMIT` bindings. Verify a mood such as `moss after rain`, including actual provider, token count, and cost when reported. In the browser check comparison previews, progressive recoloring, another ASCII mode, Restore, and mobile layout. Recoloring changes the current cell colors while preserving glyphs, density, positions, missing cells, and colored mechanics' backdrops.
+
+## Direct ASCII generation
+
+Generate uses `assets/portrait-generate.js`, `assets/ascii-contract.mjs`, and the bridge in `assets/portrait.js`. `/ascii/generate` and `/ascii/judge` are implemented in `ask-worker/ascii.mjs`. Deployment needs `ASCII_LIMIT` alongside the other rate bindings and both existing API secrets. Generation permits three requests per minute; judging has a separate three-request key in the same limiter. There is no tab lifetime cap.
+
+The model writes all 50 rows of 75 characters. Validate the exact alphabet and lengths; never pad, crop, substitute preset art, or convert a generated raster into the output. Preserve failed attempts and their raw output. Schema support does not imply visual quality. The allowlisted generation models have a 8,192-token output cap, the existing provider price ceiling, bounded streaming, and a request deadline. Inkling uses minimal reasoning, GLM low reasoning, and Qwen reasoning off; retain the actual settings in exported runs.
+
+The browser renders validated rows into a 375 px PNG. Jev receives that rendering and the visitor brief, with parallel Score questions for brief match and visual coherence. Scores are positions on a 0–3 rubric, not correctness probabilities. Keep the generator's identity out of the judging state. Retain probability distributions, rubrics, prompts, raw output, and reported usage in the downloadable run. A failed judge must not invalidate a usable generated grid or acquire a fabricated score.
+
+Refine is a feedback prompt using a previous grid and its Jev scores; it is not a DSPy or weight-space optimization run. Label it accordingly. Live attempts demonstrate behavior on those inputs; do not claim held-out improvement from one revision. Broader optimization needs separate practice and held-out briefs.
+
+Run `node --test ask-worker/*.test.mjs assets/portrait-fire.test.mjs` and the Worker build after backend changes. Check generation, judging, refinement, loading prior attempts, Restore, and mobile layout. New grids must remain usable by the existing ASCII mechanics. Bump the portrait entry script version when imports change so cached modules do not leave new controls bound to old code.

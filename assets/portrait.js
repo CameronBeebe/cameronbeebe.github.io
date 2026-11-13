@@ -1,8 +1,9 @@
 import { createSimulations, simulationDescriptions } from './portrait-simulations.js?v=2';
 import { swapCells, sortPass, neighbors, repairPass, quantizeRow } from './portrait-grid.js';
-import { glyphs, sampleImageTones } from './ascii-image.js?v=2';
+import { glyphs, glyphDensity, sampleImageTones } from './ascii-image.js?v=2';
 import { createPalette } from './portrait-palette.js?v=2';
 import { colorCells } from './palette-colors.mjs';
+import { createGeneration } from './portrait-generate.js?v=2';
 
 const portrait = document.querySelector('.portrait-print');
 const terminal = document.querySelector('.portrait-terminal');
@@ -70,6 +71,7 @@ function enablePortraitExperiments() {
   let alphabet = 4;
   let preview = null;
   let colors;
+  let generation;
 
   function draw() {
     drawTerminal(ctx, working);
@@ -99,9 +101,10 @@ function enablePortraitExperiments() {
   }
   function lockControls(locked) {
     rewinding = locked;
-    for (const control of controls.closest('.hero').querySelectorAll('button, input, select')) control.disabled = locked;
+    for (const control of controls.closest('.hero').querySelectorAll('button, input, select, textarea')) control.disabled = locked;
     if (!locked) dither.disabled = alphabet === glyphs.length;
     colors?.syncControls();
+    generation?.syncControls();
   }
 
   function applyGrid(next) {
@@ -343,6 +346,7 @@ function enablePortraitExperiments() {
     trace: ['Trace the ink', 'Click a character to rewrite connected cells of similar tone. Change tolerance to see where the fill stops.'],
     alphabet: ['Shrink the alphabet', 'Try 2, 4, or 8 glyphs with optional dithering. Use 12 to restore the grid you entered with. Colored mechanics marks keep their glyphs and ink.'],
     palette: ['Color by mood', 'Describe a mood. Three models propose palettes for the same glyphs. Choose your favorite.'],
+    generate: ['Generate a grid', 'The model writes every character. Load previous attempts, refine with Jev feedback, or try the ASCII mechanics on the generated grid.'],
   };
 
   for (const button of modeButtons) {
@@ -359,6 +363,7 @@ function enablePortraitExperiments() {
     seed = null;
     mode = next;
     colors?.setMode(next);
+    generation?.setMode(next);
     pointer = null;
     for (const button of modeButtons) button.setAttribute('aria-pressed', String(button.dataset.experiment === mode));
     for (const panel of panels) panel.hidden = panel.dataset.controls !== mode;
@@ -459,6 +464,20 @@ function enablePortraitExperiments() {
         else report('Palette applied to the glyphs. Restore portrait rewinds the colors.');
       }
       step();
+    },
+  });
+  generation = createGeneration({
+    controls, locked: () => rewinding,
+    renderRows(lines) {
+      const canvas = document.createElement('canvas'); canvas.width = canvas.height = 375;
+      drawTerminal(canvas.getContext('2d'), lines.join('').split('').map(char => makeCell(glyphDensity(char))));
+      return canvas;
+    },
+    applyRows(lines) {
+      if (rewinding) return;
+      stop(); simulations.reset(); pending.clear(); finished.clear(); preview = null; seed = null;
+      applyGrid(lines.join('').split('').map(char => makeCell(glyphDensity(char)))); draw();
+      report('Generated 75 × 50 grid loaded. Restore portrait rewinds this replacement and later edits.');
     },
   });
   selectMode('sort');

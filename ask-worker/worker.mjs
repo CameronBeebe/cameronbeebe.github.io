@@ -1,6 +1,7 @@
 import { cvUrl, maxQuestionLength } from '../assets/cv-passages.mjs';
 import { chapterPassages, publicPassages } from './sources.mjs';
 import { paletteRequest } from './palette.mjs';
+import { asciiRequest } from './ascii.mjs';
 
 const typeSafeUrl = 'https://api.typesafe.ai/v1/systemone';
 const allowedOrigins = new Set([
@@ -120,7 +121,7 @@ export default {
     if (allowedOrigins.has(origin)) headers.set('Access-Control-Allow-Origin', origin);
     const json = (body, status = 200) => Response.json(body, { status, headers });
     const path = new URL(request.url).pathname;
-    if (!['/ask', '/palette'].includes(path)) return json({ error: 'Unknown endpoint.' }, 404);
+    if (!['/ask', '/palette', '/ascii/generate', '/ascii/judge'].includes(path)) return json({ error: 'Unknown endpoint.' }, 404);
     if (!allowedOrigins.has(origin)) return json({ error: 'Origin is not allowed.' }, 403);
     if (request.method === 'OPTIONS') {
       headers.set('Access-Control-Allow-Methods', 'POST');
@@ -135,6 +136,7 @@ export default {
       return json({ error: 'Send a JSON question.' }, 415);
     }
     if (path === '/palette') return paletteRequest(request, env, json, headers, ctx);
+    if (path.startsWith('/ascii/')) return asciiRequest(request, env, json, headers, ctx, path === '/ascii/judge');
 
     let body;
     try {

@@ -108,9 +108,9 @@
     .portrait-actions button:disabled { opacity: 0.55; cursor: default; }
     #trace-tolerance, #flow-threshold { width: 5rem; }
     #portrait-status { min-height: 2.9em; color: var(--ink); }
-    .palette-panel { border-top: 1px solid var(--line); padding-top: 0.65rem; }
-    .hero-copy > .palette-panel { margin-top: 1.5rem; font: 0.74rem/1.45 var(--mono); }
-    .palette-panel [hidden] { display: none; }
+    .palette-panel, .generation-panel { border-top: 1px solid var(--line); padding-top: 0.65rem; }
+    .hero-copy > :is(.palette-panel, .generation-panel) { margin-top: 1.5rem; font: 0.74rem/1.45 var(--mono); }
+    .palette-panel [hidden], .generation-panel [hidden] { display: none; }
     .palette-form { display: flex; gap: 0.5rem; margin: 0.45rem 0; }
     .palette-form input {
       flex: 1; min-width: 0; border: 1px solid var(--line); padding: 0.4rem;
@@ -133,10 +133,14 @@
     .palette-track { display: block; height: 3px; background: var(--line); margin-top: 2px; }
     .palette-track > span { display: block; height: 100%; background: var(--phosphor); transition: width 0.2s; }
     .palette-timing + .palette-timing .palette-track > span { background: var(--link); }
-    .palette-panel summary { color: var(--link); cursor: pointer; }
-    .hero:has([data-experiment="palette"][aria-pressed="true"]) { align-items: start; }
+    .palette-panel summary, .generation-panel summary { color: var(--link); cursor: pointer; }
+    .generation-panel textarea, .generation-panel select { max-width: 100%; border: 1px solid var(--line); background: var(--well); color: var(--link); font: inherit; padding: 0.4rem; }
+    .generation-panel textarea { width: 100%; resize: vertical; margin: 0.4rem 0; }
+    .generation-panel pre { max-height: 15rem; overflow: auto; font-size: 0.65rem; white-space: pre; }
+    .generation-evidence { display: block; width: 100%; height: auto; }
+    .hero:has(:is([data-experiment="palette"], [data-experiment="generate"])[aria-pressed="true"]) { align-items: start; }
     @media (min-width: 701px) {
-      .hero:has([data-experiment="palette"][aria-pressed="true"]) .hero-art { position: sticky; top: 1rem; align-self: start; }
+      .hero:has(:is([data-experiment="palette"], [data-experiment="generate"])[aria-pressed="true"]) .hero-art { position: sticky; top: 1rem; align-self: start; }
     }
     .eyebrow { color: var(--link); margin: 0; }
     .hero .icons { display: flex; flex-wrap: wrap; gap: 0.45rem; margin-top: 1.5rem; }
@@ -434,7 +438,7 @@
   </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/tex-chtml.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-  <script type="module" src="assets/portrait.js?v=4"></script>
+  <script type="module" src="assets/portrait.js?v=6"></script>
   <script type="module" src="assets/ask-cameron.js?v=14"></script>
 </head>
 <body>
@@ -472,6 +476,7 @@
           <button type="button" data-experiment="flow" aria-pressed="false">Percolation</button>
           <button type="button" data-experiment="fire" aria-pressed="false">Fire</button>
           <button type="button" data-experiment="palette" aria-pressed="false">Color</button>
+          <button type="button" data-experiment="generate" aria-pressed="false">Generate</button>
         </div>
       </div>
       <strong class="portrait-title" id="portrait-title"></strong>
@@ -523,6 +528,26 @@
         <p role="status">One mood, three interpretations. Select a preview to apply it.</p>
         <div class="palette-results" hidden></div>
         <details><summary>What is measured?</summary><p>First token: time from the Worker's request to the first nonempty JSON token. Usable JSON: time until a complete palette passes format checks and is adjusted for readable contrast. The models choose the hues; code adjusts lightness. Bars share a scale within this round. Cost and token counts come from OpenRouter; missing usage is shown as unreported.</p><p>These are individual live requests, including provider queuing and network time. Your mood is sent to OpenRouter and its model providers. Three comparisons per minute.</p></details>
+      </div>
+      <div class="generation-panel" data-controls="generate" data-endpoint="https://cameron-portfolio-ask.cameronbeebe.workers.dev/ascii" hidden>
+        <form>
+          <label for="generation-brief">What should the model draw?</label>
+          <textarea id="generation-brief" rows="3" maxlength="300" required>Close-up portrait of a stern frog samurai beneath a pine branch, with prominent eyes and layered armor.</textarea>
+          <div class="portrait-actions">
+            <select aria-label="ASCII generation model"></select>
+            <button type="submit">Generate</button>
+            <button type="button" class="generation-refine" disabled>Refine</button>
+          </div>
+        </form>
+        <p role="status">Text → 75 × 50 characters → Jev judgment.</p>
+        <div class="generation-results palette-results"></div>
+        <details><summary>Run details</summary>
+          <p>Each cell comes directly from the model. Code checks the shape and glyph alphabet; it does not repair the drawing. Jev judges a 375 px rendering on two descriptive scales from 0 to 3. Its image judgments are experimental, not objective grades. Refine supplies the previous grid and judgments to the generator; it is feedback prompting, not a DSPy or weight optimization run.</p>
+          <p>Prompts and outputs go to OpenRouter and its providers. Rendered output and the brief go to Jev. Three generations per minute.</p>
+          <div class="portrait-actions"><button type="button" class="generation-download" disabled>Download run</button></div>
+          <img class="generation-evidence" width="375" height="375" alt="The generated ASCII rendering sent to Jev" hidden />
+          <pre class="generation-details"></pre>
+        </details>
       </div>
       <div class="portrait-actions">
         <button type="button" id="portrait-restore">Restore portrait</button>
