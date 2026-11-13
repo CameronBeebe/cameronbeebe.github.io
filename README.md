@@ -6,6 +6,8 @@ A portfolio for philosophy of science and agent engineering, with a CV, research
 
 An interactive frog samurai rendered as a grid of characters. Sort or repair the portrait, change its glyph palette, or explore simulations such as gravity, gradient descent, and percolation. The screenshot shows a completed descent across the glyphs.
 
+Fire turns visible glyph density into fuel: drag to ignite cells, watch heat spread and denser characters burn longer, then rewind the burn with Restore.
+
 Color lets visitors describe a mood and compare palettes from three inexpensive OpenRouter models. Each result previews the current glyph grid and reports response timing, validation, and usage cost. Selecting a palette progressively recolors the cells; Restore rewinds those edits.
 
 <img src="docs/screenshots/ascii-portrait.jpg" width="480" alt="ASCII frog samurai with gradient descent selected and a path through the glyphs">

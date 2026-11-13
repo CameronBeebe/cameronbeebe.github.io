@@ -134,7 +134,6 @@
     .palette-track > span { display: block; height: 100%; background: var(--phosphor); transition: width 0.2s; }
     .palette-timing + .palette-timing .palette-track > span { background: var(--link); }
     .palette-panel summary { color: var(--link); cursor: pointer; }
-    .palette-rounds { font-size: 0.67rem; }
     .hero:has([data-experiment="palette"][aria-pressed="true"]) { align-items: start; }
     @media (min-width: 701px) {
       .hero:has([data-experiment="palette"][aria-pressed="true"]) .hero-art { position: sticky; top: 1rem; align-self: start; }
@@ -435,7 +434,7 @@
   </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/tex-chtml.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-  <script type="module" src="assets/portrait.js?v=3"></script>
+  <script type="module" src="assets/portrait.js?v=4"></script>
   <script type="module" src="assets/ask-cameron.js?v=14"></script>
 </head>
 <body>
@@ -471,6 +470,7 @@
           <button type="button" data-experiment="descent" aria-pressed="false">Descent</button>
           <button type="button" data-experiment="edges" aria-pressed="false">Edges</button>
           <button type="button" data-experiment="flow" aria-pressed="false">Percolation</button>
+          <button type="button" data-experiment="fire" aria-pressed="false">Fire</button>
           <button type="button" data-experiment="palette" aria-pressed="false">Color</button>
         </div>
       </div>
@@ -511,6 +511,9 @@
         <button type="button" id="flow-run">Release ink</button>
         <label>Max density <input type="range" id="flow-threshold" min="0" max="100" value="40" /> <output id="flow-level" for="flow-threshold">40</output></label>
       </div>
+      <div class="portrait-actions" data-controls="fire" hidden>
+        <button type="button" id="fire-run">Resume fire</button>
+      </div>
       <div class="palette-panel" data-controls="palette" data-endpoint="https://cameron-portfolio-ask.cameronbeebe.workers.dev/palette" hidden>
         <form class="palette-form portrait-actions">
           <input type="text" value="moss after rain" maxlength="120" list="palette-moods" aria-label="A mood for the portrait" required />
@@ -519,8 +522,7 @@
         </form>
         <p role="status">One mood, three interpretations. Select a preview to apply it.</p>
         <div class="palette-results" hidden></div>
-        <p class="palette-rounds"></p>
-        <details><summary>What is measured?</summary><p>First token: time from the Worker's request to the first nonempty JSON token. Usable JSON: time until a complete palette passes format checks and is adjusted for readable contrast. The models choose the hues; code adjusts lightness. Bars share a scale within this round. Cost and token counts come from OpenRouter; missing usage is shown as unreported.</p><p>These are individual live requests, including provider queuing and network time. Your mood is sent to OpenRouter and its model providers. Three short comparisons per tab; three per minute on the server.</p></details>
+        <details><summary>What is measured?</summary><p>First token: time from the Worker's request to the first nonempty JSON token. Usable JSON: time until a complete palette passes format checks and is adjusted for readable contrast. The models choose the hues; code adjusts lightness. Bars share a scale within this round. Cost and token counts come from OpenRouter; missing usage is shown as unreported.</p><p>These are individual live requests, including provider queuing and network time. Your mood is sent to OpenRouter and its model providers. Three comparisons per minute.</p></details>
       </div>
       <div class="portrait-actions">
         <button type="button" id="portrait-restore">Restore portrait</button>

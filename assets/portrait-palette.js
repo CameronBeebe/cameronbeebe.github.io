@@ -7,7 +7,6 @@ export function createPalette({ controls, current, apply, drawPreview, locked })
   const compare = form.querySelector('button');
   const status = panel.querySelector('[role="status"]');
   const results = panel.querySelector('.palette-results');
-  const rounds = panel.querySelector('.palette-rounds');
   const cards = new Map();
   const home = document.createComment('palette controls');
   panel.before(home);
@@ -16,13 +15,9 @@ export function createPalette({ controls, current, apply, drawPreview, locked })
   let request;
   let active = false;
   let rendering;
-  let used = 0;
-  try { used = Math.min(3, Math.max(0, Number(sessionStorage.getItem('palette-rounds')) || 0)); } catch { /* Storage is optional. */ }
-
   function updateButton() {
-    compare.disabled = Boolean(request) || used >= 3 || locked();
+    compare.disabled = Boolean(request) || locked();
     compare.textContent = request ? 'Comparing…' : 'Compare';
-    rounds.textContent = `${3 - used} comparisons left in this tab.`;
   }
   updateButton();
 
@@ -110,15 +105,11 @@ export function createPalette({ controls, current, apply, drawPreview, locked })
   form.addEventListener('submit', async event => {
     event.preventDefault();
     const mood = input.value.trim();
-    if (!mood || request || used >= 3 || locked()) return;
+    if (!mood || request || locked()) return;
     const controller = new AbortController();
     request = controller;
     updateButton();
     status.textContent = 'The same mood goes to three models in parallel.';
-    results.replaceChildren(); cards.clear();
-    for (const model of paletteModels) makeCard(model);
-    results.hidden = false;
-    let counted = false;
     let done = false;
     try {
       const response = await fetch(panel.dataset.endpoint, {
@@ -129,9 +120,9 @@ export function createPalette({ controls, current, apply, drawPreview, locked })
         const problem = await response.json();
         throw new Error(problem.error ?? 'The comparison could not start.');
       }
-      used++;
-      counted = true;
-      try { sessionStorage.setItem('palette-rounds', String(used)); } catch { /* Storage is optional. */ }
+      results.replaceChildren(); cards.clear();
+      for (const model of paletteModels) makeCard(model);
+      results.hidden = false;
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let pending = '';
@@ -156,7 +147,7 @@ export function createPalette({ controls, current, apply, drawPreview, locked })
         if (!card.result || card.result.event !== 'result') card.state.textContent = 'Comparison incomplete';
       }
       status.textContent = controller.signal.aborted ? 'Comparison stopped.' : error.message;
-      if (!counted) results.hidden = true;
+      if (!cards.size) results.hidden = true;
     } finally {
       request = null;
       updateButton();

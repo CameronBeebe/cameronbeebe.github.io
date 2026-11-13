@@ -1,7 +1,7 @@
-import { createSimulations, simulationDescriptions } from './portrait-simulations.js';
+import { createSimulations, simulationDescriptions } from './portrait-simulations.js?v=2';
 import { swapCells, sortPass, neighbors, repairPass, quantizeRow } from './portrait-grid.js';
 import { glyphs, sampleImageTones } from './ascii-image.js?v=2';
-import { createPalette } from './portrait-palette.js';
+import { createPalette } from './portrait-palette.js?v=2';
 import { colorCells } from './palette-colors.mjs';
 
 const portrait = document.querySelector('.portrait-print');
@@ -390,7 +390,7 @@ function enablePortraitExperiments() {
     const point = pointAt(event);
     if (mode === 'trace') trace(point[1] * columns + point[0]);
     simulations.pick(mode, point);
-    if (!['repair', 'sort', 'life', 'gravity'].includes(mode)) return;
+    if (!['repair', 'sort', 'life', 'gravity', 'fire'].includes(mode)) return;
     terminal.setPointerCapture(event.pointerId);
     pointer = { id: event.pointerId, point };
     stroke(point, point);
