@@ -108,34 +108,36 @@
     .portrait-actions button:disabled { opacity: 0.55; cursor: default; }
     #trace-tolerance, #flow-threshold { width: 5rem; }
     #portrait-status { min-height: 2.9em; color: var(--ink); }
-    .perception-panel { border-top: 1px solid var(--line); padding-top: 0.65rem; font: 0.78rem/1.5 var(--mono); }
-    .perception-panel [hidden] { display: none; }
-    .hero-copy > .perception-panel { margin-top: 1.5rem; }
-    .perception-panel input[type="text"], .perception-panel select {
-      min-width: 0; max-width: 100%; border: 1px solid var(--line); padding: 0.35rem;
+    .palette-panel { border-top: 1px solid var(--line); padding-top: 0.65rem; }
+    .hero-copy > .palette-panel { margin-top: 1.5rem; font: 0.74rem/1.45 var(--mono); }
+    .palette-panel [hidden] { display: none; }
+    .palette-form { display: flex; gap: 0.5rem; margin: 0.45rem 0; }
+    .palette-form input {
+      flex: 1; min-width: 0; border: 1px solid var(--line); padding: 0.4rem;
       background: var(--well); color: var(--link); font: inherit;
     }
-    .perception-panel .perception-target { display: flex; gap: 0.4rem; margin-bottom: 0.5rem; }
-    .perception-target input { flex: 1; width: 6rem; }
-    .perception-panel .perception-options { display: grid; gap: 0.45rem; margin: 0.55rem 0; }
-    .perception-options > label { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
-    .perception-options input[type="text"] { width: 65%; }
-    .perception-panel details { margin: 0.6rem 0; }
-    .perception-panel summary { cursor: pointer; color: var(--link); }
-    .perception-panel output { color: var(--link); }
-    .perception-evidence img { display: block; max-width: 100%; height: auto; }
-    .perception-evidence pre { max-width: 100%; overflow: auto; font-size: 0.5rem; line-height: 1; }
-    .perception-panel input[type="range"] { width: 6rem; accent-color: var(--phosphor); }
-    .perception-legend { display: flex; flex-wrap: wrap; gap: 0.7rem; }
-    .perception-human { color: #edc984; }
-    .perception-model { color: #7fdfe0; }
-    .perception-shared { color: #f6f1d3; }
-    .perception-result { white-space: pre-line; }
-    .portrait-guide { border-top: 1px solid var(--line); margin-top: 0.5rem; padding-top: 0.4rem; }
-    .hero .jev-suggested { outline: 2px solid #7fdfe0; outline-offset: 4px; }
-    .hero:has([data-experiment="perceive"][aria-pressed="true"]) { align-items: start; }
+    .palette-results { display: grid; gap: 0.5rem; margin: 0.8rem 0; }
+    .palette-card {
+      display: grid; grid-template-columns: minmax(4rem, 32%) 1fr; gap: 0.65rem; align-items: center;
+      width: 100%; text-align: left; border: 1px solid var(--line); padding: 0.4rem;
+      font: inherit; background: var(--well); color: var(--link); cursor: pointer;
+    }
+    .palette-card:disabled { cursor: default; }
+    .palette-card:not(:disabled):hover, .palette-card[aria-pressed="true"] { border-color: var(--phosphor); }
+    .palette-card:focus-visible { outline: 2px solid var(--phosphor); outline-offset: 3px; }
+    .palette-card canvas { display: block; width: 100%; height: auto; aspect-ratio: 1; }
+    .palette-card strong { color: var(--link); }
+    .palette-card > span, .palette-metrics { display: grid; gap: 0.2rem; }
+    .palette-state { font-size: 0.68rem; color: var(--phosphor); }
+    .palette-metrics { font-size: 0.63rem; color: var(--muted); }
+    .palette-track { display: block; height: 3px; background: var(--line); margin-top: 2px; }
+    .palette-track > span { display: block; height: 100%; background: var(--phosphor); transition: width 0.2s; }
+    .palette-timing + .palette-timing .palette-track > span { background: var(--link); }
+    .palette-panel summary { color: var(--link); cursor: pointer; }
+    .palette-rounds { font-size: 0.67rem; }
+    .hero:has([data-experiment="palette"][aria-pressed="true"]) { align-items: start; }
     @media (min-width: 701px) {
-      .hero:has([data-experiment="perceive"][aria-pressed="true"]) .hero-art { position: sticky; top: 1rem; align-self: start; }
+      .hero:has([data-experiment="palette"][aria-pressed="true"]) .hero-art { position: sticky; top: 1rem; align-self: start; }
     }
     .eyebrow { color: var(--link); margin: 0; }
     .hero .icons { display: flex; flex-wrap: wrap; gap: 0.45rem; margin-top: 1.5rem; }
@@ -454,7 +456,7 @@
   </div>
   <figure class="hero-art">
     <img class="portrait-print" src="assets/pine-ronin.webp" width="1254" height="1254" alt="Pixel woodblock portrait of a stern frog samurai under a pine, one hand on his sheathed sword." fetchpriority="high" />
-    <canvas class="portrait-terminal" width="600" height="600" role="img" aria-label="Hacker-green ASCII portrait of a frog samurai under a pine." aria-describedby="portrait-instructions" hidden></canvas>
+    <canvas class="portrait-terminal" width="600" height="600" role="img" aria-label="Interactive ASCII portrait of a frog samurai under a pine." aria-describedby="portrait-instructions" hidden></canvas>
     <figcaption class="portrait-controls" hidden>
       <div class="portrait-actions portrait-modes" role="group" aria-label="ASCII experiments">
         <div class="portrait-mode-row">
@@ -469,7 +471,7 @@
           <button type="button" data-experiment="descent" aria-pressed="false">Descent</button>
           <button type="button" data-experiment="edges" aria-pressed="false">Edges</button>
           <button type="button" data-experiment="flow" aria-pressed="false">Percolation</button>
-          <button type="button" data-experiment="perceive" aria-pressed="false">Perceive</button>
+          <button type="button" data-experiment="palette" aria-pressed="false">Color</button>
         </div>
       </div>
       <strong class="portrait-title" id="portrait-title"></strong>
@@ -509,79 +511,22 @@
         <button type="button" id="flow-run">Release ink</button>
         <label>Max density <input type="range" id="flow-threshold" min="0" max="100" value="40" /> <output id="flow-level" for="flow-threshold">40</output></label>
       </div>
-      <div class="perception-panel" data-controls="perceive" data-endpoint="https://cameron-portfolio-ask.cameronbeebe.workers.dev/portrait" hidden>
-        <div class="perception-target portrait-actions">
-          <input id="perception-target" type="text" value="frog" maxlength="100" list="perception-targets" aria-label="What should Jev look for?" />
-          <datalist id="perception-targets"><option value="frog"></option><option value="sword"></option><option value="tree"></option><option value="face"></option></datalist>
-          <button type="button" id="perception-compare">Ask Jev</button>
-        </div>
-        <p id="perception-result" class="perception-result" role="status">Name something in the portrait, then ask Jev to find it.</p>
-        <details>
-          <summary>Change how Jev looks</summary>
-          <div class="perception-options">
-            <label>View <select id="perception-view"><option value="image">Rendered ASCII</option><option value="grid">Raw character grid</option></select></label>
-            <label>Artwork description <input id="perception-context" type="checkbox" /></label>
-            <label>Crop tool <input id="perception-tools" type="checkbox" checked /></label>
-            <label>Boost glyph contrast <input id="perception-contrast" type="checkbox" /></label>
-          </div>
-          <details>
-            <summary>More settings</summary>
-            <div class="perception-options">
-              <label>Model <select id="perception-model"><option value="jev-latest">Jev latest</option><option value="jev-1.14.0">Jev 1.14</option></select></label>
-              <label>Original ASCII reference <input id="perception-reference" type="checkbox" /></label>
-              <label>Guidance <input id="perception-guidance" type="text" maxlength="300" placeholder="What counts as recognizable?" /></label>
-            </div>
-          </details>
-        </details>
-        <details id="perception-experiments">
-          <summary>Experiments</summary>
-          <details id="perception-human">
-            <summary>Compare your interpretation</summary>
-            <div class="portrait-actions">
-              <label>Your probability <input id="perception-belief" type="range" min="0" max="100" value="50" /> <output for="perception-belief" id="perception-belief-value">50%</output></label>
-            </div>
-            <p>Paint the characters you think belong to the target.</p>
-            <div class="portrait-actions">
-              <label>Brush <select id="perception-brush"><option value="mark">Mark yours</option><option value="unmark">Unmark</option></select></label>
-              <button type="button" id="perception-clear">Clear marks</button>
-            </div>
-            <div class="perception-legend"><span class="perception-human">You</span><span class="perception-model">Jev</span><span class="perception-shared">Both</span></div>
-            <div class="portrait-actions">
-              <label>Show <select id="perception-overlay"><option value="overlap">Both interpretations</option><option value="difference">Disagreement</option><option value="model">Jev only</option><option value="human">You only</option></select></label>
-              <label>Cutoff <input id="perception-cutoff" type="range" min="10" max="90" value="50" /> <output id="perception-cutoff-value" for="perception-cutoff">50%</output></label>
-            </div>
-            <p id="perception-hover">Jev scores regions of the grid.</p>
-            <div class="perception-options"><label>Share my marks as context <input id="perception-share" type="checkbox" /></label></div>
-            <div class="portrait-actions">
-              <button type="button" id="perception-focus">Inspect marked region</button>
-              <button type="button" id="perception-whole" hidden>Whole portrait</button>
-            </div>
-          </details>
-          <details>
-            <summary>Predict an edit</summary>
-            <div class="portrait-actions">
-              <button type="button" id="perception-predict">Suggest an erasure</button>
-              <button type="button" id="perception-test" hidden>Erase &amp; check</button>
-            </div>
-            <p id="perception-prediction"></p>
-          </details>
-          <details>
-            <summary>Suggest what’s next</summary>
-            <div class="perception-options">
-              <label>My intention <select id="perception-goal"><option value="">Let Jev infer it</option><option value="recognition">Recognition</option><option value="recovery">Recovering the portrait</option><option value="mechanics">How the algorithms work</option><option value="comparison">Human/model agreement</option><option value="exploration">Just exploring</option></select></label>
-            </div>
-            <div class="portrait-actions"><button type="button" id="perception-next">Suggest a next step</button></div>
-          </details>
-          <details id="perception-history" hidden><summary>Recent comparisons</summary><ol></ol></details>
-          <details id="perception-evidence" class="perception-evidence" hidden><summary>Last view sent to Jev</summary><p></p><img width="750" height="750" alt="The ASCII image sent to Jev, without interpretation overlays" hidden /><pre hidden></pre></details>
-          <p class="bio-detail">Jev vision is experimental. Your selected view and recent demo actions are sent when you ask.</p>
-        </details>
+      <div class="palette-panel" data-controls="palette" data-endpoint="https://cameron-portfolio-ask.cameronbeebe.workers.dev/palette" hidden>
+        <form class="palette-form portrait-actions">
+          <input type="text" value="moss after rain" maxlength="120" list="palette-moods" aria-label="A mood for the portrait" required />
+          <datalist id="palette-moods"><option value="moss after rain"></option><option value="lantern-lit"></option><option value="cold steel"></option><option value="autumn at dusk"></option></datalist>
+          <button type="submit">Compare</button>
+        </form>
+        <p role="status">One mood, three interpretations. Select a preview to apply it.</p>
+        <div class="palette-results" hidden></div>
+        <p class="palette-rounds"></p>
+        <details><summary>What is measured?</summary><p>First token: time from the Worker's request to the first nonempty JSON token. Usable JSON: time until a complete palette passes format checks and is adjusted for readable contrast. The models choose the hues; code adjusts lightness. Bars share a scale within this round. Cost and token counts come from OpenRouter; missing usage is shown as unreported.</p><p>These are individual live requests, including provider queuing and network time. Your mood is sent to OpenRouter and its model providers. Three short comparisons per tab; three per minute on the server.</p></details>
       </div>
       <div class="portrait-actions">
         <button type="button" id="portrait-restore">Restore portrait</button>
       </div>
       <p id="portrait-status" role="status"></p>
-      <div class="portrait-guide" hidden><p id="perception-suggestion" role="status"></p><div class="portrait-actions"><button type="button" id="perception-follow">Try it</button><button type="button" id="perception-dismiss">Dismiss</button></div></div>
+
     </figcaption>
   </figure>
   </header>

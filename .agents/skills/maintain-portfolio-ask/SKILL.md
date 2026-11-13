@@ -1,6 +1,6 @@
 ---
 name: maintain-portfolio-ask
-description: Maintain Ask more and the Perceive portrait experiment on cameronbeebe.github.io. Use for changes to search, visual judgments, indexed sources, or the Cloudflare Worker, including testing and deployment.
+description: Maintain Ask more and the Color portrait experiment on cameronbeebe.github.io. Use for changes to search, model comparisons, indexed sources, or the Cloudflare Worker, including testing and deployment.
 ---
 
 # Maintain portfolio Ask
@@ -47,8 +47,12 @@ curl -fsS https://cameron-portfolio-ask.cameronbeebe.workers.dev/ask \
 
 For a local live test, run `npx wrangler dev --config ask-worker/wrangler.toml --port 8787 --env-file /path/to/private/ask-worker.env` and open the local site with `?live-ask#ask-cameron`. Keep the environment file outside both the repository and the preview server's directory.
 
-## Portrait perception
+## Portrait palettes
 
-The Perceive mode uses `assets/portrait-perception.js` and the portrait bridge in `assets/portrait.js`. The same Worker serves `/portrait` through `ask-worker/portrait.mjs`, using the existing secret and rate limiter. Run both Worker test files after changes.
+The Color mode uses `assets/portrait-palette.js`, the portrait bridge in `assets/portrait.js`, and shared palette validation in `assets/palette-colors.mjs`. The same Worker serves `/palette` through `ask-worker/palette.mjs`. It needs `OPENROUTER_API_KEY` as a Cloudflare secret and the `PALETTE_LIMIT` binding from `wrangler.toml`. Never put the key into browser code or a public file. `TYPESAFE_API_KEY` remains the separate key for Ask more.
 
-The browser sends the current rendered ASCII or raw grid, optional reference/context, and bounded demo interactions only when the visitor requests a judgment. Human marks and model overlays stay out of the captured image. Patch scores represent regions, and image/Box judgments are experimental. Check comparison, crop, prediction/erasure/restore, next-action outlines, and mobile panel placement in the preview.
+The endpoint streams three fixed, parallel model results as NDJSON. It limits moods to 120 characters, caps each call at 1,024 output tokens including reasoning (320 with reasoning off for Qwen), and excludes providers above $0.40/M input or $1/M output. It requires JSON Schema support and validates the JSON shape, then computes readable lightness from the generated hues. Inkling and GLM require reasoning; Qwen supports disabling it. Report those settings with timings. Preserve failures and missing cost as such; do not fabricate results or replace unsuccessful generations with preset palettes. First-token time excludes reasoning-only events and keepalives; usable-JSON latency is distinct from the later billing frame. These are live observations including provider/network time, not general benchmark rankings.
+
+The tab allows three comparisons via session storage; the server separately limits each IP to three comparisons per minute. The tab counter is a UX limit, not a durable spending cap. Use an OpenRouter key budget for the owner's overall spend ceiling.
+
+After backend changes, run `node --test ask-worker/*.test.mjs` and the Worker build. For a direct API deployment preserve existing secrets and include both `ASK_LIMIT` and `PALETTE_LIMIT` bindings. Verify a mood such as `moss after rain`, including actual provider, token count, and cost when reported. In the browser check comparison previews, progressive recoloring, another ASCII mode, Restore, and mobile layout. Recoloring changes the current cell colors while preserving glyphs, density, positions, missing cells, and colored mechanics' backdrops.

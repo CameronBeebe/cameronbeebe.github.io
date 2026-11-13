@@ -1,7 +1,8 @@
 import { createSimulations, simulationDescriptions } from './portrait-simulations.js';
 import { swapCells, sortPass, neighbors, repairPass, quantizeRow } from './portrait-grid.js';
 import { glyphs, sampleImageTones } from './ascii-image.js?v=2';
-import { createPerception } from './portrait-perception.js';
+import { createPalette } from './portrait-palette.js';
+import { colorCells } from './palette-colors.mjs';
 
 const portrait = document.querySelector('.portrait-print');
 const terminal = document.querySelector('.portrait-terminal');
@@ -23,7 +24,7 @@ function makeCell(tone) {
 function drawTerminal(ctx, cells) {
   const cellWidth = ctx.canvas.width / columns;
   const cellHeight = ctx.canvas.height / rows;
-  ctx.fillStyle = '#031803';
+  ctx.fillStyle = cells.find(cell => cell?.paper)?.paper ?? '#031803';
   ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
   ctx.font = `${cellHeight * 13 / 12}px ${font}`;
   ctx.textAlign = 'center';
@@ -68,16 +69,13 @@ function enablePortraitExperiments() {
   let seed = null;
   let alphabet = 4;
   let preview = null;
-  let perception;
-  let revision = 0;
+  let colors;
 
   function draw() {
     drawTerminal(ctx, working);
-    perception?.draw(ctx, working);
   }
   function gridChanged() {
-    revision++;
-    perception?.gridChanged();
+    colors?.gridChanged();
   }
   function fitCanvas() {
     const scale = window.devicePixelRatio || 1;
@@ -103,6 +101,7 @@ function enablePortraitExperiments() {
     rewinding = locked;
     for (const control of controls.closest('.hero').querySelectorAll('button, input, select')) control.disabled = locked;
     if (!locked) dither.disabled = alphabet === glyphs.length;
+    colors?.syncControls();
   }
 
   function applyGrid(next) {
@@ -343,7 +342,7 @@ function enablePortraitExperiments() {
     repair: ['Damage & repair', 'Drag to erase characters. Repair estimates each missing cell from its neighbors, one pass at a time.'],
     trace: ['Trace the ink', 'Click a character to rewrite connected cells of similar tone. Change tolerance to see where the fill stops.'],
     alphabet: ['Shrink the alphabet', 'Try 2, 4, or 8 glyphs with optional dithering. Use 12 to restore the grid you entered with. Colored mechanics marks keep their glyphs and ink.'],
-    perceive: ['What does Jev see?', 'Ask Jev to find something in the portrait. Try an edit, then ask again.'],
+    palette: ['Color by mood', 'Describe a mood. Three models propose palettes for the same glyphs. Choose your favorite.'],
   };
 
   for (const button of modeButtons) {
@@ -359,7 +358,7 @@ function enablePortraitExperiments() {
     preview = null;
     seed = null;
     mode = next;
-    perception?.setMode(next);
+    colors?.setMode(next);
     pointer = null;
     for (const button of modeButtons) button.setAttribute('aria-pressed', String(button.dataset.experiment === mode));
     for (const panel of panels) panel.hidden = panel.dataset.controls !== mode;
@@ -378,7 +377,6 @@ function enablePortraitExperiments() {
   }
 
   function stroke(from, to) {
-    if (mode === 'perceive') perception.stroke(from, to);
     if (mode === 'repair') eraseStroke(from, to);
     simulations.stroke(mode, from, to);
     if (mode === 'sort') {
@@ -392,14 +390,13 @@ function enablePortraitExperiments() {
     const point = pointAt(event);
     if (mode === 'trace') trace(point[1] * columns + point[0]);
     simulations.pick(mode, point);
-    if (!['repair', 'sort', 'life', 'gravity', 'perceive'].includes(mode)) return;
+    if (!['repair', 'sort', 'life', 'gravity'].includes(mode)) return;
     terminal.setPointerCapture(event.pointerId);
     pointer = { id: event.pointerId, point };
     stroke(point, point);
   });
 
   terminal.addEventListener('pointermove', event => {
-    if (mode === 'perceive') perception.hover(pointAt(event));
     if (pointer?.id !== event.pointerId) return;
     const point = pointAt(event);
     if (point[0] === pointer.point[0] && point[1] === pointer.point[1]) return;
@@ -438,34 +435,30 @@ function enablePortraitExperiments() {
   document.getElementById('alphabet-twelve').addEventListener('click', () => shrink(glyphs.length));
   dither.addEventListener('change', () => shrink(alphabet));
 
-  perception = createPerception({
-    terminal, controls, columns, rows, draw, selectMode,
-    revision: () => revision,
+  colors = createPalette({
+    controls,
+    current: () => working,
     locked: () => rewinding,
-    pause: stop,
-    snapshot(reference = false) {
-      const cells = reference ? original : working;
-      const canvas = document.createElement('canvas');
-      canvas.width = 750;
-      canvas.height = 750;
-      drawTerminal(canvas.getContext('2d'), cells);
-      return { canvas, grid: Array.from({ length: rows }, (_, row) =>
-        cells.slice(row * columns, (row + 1) * columns).map(cell => cell?.glyph ?? ' ').join('')) };
-    },
-    eraseRegion([left, top, right, bottom]) {
-      if (rewinding) return false;
+    drawPreview(canvas, cells) { drawTerminal(canvas.getContext('2d'), cells); },
+    apply(palette) {
+      if (rewinding) return;
       stop();
-      preview = null;
+      simulations.reset();
       pending.clear();
       finished.clear();
-      const next = working.slice();
-      for (let y = Math.floor(top * rows); y < Math.ceil(bottom * rows); y++) {
-        for (let x = Math.floor(left * columns); x < Math.ceil(right * columns); x++) next[y * columns + x] = null;
+      preview = null;
+      const target = colorCells(working, palette);
+      let row = 0;
+      function step() {
+        const next = working.slice();
+        for (let i = row * columns; i < Math.min(rows, row + 2) * columns; i++) next[i] = target[i];
+        row += 2;
+        applyGrid(next);
+        draw();
+        if (row < rows) later(step, 25);
+        else report('Palette applied to the glyphs. Restore portrait rewinds the colors.');
       }
-      applyGrid(next);
-      draw();
-      report('Region erased for the recognition test. Restore portrait rewinds this edit.');
-      return true;
+      step();
     },
   });
   selectMode('sort');

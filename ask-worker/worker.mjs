@@ -1,6 +1,6 @@
 import { cvUrl, maxQuestionLength } from '../assets/cv-passages.mjs';
 import { chapterPassages, publicPassages } from './sources.mjs';
-import { portraitRequest } from './portrait.mjs';
+import { paletteRequest } from './palette.mjs';
 
 const typeSafeUrl = 'https://api.typesafe.ai/v1/systemone';
 const allowedOrigins = new Set([
@@ -114,13 +114,13 @@ async function readBody(request) {
 }
 
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const origin = request.headers.get('Origin');
     const headers = new Headers({ Vary: 'Origin', 'Cache-Control': 'no-store' });
     if (allowedOrigins.has(origin)) headers.set('Access-Control-Allow-Origin', origin);
     const json = (body, status = 200) => Response.json(body, { status, headers });
     const path = new URL(request.url).pathname;
-    if (!['/ask', '/portrait'].includes(path)) return json({ error: 'Unknown endpoint.' }, 404);
+    if (!['/ask', '/palette'].includes(path)) return json({ error: 'Unknown endpoint.' }, 404);
     if (!allowedOrigins.has(origin)) return json({ error: 'Origin is not allowed.' }, 403);
     if (request.method === 'OPTIONS') {
       headers.set('Access-Control-Allow-Methods', 'POST');
@@ -134,7 +134,7 @@ export default {
     if (request.headers.get('Content-Type')?.split(';')[0].trim().toLowerCase() !== 'application/json') {
       return json({ error: 'Send a JSON question.' }, 415);
     }
-    if (path === '/portrait') return portraitRequest(request, env, json, headers);
+    if (path === '/palette') return paletteRequest(request, env, json, headers, ctx);
 
     let body;
     try {

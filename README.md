@@ -6,7 +6,7 @@ A portfolio for philosophy of science and agent engineering, with a CV, research
 
 An interactive frog samurai rendered as a grid of characters. Sort or repair the portrait, change its glyph palette, or explore simulations such as gravity, gradient descent, and percolation. The screenshot shows a completed descent across the glyphs.
 
-Perceive lets visitors name something in the portrait and ask Jev to highlight its interpretation. Viewing settings are collapsed, with human comparisons, predicted edits, and next-action suggestions available as optional experiments. Image judgments are experimental.
+Color lets visitors describe a mood and compare palettes from three inexpensive OpenRouter models. Each result previews the current glyph grid and reports response timing, validation, and usage cost. Selecting a palette progressively recolors the cells; Restore rewinds those edits.
 
 <img src="docs/screenshots/ascii-portrait.jpg" width="480" alt="ASCII frog samurai with gradient descent selected and a path through the glyphs">
 
