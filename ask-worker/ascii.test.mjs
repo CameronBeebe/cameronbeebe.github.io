@@ -40,7 +40,7 @@ test('direct generation returns exact model-written rows, costs, provider, and p
     assert.equal(body.response_format.json_schema.strict, true);
     assert.equal(body.response_format.json_schema.schema.properties.rows.minItems, 50);
     assert.equal(body.response_format.json_schema.schema.properties.rows.items.minLength, 75);
-    assert.equal(body.max_tokens, 8192);
+    assert.equal(body.max_tokens, 32768);
     assert.equal(body.reasoning.enabled, false);
     assert.ok(body.messages.every(m => typeof m.content === 'string'));
     assert.equal(body.messages.length, 2);

@@ -40,6 +40,8 @@ export function modelStream(request, headers, ctx, work, timeoutMs = 70000) {
     writes = writes.then(() => writer.write(new TextEncoder().encode(JSON.stringify(data) + '\n')));
     writes.catch(abort);
   };
+  const started = performance.now();
+  const heartbeat = setInterval(() => emit({ event: 'waiting', elapsedMs: Math.round(performance.now() - started) }), 5000);
   ctx.waitUntil((async () => {
     try {
       await work(controller.signal, emit);
@@ -48,7 +50,7 @@ export function modelStream(request, headers, ctx, work, timeoutMs = 70000) {
     } catch {
       abort(); await writer.abort().catch(() => {});
     } finally {
-      clearTimeout(timeout); request.signal.removeEventListener('abort', abort);
+      clearTimeout(timeout); clearInterval(heartbeat); request.signal.removeEventListener('abort', abort);
     }
   })());
   headers.set('Content-Type', 'application/x-ndjson; charset=utf-8');

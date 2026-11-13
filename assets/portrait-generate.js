@@ -102,13 +102,15 @@ export function createGeneration({ controls, locked, applyRows, renderRows }) {
       });
       if (!response.ok) throw new Error((await response.json()).error ?? 'Generation could not start.');
       const reader = response.body.getReader(), decoder = new TextDecoder();
-      let pending = '', done = false;
+      let pending = '', done = false, writing = false;
       while (true) {
         const chunk = await reader.read(); pending += decoder.decode(chunk.value, { stream: !chunk.done });
         let end;
         while ((end = pending.indexOf('\n')) !== -1) {
           const line = pending.slice(0, end); pending = pending.slice(end + 1); if (!line) continue;
           const value = JSON.parse(line);
+          if (value.event === 'first') writing = true;
+          if (value.event === 'waiting' && !writing) status.textContent = `Preparing the grid… ${Math.round(value.elapsedMs / 1000)}s elapsed.`;
           if (value.event === 'progress') status.textContent = `Writing JSON · ${value.characters.toLocaleString()} characters received…`;
           if (value.event === 'result') attempt = { ...value, number: attempts.length + 1 };
           if (value.event === 'done') done = true;

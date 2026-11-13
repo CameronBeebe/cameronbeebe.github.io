@@ -33,7 +33,7 @@ async function generate(input, env, signal, emit) {
     }) });
   }
   const result = { model: model.id, name: model.name, brief: input.brief, strategy: input.previous ? 'Feedback revision' : 'Initial prompt', thinking,
-    firstMs: null, readyMs: null, cost: null, tokens: null, reasoningTokens: null, maxTokens: 8192, provider: null, valid: false, prompt };
+    firstMs: null, readyMs: null, cost: null, tokens: null, reasoningTokens: null, maxTokens: 32768, provider: null, valid: false, prompt };
   const start = performance.now();
   let text = '';
   try {
@@ -47,7 +47,7 @@ async function generate(input, env, signal, emit) {
     });
     if (!response.ok || !response.body) { await response.body?.cancel(); throw Object.assign(new Error('Generation provider unavailable.'), { status: response.status }); }
     let completed = false, finish = null, progress = 0;
-    for await (const event of streamEvents(response.body, 4000000)) {
+    for await (const event of streamEvents(response.body, 24000000)) {
       if (event === '[DONE]') { completed = true; break; }
       const chunk = JSON.parse(event);
       if (chunk.error) throw new Error('The provider interrupted generation.');
@@ -108,7 +108,7 @@ export async function asciiRequest(request, env, json, headers, ctx, judging = f
   if (!env.ASCII_LIMIT || !(judging ? env.TYPESAFE_API_KEY : env.OPENROUTER_API_KEY)) return json({ error: 'ASCII generation is awaiting its model connection.' }, 503);
   const { success } = await env.ASCII_LIMIT.limit({ key: `${judging ? 'judge' : 'generate'}:${request.headers.get('CF-Connecting-IP') ?? 'unknown'}` });
   if (!success) { headers.set('Retry-After', '60'); return json({ error: 'Three attempts per minute. Try again shortly.' }, 429); }
-  if (!judging) return modelStream(request, headers, ctx, (signal, emit) => generate(input, env, signal, emit));
+  if (!judging) return modelStream(request, headers, ctx, (signal, emit) => generate(input, env, signal, emit), 300000);
   try {
     const signal = AbortSignal.any([request.signal, AbortSignal.timeout(18000)]);
     return json(await judge(input, env, signal));
