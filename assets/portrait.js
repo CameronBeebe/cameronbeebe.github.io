@@ -3,7 +3,7 @@ import { swapCells, sortPass, neighbors, repairPass, quantizeRow } from './portr
 import { glyphs, glyphDensity, sampleImageTones } from './ascii-image.js?v=2';
 import { createPalette } from './portrait-palette.js?v=2';
 import { colorCells } from './palette-colors.mjs';
-import { createGeneration } from './portrait-generate.js?v=5';
+import { createGeneration } from './portrait-generate.js?v=7';
 
 const portrait = document.querySelector('.portrait-print');
 const terminal = document.querySelector('.portrait-terminal');
@@ -346,7 +346,7 @@ function enablePortraitExperiments() {
     trace: ['Trace the ink', 'Click a character to rewrite connected cells of similar tone. Change tolerance to see where the fill stops.'],
     alphabet: ['Shrink the alphabet', 'Try 2, 4, or 8 glyphs with optional dithering. Use 12 to restore the grid you entered with. Colored mechanics marks keep their glyphs and ink.'],
     palette: ['Color by mood', 'Describe a mood. Three models propose palettes for the same glyphs. Choose your favorite.'],
-    generate: ['Generate a grid', 'The model writes every character. Code checks the format and can send errors back for repair. Try the ASCII mechanics on any valid grid.'],
+    generate: ['Generate a grid', 'The model writes every character. Switch feedback, tools, guidance, and a DSPy prompt to change the harness. Try the ASCII mechanics on any valid grid.'],
   };
 
   for (const button of modeButtons) {
@@ -473,11 +473,11 @@ function enablePortraitExperiments() {
       drawTerminal(canvas.getContext('2d'), lines.join('').split('').map(char => makeCell(glyphDensity(char))));
       return canvas;
     },
-    applyRows(lines) {
+    applyRows(lines, workspace = false) {
       if (rewinding) return;
       stop(); simulations.reset(); pending.clear(); finished.clear(); preview = null; seed = null;
       applyGrid(lines.join('').split('').map(char => makeCell(glyphDensity(char)))); draw();
-      report('Generated 75 × 50 grid loaded. Restore portrait rewinds this replacement and later edits.');
+      report(workspace ? 'Model workspace · work in progress, not submitted. Restore rewinds these edits.' : 'Generated 75 × 50 grid loaded. Restore portrait rewinds this replacement and later edits.');
     },
   });
   selectMode('sort');

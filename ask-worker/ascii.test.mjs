@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import worker from './worker.mjs';
 import { checkAscii, asciiRubrics } from '../assets/ascii-contract.mjs';
+import promptArtifact from '../assets/ascii-prompts.json' with { type: 'json' };
+import { baselineInstructions } from './ascii.mjs';
 
 const rows = Array.from({ length: 50 }, (_, i) => ' '.repeat(5) + (i % 2 ? 'O' : '@').repeat(65) + ' '.repeat(5));
 const input = { brief: 'frog samurai', model: 'qwen/qwen3.6-35b-a3b', mode: 'single' };
@@ -24,6 +26,15 @@ function completion(value, finish = 'stop') {
   for (let i = 0; i < content.length; i += 110) chunks.push({ provider: 'Test provider', choices: [{ delta: { content: content.slice(i, i + 110) } }] });
   chunks.push({ choices: [{ delta: {}, finish_reason: finish }], usage: { cost: 0.003, total_tokens: 3900 } });
   return new Response(chunks.map(c => `data: ${JSON.stringify(c)}\n\n`).join('') + 'data: [DONE]\n\n');
+}
+function toolCompletion(calls, finish = 'tool_calls') {
+  const chunks = calls.flatMap((call, index) => {
+    const args = JSON.stringify(call.args);
+    return [{ choices: [{ delta: { tool_calls: [{ index, id: `call-${index}`, function: { name: call.name, arguments: args.slice(0, 20) } }] } }] },
+      { choices: [{ delta: { tool_calls: [{ index, function: { arguments: args.slice(20) } }] } }] }];
+  });
+  chunks.push({ choices: [{ delta: {}, finish_reason: finish }], usage: { cost: 0.002, total_tokens: 1200 } });
+  return new Response(chunks.map(chunk => `data: ${JSON.stringify(chunk)}\n\n`).join('') + 'data: [DONE]\n\n');
 }
 
 test('grid contract checks every literal cell and preserves edge spaces', () => {
@@ -188,5 +199,97 @@ test('bad inputs, origins, configuration, and rate limits do not reach paid serv
   const limited = { ...env, ASCII_LIMIT: { limit: async () => ({ success: false }) } };
   assert.equal((await run(post(input), limited)).response.status, 429);
   assert.equal((await run(post({ brief: input.brief, rows, image }, true), limited)).response.status, 429);
+  assert.equal(fetch.mock.callCount(), 0);
+});
+
+test('native batched calls preserve workspace state and expose exact tool feedback only when enabled', async t => {
+  for (const detailed of [true, false]) {
+    let count = 0;
+    const fetch = t.mock.method(globalThis, 'fetch', async (_, options) => {
+      const body = JSON.parse(options.body); count++;
+      assert.equal(body.response_format, undefined);
+      assert.deepEqual(body.tools.map(tool => tool.function.name), ['create_grid', 'write_rows', 'write_columns', 'submit_grid']);
+      assert.equal(body.parallel_tool_calls, undefined); // Supported providers do not advertise this parameter.
+      assert.equal(body.messages[0].content.includes('Tool guidance:'), detailed);
+      if (count === 1) return toolCompletion([
+        { name: 'create_grid', args: { width: 75, height: 50, rows } },
+        { name: 'write_rows', args: { updates: [{ row: 1, text: '@'.repeat(79) }, { row: 2, text: '*O' }] } },
+      ]);
+      const feedback = JSON.parse(body.messages.at(-1).content);
+      assert.equal(feedback.remainingModelTurns, 7);
+      assert.equal(feedback.rows[1], '*O' + rows[1].slice(2));
+      assert.equal(feedback.rejected[0].message === 'Rejected.', !detailed);
+      return toolCompletion([{ name: 'write_columns', args: { updates: [{ column: 75, text: '@' }] } }, { name: 'submit_grid', args: {} }]);
+    });
+    const harness = { tools: true, guidance: detailed, feedback: detailed, optimized: false };
+    const { events } = await run(post({ brief: input.brief, model: input.model, harness }));
+    const drafts = events.filter(event => event.event === 'result');
+    assert.equal(count, 2); assert.equal(drafts[0].valid, false); assert.equal(drafts[1].valid, true);
+    assert.equal(drafts[0].maxDrafts, 8); assert.equal(drafts[1].parentId, drafts[0].id);
+    assert.equal(drafts[1].rows[0], rows[0].slice(0, 74) + '@');
+    assert.equal(drafts[1].rows[1], '*O' + rows[1].slice(2));
+    assert.equal(drafts[0].toolTrace[1].observation.rejected[0].actual, 79);
+    fetch.mock.restore();
+  }
+});
+
+test('incomplete tool-call output cannot mutate a workspace or count as a completed drawing', async t => {
+  t.mock.method(console, 'error', () => {});
+  const fetch = t.mock.method(globalThis, 'fetch', async () => toolCompletion([
+    { name: 'create_grid', args: { width: 75, height: 50, rows } }, { name: 'submit_grid', args: {} },
+  ], 'length'));
+  const { events } = await run(post({ brief: input.brief, model: input.model,
+    harness: { tools: true, guidance: false, feedback: true, optimized: false } }));
+  const drafts = events.filter(event => event.event === 'result');
+  assert.equal(fetch.mock.callCount(), 1); assert.equal(drafts[0].valid, false);
+  assert.equal(drafts[0].toolTrace, undefined); assert.equal(drafts[0].rows, undefined);
+});
+
+test('detailed errors can be disabled without disabling validation or reducing the turn ceiling', async t => {
+  let count = 0;
+  t.mock.method(globalThis, 'fetch', async (_, options) => {
+    const body = JSON.parse(options.body); count++;
+    if (count > 1) {
+      assert.deepEqual(JSON.parse(body.messages.at(-1).content), { task: 'Rejected. Try again using the original output contract.' });
+    }
+    return completion({ rows: count === 1 ? rows.slice(1) : rows });
+  });
+  const { events } = await run(post({ brief: input.brief, model: input.model,
+    harness: { tools: false, guidance: false, feedback: false, optimized: false } }));
+  const drafts = events.filter(event => event.event === 'result');
+  assert.equal(drafts.length, 2); assert.equal(drafts[0].maxDrafts, 8);
+  assert.equal(drafts[0].errors[0].actual, 49); assert.equal(drafts[1].valid, true);
+});
+
+test('the four switch combinations preserve their own instructions, capabilities, budget, and prompt provenance', async t => {
+  assert.equal(promptArtifact.optimizer, 'DSPy GEPA');
+  assert.ok(promptArtifact.candidates.length >= 2);
+  assert.equal(promptArtifact.instructions, promptArtifact.candidates[promptArtifact.selectedIndex].draw);
+  assert.ok(promptArtifact.heldOut.some(entry => entry.variant === 'selected'));
+  for (const tools of [false, true]) for (const guidance of tools ? [false, true] : [false])
+    for (const feedback of [false, true]) for (const optimized of [false, true]) {
+      const harness = { tools, guidance, feedback, optimized };
+      const fetch = t.mock.method(globalThis, 'fetch', async (_, options) => {
+        const body = JSON.parse(options.body), system = body.messages[0].content;
+        assert.equal(Boolean(body.tools), tools);
+        assert.equal(system.includes('Tool guidance:'), guidance);
+        assert.ok(system.includes(optimized ? promptArtifact.instructions : baselineInstructions));
+        assert.equal(system.includes('UNTRUSTED_REPLACEMENT'), false);
+        return tools ? toolCompletion([{ name: 'create_grid', args: { width: 75, height: 50, rows } }, { name: 'submit_grid', args: {} }]) : completion({ rows });
+      });
+      const { events } = await run(post({ brief: input.brief, model: input.model, harness,
+        promptId: optimized ? promptArtifact.id : undefined, instructions: 'UNTRUSTED_REPLACEMENT' }));
+      const result = events.find(event => event.event === 'result');
+      assert.equal(result.valid, true); assert.equal(result.maxDrafts, 8); assert.deepEqual(result.harness, harness);
+      assert.equal(result.optimizedPrompt?.id ?? null, optimized ? promptArtifact.id : null);
+      fetch.mock.restore();
+    }
+});
+
+test('invalid flags, guidance without tools, and stale prompt IDs never reach a paid provider', async t => {
+  const fetch = t.mock.method(globalThis, 'fetch', async () => { throw Error('must not call'); });
+  const harness = { tools: false, guidance: false, feedback: true, optimized: true };
+  for (const value of [{ ...input, harness: { ...harness, feedback: 'yes' } }, { ...input, harness: { ...harness, guidance: true } },
+    { ...input, harness, promptId: 'stale-prompt' }]) assert.equal((await run(post(value))).response.status, 400);
   assert.equal(fetch.mock.callCount(), 0);
 });

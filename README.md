@@ -10,7 +10,7 @@ Fire turns visible glyph density into fuel: drag to ignite cells, watch heat spr
 
 Color lets visitors describe a mood and compare palettes from three inexpensive OpenRouter models. Each result previews the current glyph grid and reports response timing, validation, and usage cost. Selecting a palette progressively recolors the cells; Restore rewinds those edits.
 
-Generate asks a model to write a 75 × 50 ASCII grid directly from a text brief. Code validates every row and character; Jev judges a rendering for brief match and visual coherence. Visitors can request feedback revisions, revisit attempts, download the full run, and apply the existing ASCII mechanics to generated grids. This is a live generation/evaluation demo; DSPy and weight optimization are future experiments.
+Generate compares four harness switches: exact error feedback, persistent ASCII grid tools, tool guidance, and a prompt candidate from an actual DSPy GEPA pilot. Models can return a full grid directly or create and revise a workspace with batched row/column writes. The demo shows intermediate states and tool actions; Jev judges submitted renderings. Runs export their prompts, switches, outputs, usage, and feedback, and Restore rewinds the edits. The small DSPy pilot showed mixed validation and held-out results; it does not establish a general improvement. See the [experiment design and optimizer](docs/ascii-generation.md).
 
 <img src="docs/screenshots/ascii-portrait.jpg" width="480" alt="ASCII frog samurai with gradient descent selected and a path through the glyphs">
 

@@ -1,35 +1,60 @@
-# Direct ASCII generation experiment
+# ASCII harness experiment
 
-The generator writes a JSON object containing 50 rows of 75 characters. Every cell is model-authored. The renderer displays those characters; it does not convert a generated image, pad rows, crop rows, or supply replacement artwork.
+Generate exposes four switches: detailed error feedback, workspace tools, tool guidance, and a DSPy prompt candidate. These are separate inputs to the run, not bundled presets. Tool guidance requires tools; switching tools off also turns guidance off.
 
-## Runtime feedback
+## Fixed task and runtime
 
-Generate defaults to validation repair. The Worker checks the complete draft and returns all format errors, including actual versus expected row widths and forbidden glyph coordinates. A failed draft and these exact errors enter the next model call. The model returns the full grid again, with instructions to preserve valid rows and composition where possible.
+The displayed grid has 75 columns and 50 rows and uses ` .,:;*oxO%#@`. Direct output must contain all 50 exact-width strings. It is never padded, cropped, converted from an image, or replaced with preset artwork.
 
-A run stops on structural success, after three drafts, on a provider/output-budget failure, on cancellation, or at its five-minute deadline. Every call retains the existing 32,768-token cap and provider price ceiling. The request rate is three runs per minute, so repair can make up to nine generation calls per minute per IP. These limits bound work; they do not promise success.
+With tools enabled, the model gets a persistent workspace:
 
-The UI streams each completed draft, links repairs to their parents, and exports prompts, raw outputs, validation errors, IDs, timings, provider, and reported usage. Invalid drafts are inspectable without replacing the displayed artwork. Interrupted streams preserve the started call, available partial text, and unreported billing instead of disappearing. Turning feedback off requests one draft. A valid final draft is rendered and judged separately by Jev; its visual scores never decide whether the structure passes or trigger another generation call.
+- `create_grid(width, height, rows)` initializes spaces and optionally writes up to 50 literal row prefixes. It can place a whole picture in one call. Initial prefixes may contain 0–75 allowed glyphs.
+- `write_rows(updates)` and `write_columns(updates)` batch edits. Each write changes only its supplied cells from column 1 or row 1; shorter text leaves the remaining cells untouched. No cropping, character substitution, or drawing primitives are involved.
+- `submit_grid()` publishes the current state without another full-grid output.
 
-This is an explicit JavaScript repair harness. It is not DSPy `Refine`, GEPA optimization, learning across visitors, or weight editing. The generator currently receives text feedback, not the rendered preview. Visual feedback and prompt optimization require their own evaluation before being presented as improvements.
+Indices start at 1. Calls in one response execute in listed order. An invalid grid creation leaves the previous state unchanged; an invalid incremental write leaves those cells unchanged while valid sibling writes apply. Editing clears the submitted flag. Unknown functions and out-of-bounds writes are rejected. A model response with incomplete or truncated tool framing is never executed.
 
-## Compare feedback with fresh retries
+The interface previews workspace snapshots after each model turn and distinguishes work in progress from submission. Validly shaped but unfinished work is not judged as a completed result. Restoring rewinds those previews through the existing portrait history.
 
-The endpoint accepts `mode: "single"`, `"repair"`, or `"retry"`. Repair and retry share identical initial prompts, model settings, maximum calls, token caps, deadlines, and structural stopping rules. Retry starts each call from the original brief, without the failed output or validator feedback. Actual calls and cost differ when one succeeds sooner. Provider routing remains a source of variation.
+All new switch combinations have the same ceiling of eight model turns, 32,768 output tokens per turn, fixed provider price limits, and a five-minute run deadline. Tool runs need time to create, edit, and submit; eight turns replaces the earlier three-draft UI budget. Successful submission/direct-format success stops early. The existing IP limiter permits three runs per minute, so a run can make eight model calls and an IP could make 24 per minute; use the owner's OpenRouter spend ceiling for total billing. Legacy `single`, `repair`, and `retry` evaluation modes retain their one/three-turn budgets.
 
-Create a JSON array of briefs outside the repository, then run:
+## What each switch changes
+
+**Error feedback** controls model-visible detail, not validation. On supplies exact errors; off supplies generic rejections. Basic accepted/rejected status and workspace snapshots remain available. The exported human record always retains detailed observations and the actual feedback sent to the model.
+
+**ASCII tools** changes the output protocol from full-grid JSON to native function calls. Function schemas and minimal descriptions are always included when tools are enabled.
+
+**Tool guidance** adds the visible workflow advice in `assets/ascii-workspace.mjs`: batch writes, preserve successful sections, inspect results, and submit when ready. It does not silently enable additional tools.
+
+**DSPy prompt** selects composition instructions from `assets/ascii-prompts.json`. The mandatory output/tool contract and manual guidance remain separate. It does not optimize on each visitor request or alter model weights. The artifact is a small Qwen pilot; cross-model transfer and all switch combinations are untested. A changed GEPA candidate is not guaranteed to outperform baseline.
+
+A submitted rendering is judged separately by Jev with the existing parallel 0–3 brief-match and visual-coherence rubrics. These are fallible descriptive scores, not correctness probabilities or format acceptance gates. The generator does not currently receive its rendered image or Jev's scores during a public run.
+
+## Actual DSPy optimization
+
+`ask-worker/optimize-ascii.py` runs DSPy 3.5 GEPA over the practice and validation splits in `ask-worker/dspy-briefs.json`, then evaluates baseline and the selected changed candidate on a separate held-out split. A custom DSPy adapter calls the same JavaScript generation/tool engine through a private stdin/stdout bridge (`ascii-offline.mjs`). This avoids optimizing against a different DSPy text-output wrapper. The bridge has no HTTP route. Keys remain in the local process environment and the existing Cloudflare secrets; they are never exported.
+
+The metric gives invalid/blank output zero, otherwise `(0.8 × Jev brief match + 0.2 × visual coherence) / 3`. It supplies exact validation/tool failures and fallible visual rubric feedback to GEPA. A custom proposal predictor receives compact trial evidence and is constrained to visual composition advice, keeping it from copying tool guidance or redefining other switches. Repeated scoring of the identical generated trace reuses its judgment rather than re-querying Jev. Offline images use approximate Pillow/Menlo rasterization at the browser's 375 px dimensions, glyph ramp and colors. They are not exact browser screenshots. On other platforms set `ASCII_EVAL_FONT` to a monospace TTF/OTF font.
 
 ```sh
-node ask-worker/evaluate-ascii.mjs /private/tmp/briefs.json /private/tmp/ascii-evaluation.json qwen/qwen3.6-35b-a3b 3
+uv run ask-worker/optimize-ascii.py --out /private/tmp/ascii-gepa --budget 14 --publish
 ```
 
-This makes paid requests through the existing Worker, randomizes strategy order, and paces starts to respect its rate limit. It preserves started calls, stream events, errors, and incomplete runs, counts missing billing, and stops on a request failure. It measures format reliability, calls, reported cost, and elapsed time. It does not measure visual quality, and one successful repair is not evidence of general improvement. Treat small live smoke tests only as integration checks.
+The script pins its dependencies. Set `OPENROUTER_API_KEY` and `TYPESAFE_API_KEY` privately in the environment, not in arguments or public files. Generation traces, metrics, and DSPy state stay in the chosen output directory. `--publish` exports only the prompt/evaluation artifact to the site. Do not publish an empty/no-candidate run or handwrite an allegedly optimized prompt. The selected artifact is the best validation-scored changed candidate; rejected practice proposals can also receive explicit validation after the search, recorded separately. it records the optimizer's overall winner too, which may still be baseline. This makes the toggle usable for comparison without implying an improvement when the data doesn't support it.
 
-For broader evaluation, freeze separate practice and held-out briefs spanning subjects, compositions, and shading, use repeated runs, and compare visual quality independently of format validity. Keep failures in the denominator. Compare a feedback loop with a fresh-retry control before attributing improvements to feedback. Record model/provider/settings and both reported costs and missing billing.
+The exported record includes candidate instructions, lineage, validation scores, held-out cases, model, versions, dataset/engine hashes, budget and limitations. Public requests cannot supply arbitrary replacement instructions. Frontend/Worker prompt ID mismatches are rejected rather than silently using another version.
 
-## DSPy optimization stage
+## Evaluation and maintenance
 
-After establishing this baseline, use actual DSPy GEPA offline with practice/validation cases and actionable failure feedback. Freeze the final prompt before evaluating held-out cases; export the selected instructions/configuration to the Worker. The current implementation does not claim a completed optimization run. Useful primary references:
+Run:
 
-- [DSPy 3.5 structured histories and rich tool results](https://github.com/stanfordnlp/dspy/releases/tag/3.5.0)
-- [GEPA optimization and text feedback](https://dspy.ai/current/getting-started/gepa-optimization/)
-- [DSPy Refine implementation](https://github.com/stanfordnlp/dspy/blob/3.5.0/dspy/predict/refine.py)
+```sh
+node --test ask-worker/*.test.mjs assets/portrait-fire.test.mjs
+npx wrangler deploy --config ask-worker/wrangler.toml --dry-run
+```
+
+Browser-check each switch, tool-guidance dependency, live workspace updates, tool trace, export, prior workspace previews, another ASCII mode, Restore, and mobile fit. Preserve failures, partial output, unavailable judgments, and unreported costs. Inspect actual prompts to verify that turning a switch off removes that additional context/capability.
+
+`evaluate-ascii.mjs` remains the earlier direct-output comparison runner for single drafts, feedback repair and fresh retries. Its randomized order and failure-inclusive metrics do not establish broad superiority. The pilot cases are excluded from GEPA prompt search, but have been reused during development; they are exploratory rather than a blind confirmation set. The GEPA pilot is also small and noisy: use repeated independent held-out runs and matched budgets before making reliability or quality claims. Never tune on held-out cases after examining their results and continue to call them untouched tests.
+
+Primary references: [GEPA](https://dspy.ai/current/getting-started/gepa-optimization/), [DSPy 3.5](https://github.com/stanfordnlp/dspy/releases/tag/3.5.0), [OpenRouter tool calling](https://openrouter.ai/docs/guides/features/tool-calling).

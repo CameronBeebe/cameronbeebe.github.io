@@ -137,6 +137,9 @@
     .generation-panel textarea, .generation-panel select { max-width: 100%; border: 1px solid var(--line); background: var(--well); color: var(--link); font: inherit; padding: 0.4rem; }
     .generation-panel textarea { width: 100%; resize: vertical; margin: 0.4rem 0; }
     .generation-panel pre { max-height: 15rem; overflow: auto; font-size: 0.65rem; white-space: pre; }
+    .generation-switches { display: flex; flex-wrap: wrap; gap: 0.45rem 0.8rem; margin: 0.65rem 0; border: 1px solid var(--line); }
+    .generation-switches label { display: inline-flex; align-items: center; gap: 0.3rem; }
+    .generation-optimization { font-size: 0.68rem; }
     .generation-evidence { display: block; width: 100%; height: auto; }
     .hero:has(:is([data-experiment="palette"], [data-experiment="generate"])[aria-pressed="true"]) { align-items: start; }
     @media (min-width: 701px) {
@@ -438,7 +441,7 @@
   </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/tex-chtml.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-  <script type="module" src="assets/portrait.js?v=9"></script>
+  <script type="module" src="assets/portrait.js?v=11"></script>
   <script type="module" src="assets/ask-cameron.js?v=14"></script>
 </head>
 <body>
@@ -537,14 +540,22 @@
             <select aria-label="ASCII generation model"></select>
             <button type="submit">Generate</button>
           </div>
-          <label><input type="checkbox" class="generation-repair" checked /> Send format errors back to the model · up to 3 drafts</label>
+          <fieldset class="generation-switches"><legend>Harness</legend>
+            <label><input type="checkbox" class="generation-repair" checked /> Error feedback</label>
+            <label><input type="checkbox" class="generation-tools" /> ASCII tools</label>
+            <label><input type="checkbox" class="generation-guidance" disabled /> Tool guidance</label>
+            <label><input type="checkbox" class="generation-optimized" disabled /> DSPy prompt · pilot</label>
+          </fieldset>
         </form>
-        <p role="status">Model draws → code checks → model repairs → Jev judges.</p>
+        <p role="status">One grid · up to 8 model turns. Change the harness and compare.</p>
         <ol class="generation-trace" aria-label="Generation steps"></ol>
         <div class="generation-results palette-results"></div>
+        <p class="generation-optimization"></p>
         <details><summary>Run details</summary>
-          <p>Each cell comes directly from the model. Code checks all row lengths and the glyph alphabet. With feedback enabled, the model receives its draft and the exact errors, then writes a corrected grid. Code never pads or crops the output. The run stops when the structure passes, after 3 drafts, on a provider failure, or at the five-minute deadline. Turn feedback off for a single draft. Jev separately judges a 375 px rendering on two descriptive scales from 0 to 3; these are fallible visual judgments, not acceptance gates. This repair loop does not use DSPy or change model weights.</p>
-          <p>Prompts and outputs go to OpenRouter and its providers. Rendered output and the brief go to Jev. Three runs per minute; each run can make up to three generation calls. Every draft, prompt, error, and reported cost is preserved in Download run.</p>
+          <p>Without tools, the model returns the full 75 × 50 grid. With tools, it can create an empty or populated workspace, batch row/column writes, and submit the stored grid. Valid writes persist; rejected writes leave those cells unchanged. Tool workspaces start with spaces. Initial row prefixes and incremental writes change only the supplied cells; oversized or forbidden writes are rejected, not cropped. Direct output still requires all 50 exact-width rows.</p>
+          <p>Error feedback supplies exact validation details; off supplies a generic rejection. Tool guidance adds a short workflow skill beyond the function definitions. The DSPy switch selects a prompt candidate from a recorded GEPA pilot, not a new optimization per visitor. It was tuned on Qwen with a small dataset and a fallible Jev image judge; improvement and transfer to other models are not guaranteed.</p>
+          <p>Every combination gets up to 8 model turns, with a 32,768-token cap per turn and a five-minute run deadline. A tool turn may contain many operations. Successful submission stops the run early. Jev separately judges the submitted rendering on two 0–3 scales. This changes instructions and available actions, not model weights.</p>
+          <p>Prompts and outputs go to OpenRouter and its providers. The rendering and brief go to Jev. Three runs per minute. Download run preserves switches, prompts, tool arguments, observations, feedback, output, errors, and reported usage.</p>
           <div class="portrait-actions"><button type="button" class="generation-download" disabled>Download run</button></div>
           <img class="generation-evidence" width="375" height="375" alt="The generated ASCII rendering sent to Jev" hidden />
           <pre class="generation-details"></pre>

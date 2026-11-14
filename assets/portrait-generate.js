@@ -8,6 +8,11 @@ export function createGeneration({ controls, locked, applyRows, renderRows }) {
   const model = form.querySelector('select');
   const generate = form.querySelector('[type="submit"]');
   const repair = panel.querySelector('.generation-repair');
+  const tools = panel.querySelector('.generation-tools');
+  const guidance = panel.querySelector('.generation-guidance');
+  const optimized = panel.querySelector('.generation-optimized');
+  const optimizationInfo = panel.querySelector('.generation-optimization');
+  let promptArtifact = null;
   const trace = panel.querySelector('.generation-trace');
   const status = panel.querySelector('[role="status"]');
   const list = panel.querySelector('.generation-results');
@@ -30,16 +35,34 @@ export function createGeneration({ controls, locked, applyRows, renderRows }) {
   function updateControls() {
     generate.disabled = Boolean(request) || locked();
     generate.textContent = request ? 'Working…' : 'Generate';
-    repair.disabled = Boolean(request);
-    model.disabled = Boolean(request);
-    brief.disabled = Boolean(request);
+    repair.disabled = Boolean(request) || locked();
+    tools.disabled = Boolean(request) || locked();
+    guidance.disabled = Boolean(request) || locked() || !tools.checked;
+    optimized.disabled = Boolean(request) || locked() || !promptArtifact?.instructions;
+    model.disabled = Boolean(request) || locked();
+    brief.disabled = Boolean(request) || locked();
     download.disabled = !attempts.length;
   }
   brief.addEventListener('input', updateControls);
+  tools.addEventListener('change', () => { if (!tools.checked) guidance.checked = false; updateControls(); });
+  void fetch(new URL('./ascii-prompts.json', import.meta.url), { cache: 'no-cache' }).then(response => {
+    if (!response.ok) throw new Error('Prompt record unavailable.'); return response.json();
+  }).then(value => {
+    promptArtifact = value;
+    const comparison = value.instructions && value.validationScores[value.selectedIndex] > value.validationScores[0]
+      ? 'The candidate scored higher on this small validation run.' : 'Baseline matched or beat the candidate on validation.';
+    const mean = label => { const cases = value.heldOut?.filter(entry => entry.variant === label) ?? []; return cases.length ? cases.reduce((sum, entry) => sum + entry.score, 0) / cases.length : null; };
+    const heldBaseline = mean('baseline'), heldCandidate = mean('selected');
+    const heldOut = heldCandidate === null ? '' : heldCandidate < heldBaseline ? ' The candidate scored lower on the held-out cases.' : heldCandidate > heldBaseline ? ' It scored higher on the held-out cases.' : ' Held-out scores tied.';
+    optimizationInfo.textContent = value.instructions
+      ? `DSPy GEPA pilot · tuned on Qwen. ${comparison}${heldOut} No reliable improvement is established. Exact instructions and results are in Run details.`
+      : 'DSPy prompt is awaiting an optimization run.';
+    updateControls();
+  }).catch(() => { optimizationInfo.textContent = 'DSPy prompt record unavailable. Other switches remain usable.'; });
   const time = ms => ms === null ? '—' : `${(ms / 1000).toFixed(2)}s`;
   function showDetails(attempt) {
     const { image, ...record } = attempt;
-    details.textContent = JSON.stringify({ ...record, rubrics: asciiRubrics }, null, 2);
+    details.textContent = JSON.stringify({ ...record, rubrics: asciiRubrics, optimization: attempt.harness?.optimized ? promptArtifact : null }, null, 2);
     evidence.hidden = !image;
     if (image) evidence.src = `data:image/png;base64,${image}`;
   }
@@ -47,15 +70,17 @@ export function createGeneration({ controls, locked, applyRows, renderRows }) {
     list.replaceChildren();
     for (const attempt of attempts.slice(-4).reverse()) {
       const button = document.createElement('button'); button.type = 'button'; button.className = 'palette-card';
-      button.disabled = locked(); button.setAttribute('aria-label', `${attempt.valid ? 'Use' : 'Inspect'} generated attempt ${attempt.number}`);
+      button.disabled = locked(); button.setAttribute('aria-label', `${attempt.valid ? 'Use' : attempt.workspaceRows ? 'Preview workspace for' : 'Inspect'} generated attempt ${attempt.number}`);
       const canvas = document.createElement('canvas'); canvas.width = canvas.height = 300;
       canvas.setAttribute('aria-hidden', 'true');
-      if (attempt.valid) canvas.getContext('2d').drawImage(renderRows(attempt.rows), 0, 0, 300, 300);
+      if (attempt.valid || attempt.workspaceRows) canvas.getContext('2d').drawImage(renderRows(attempt.rows ?? attempt.workspaceRows), 0, 0, 300, 300);
       const text = document.createElement('span');
       const heading = document.createElement('strong'); heading.textContent = `${attempt.number}. ${attempt.name}`;
       const shape = document.createElement('span'); shape.className = 'palette-state';
       shape.textContent = attempt.valid ? '75 × 50 · structure passed' : attempt.reason ?? 'Generation failed';
       const metrics = document.createElement('span'); metrics.className = 'palette-metrics';
+      const switches = document.createElement('span');
+      if (attempt.harness) { switches.textContent = Object.entries(attempt.harness).filter(([, on]) => on).map(([name]) => name).join(' + ') || 'All switches off'; metrics.append(switches); }
       const strategy = document.createElement('span');
       const parent = attempts.find(a => a.id === attempt.parentId);
       strategy.textContent = `${attempt.strategy}${parent ? ` · follows draft ${parent.number}` : ''}`; metrics.append(strategy);
@@ -80,9 +105,9 @@ export function createGeneration({ controls, locked, applyRows, renderRows }) {
       text.append(heading, shape, metrics); button.append(canvas, text);
       button.addEventListener('click', () => {
         if (locked()) return;
-        if (attempt.valid) { applyRows(attempt.rows); }
+        if (attempt.valid || attempt.workspaceRows) { applyRows(attempt.rows ?? attempt.workspaceRows, !attempt.valid); }
         showDetails(attempt); updateControls();
-        status.textContent = attempt.valid ? `Draft ${attempt.number} loaded. Its stored judgment describes the grid before further edits.` : `Draft ${attempt.number} failed validation. Its errors and raw output are available in Run details.`;
+        status.textContent = attempt.valid ? `Draft ${attempt.number} loaded. Its stored judgment describes the grid before further edits.` : attempt.workspaceRows ? `Workspace from turn ${attempt.step} loaded as a preview; the model had not submitted it.` : `Draft ${attempt.number} failed validation. Its errors and raw output are available in Run details.`;
       });
       list.append(button);
     }
@@ -93,10 +118,10 @@ export function createGeneration({ controls, locked, applyRows, renderRows }) {
     const controller = new AbortController(); request = controller; updateControls();
     const subject = brief.value.trim();
     trace.replaceChildren();
-    status.textContent = 'The model is writing the grid directly…';
+    status.textContent = tools.checked ? 'The model is working in its grid…' : 'The model is writing the grid directly…';
     let attempt, partial;
     try {
-      const input = { brief: subject, model: model.value, mode: repair.checked ? 'repair' : 'single' };
+      const input = { brief: subject, model: model.value, harness: { feedback: repair.checked, tools: tools.checked, guidance: guidance.checked && tools.checked, optimized: optimized.checked }, promptId: optimized.checked ? promptArtifact?.id : undefined };
       const response = await fetch(`${panel.dataset.endpoint}/generate`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(input), signal: controller.signal,
       });
@@ -112,7 +137,7 @@ export function createGeneration({ controls, locked, applyRows, renderRows }) {
           if (value.event === 'draft') {
             partial = { ...value, raw: '', partial: true };
             writing = false;
-            status.textContent = `Draft ${value.step}/${value.maxDrafts} · ${value.step === 1 ? 'writing the grid' : 'repairing validation errors'}…`;
+            status.textContent = `Turn ${value.step}/${value.maxDrafts} · ${tools.checked ? 'working on the grid' : value.step === 1 ? 'writing the grid' : 'retrying the grid'}…`;
           }
           if (value.event === 'first') { writing = true; if (partial) partial.firstMs = value.firstMs; }
           if (value.event === 'waiting' && !writing) status.textContent = `Preparing the grid… ${Math.round(value.elapsedMs / 1000)}s elapsed.`;
@@ -125,7 +150,20 @@ export function createGeneration({ controls, locked, applyRows, renderRows }) {
             attempt = { ...value, number: attempts.length + 1 }; attempts.push(attempt); partial = null;
             const line = document.createElement('li');
             const failures = value.errors?.length ?? 0;
-            line.textContent = `Draft ${value.step ?? 1}: ${value.valid ? 'structure passed' : value.reason ?? 'generation failed'}${failures > 1 ? ` (${failures} validation errors)` : ''}${value.stopReason === 'draft_budget' ? ' · repair budget reached' : ''}${value.stopReason === null ? ' → sending errors back to the model' : ''}`;
+            line.textContent = `Turn ${value.step ?? 1}: ${value.valid ? 'submitted · structure passed' : value.reason ?? 'generation failed'}${failures > 1 ? ` (${failures} validation errors)` : ''}${value.stopReason === 'draft_budget' ? ' · turn budget reached' : ''}`;
+            if (value.toolTrace?.length) {
+              const actions = document.createElement('ul');
+              for (const call of value.toolTrace) {
+                const action = document.createElement('li');
+                action.textContent = `${call.name} · ${call.observation.accepted.length} accepted · ${call.observation.rejected.length} rejected`;
+                actions.append(action);
+              }
+              line.append(actions);
+            }
+            if (value.workspaceRows) {
+              if (!checkAscii({ rows: value.workspaceRows }).valid) throw new Error('The workspace failed browser validation.');
+              applyRows(value.workspaceRows, !value.valid);
+            }
             trace.append(line); renderAttempts(); showDetails(attempt);
           }
           if (value.event === 'done') done = true;
@@ -133,7 +171,7 @@ export function createGeneration({ controls, locked, applyRows, renderRows }) {
         if (chunk.done) break;
       }
       if (!done || !attempt) throw new Error('Generation ended before a complete result.');
-      if (!attempt.valid) { status.textContent = `${attempt.reason}${attempt.stopReason === 'draft_budget' ? ' Repair budget reached; all drafts are preserved below.' : ''}`; return; }
+      if (!attempt.valid) { status.textContent = `${attempt.reason}${attempt.stopReason === 'draft_budget' ? ' Turn budget reached; all drafts are preserved below.' : ''}`; return; }
       const canvas = renderRows(attempt.rows);
       attempt.image = canvas.toDataURL('image/png').split(',')[1];
       applyRows(attempt.rows); renderAttempts(); showDetails(attempt);
@@ -146,7 +184,7 @@ export function createGeneration({ controls, locked, applyRows, renderRows }) {
         const result = await response.json();
         if (!response.ok) throw new Error(result.error ?? 'Jev could not judge this grid.');
         attempt.judge = result;
-        status.textContent = 'Structure passed. Jev’s visual judgments are ready; they do not control format repair.';
+        status.textContent = 'Submitted. Jev’s visual judgments are ready; format checks remain separate.';
       } catch (error) {
         attempt.judgeError = controller.signal.aborted ? 'Judging stopped' : error.message;
         status.textContent = `Grid generated. ${attempt.judgeError}`;
@@ -157,7 +195,7 @@ export function createGeneration({ controls, locked, applyRows, renderRows }) {
         const reason = controller.signal.aborted ? 'Generation stopped.' : error.message;
         attempt = { ...partial, event: 'result', number: attempts.length + 1, valid: false, reason, stopReason: 'stream_failure' };
         attempts.push(attempt); renderAttempts(); showDetails(attempt);
-        const line = document.createElement('li'); line.textContent = `Draft ${attempt.step}: interrupted · available partial output preserved`; trace.append(line);
+        const line = document.createElement('li'); line.textContent = `Turn ${attempt.step}: interrupted · available partial output preserved`; trace.append(line);
       }
       status.textContent = controller.signal.aborted ? 'Generation stopped.' : error.message;
     } finally { request = null; updateControls(); }

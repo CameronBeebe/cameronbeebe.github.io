@@ -1,0 +1,82 @@
+{
+  "id": "gepa-2bedeed8161f",
+  "status": "pilot",
+  "created": "2026-11-14T19:55:57Z",
+  "optimizer": "DSPy GEPA",
+  "dspyVersion": "3.5.0",
+  "model": "qwen/qwen3.6-35b-a3b",
+  "instructions": "Establish a clear tonal hierarchy to define the subject against the background, ensuring the focal point is visually dominant. Prioritize a strong, recognizable silhouette by concentrating on the outline and key distinctive features. Utilize negative space intentionally to separate elements and enhance readability. Apply shading and texture strategically to create depth and volume, avoiding flat uniformity. Ensure the spatial layout balances the subject with its surroundings to maintain visual clarity and impact.",
+  "baselineInstructions": "Compose a large, recognizable focal subject with clear silhouette and distinctive features; use negative space and intentional shading.",
+  "metric": "0 for invalid/blank; otherwise (0.8 \u00d7 Jev brief match + 0.2 \u00d7 coherence) / 3",
+  "maxModelTurns": 8,
+  "writeSemantics": "initial and incremental prefix writes preserve unaddressed cells",
+  "engineSha256": "83bd7f5fff5a43319d3a20eafa01b7c8f0c893db6bc6c852c3ae90a3e5788f1c",
+  "metricCalls": 18,
+  "validationScores": [
+    0.16466666666666666,
+    0.0,
+    0.19533333333333336
+  ],
+  "candidates": [
+    {
+      "draw": "Compose a large, recognizable focal subject with clear silhouette and distinctive features; use negative space and intentional shading."
+    },
+    {
+      "draw": "Establish a solid, uninterrupted silhouette to anchor the composition; ensure the subject\u2019s outline is distinct from the background. Define key features with high-contrast characters to prevent visual ambiguity, especially for small details like eyes or beaks that must remain legible at low resolution. Use intentional negative space around the focal point to enhance readability and reduce clutter. Apply tonal hierarchy by varying character density\u2014use sparse, lighter textures for background areas and dense, darker patterns for core mass and shadows. Prioritize structural clarity over intricate detail, ensuring spatial relationships between elements are immediately apparent."
+    },
+    {
+      "draw": "Establish a clear tonal hierarchy to define the subject against the background, ensuring the focal point is visually dominant. Prioritize a strong, recognizable silhouette by concentrating on the outline and key distinctive features. Utilize negative space intentionally to separate elements and enhance readability. Apply shading and texture strategically to create depth and volume, avoiding flat uniformity. Ensure the spatial layout balances the subject with its surroundings to maintain visual clarity and impact."
+    }
+  ],
+  "parents": [
+    [
+      null
+    ],
+    [
+      0
+    ],
+    [
+      0
+    ]
+  ],
+  "selectedIndex": 2,
+  "optimizerBestIndex": 2,
+  "selection": "Best validation score among changed prompts. Baseline may still win overall; compare the recorded scores.",
+  "heldOut": [
+    {
+      "variant": "baseline",
+      "brief": "A butterfly with four distinct wings and a thin central body.",
+      "score": 0.21600000000000005,
+      "valid": true
+    },
+    {
+      "variant": "baseline",
+      "brief": "A three-tier pagoda with a curved roof on each tier.",
+      "score": 0.0,
+      "valid": false
+    },
+    {
+      "variant": "selected",
+      "brief": "A butterfly with four distinct wings and a thin central body.",
+      "score": 0.0,
+      "valid": true
+    },
+    {
+      "variant": "selected",
+      "brief": "A three-tier pagoda with a curved roof on each tier.",
+      "score": 0.0,
+      "valid": false
+    }
+  ],
+  "datasetSha256": "e49d9bd5b36948769a542c013d3335b8a28e10ca817652e54a2eebec4e553956",
+  "limitations": "Small single-run pilot; noisy uncalibrated image judge and approximate Pillow rendering. Training model Qwen; cross-model transfer and all switch combinations are untested. Not evidence of general superiority.",
+  "extraValidationRuns": 0,
+  "generatorRuns": 22,
+  "dependencies": {
+    "dspy": "3.5.0",
+    "pillow": "13.0.0",
+    "litellm": "1.109.1"
+  },
+  "renderer": "Approximate 375px Pillow/Menlo rasterization, not an exact browser screenshot",
+  "heldOutScope": "Excluded from GEPA practice/validation, but reused during development; exploratory, not a blind independent benchmark."
+}
