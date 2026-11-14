@@ -3,7 +3,7 @@ import { swapCells, sortPass, neighbors, repairPass, quantizeRow } from './portr
 import { glyphs, glyphDensity, sampleImageTones } from './ascii-image.js?v=2';
 import { createPalette } from './portrait-palette.js?v=2';
 import { colorCells } from './palette-colors.mjs';
-import { createGeneration } from './portrait-generate.js?v=7';
+import { createGeneration } from './portrait-generate.js?v=8';
 
 const portrait = document.querySelector('.portrait-print');
 const terminal = document.querySelector('.portrait-terminal');
@@ -78,6 +78,7 @@ function enablePortraitExperiments() {
   }
   function gridChanged() {
     colors?.gridChanged();
+    generation?.gridChanged();
   }
   function fitCanvas() {
     const scale = window.devicePixelRatio || 1;

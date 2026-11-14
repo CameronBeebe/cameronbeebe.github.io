@@ -14,7 +14,7 @@ With tools enabled, the model gets a persistent workspace:
 
 Indices start at 1. Calls in one response execute in listed order. An invalid grid creation leaves the previous state unchanged; an invalid incremental write leaves those cells unchanged while valid sibling writes apply. Editing clears the submitted flag. Unknown functions and out-of-bounds writes are rejected. A model response with incomplete or truncated tool framing is never executed.
 
-The interface previews workspace snapshots after each model turn and distinguishes work in progress from submission. Validly shaped but unfinished work is not judged as a completed result. Restoring rewinds those previews through the existing portrait history.
+The interface previews workspace snapshots after each model turn and distinguishes work in progress from submission. Validly shaped but unfinished work is not judged as a completed result. Restoring rewinds those previews through the existing portrait history. The main view is deliberately small: brief, model, four switches, Generate, a short result summary, and thumbs. Earlier results and implementation details are collapsed; detailed tool actions, prompts and raw responses remain in the full-run download rather than a trace viewer.
 
 All new switch combinations have the same ceiling of eight model turns, 32,768 output tokens per turn, fixed provider price limits, and a five-minute run deadline. Tool runs need time to create, edit, and submit; eight turns replaces the earlier three-draft UI budget. Successful submission/direct-format success stops early. The existing IP limiter permits three runs per minute, so a run can make eight model calls and an IP could make 24 per minute; use the owner's OpenRouter spend ceiling for total billing. Legacy `single`, `repair`, and `retry` evaluation modes retain their one/three-turn budgets.
 
@@ -44,6 +44,14 @@ The script pins its dependencies. Set `OPENROUTER_API_KEY` and `TYPESAFE_API_KEY
 
 The exported record includes candidate instructions, lineage, validation scores, held-out cases, model, versions, dataset/engine hashes, budget and limitations. Public requests cannot supply arbitrary replacement instructions. Frontend/Worker prompt ID mismatches are rejected rather than silently using another version.
 
+## Visitor feedback
+
+Thumbs rate the entire frozen run: brief, model/provider, all harness settings, actual prompts, intermediate drafts/tool observations, submitted or unfinished grid, reported usage, and any visual judgment. They do not isolate the cause of success or failure. Loading an earlier result selects that result's configuration for feedback; editing the visible grid or restoring hides voting until an original generated result is loaded again.
+
+`POST /ascii/feedback` validates the record, awaits a private `ASCII_FEEDBACK` KV write, then acknowledges it. No public read endpoint, identity cookie, or stored IP address is added. Only voted runs are copied to this feedback store; ordinary runs retain their detailed export in browser memory. Existing generation and judging still send data to their respective providers. `FEEDBACK_LIMIT` permits eight submissions per minute per IP. Preserve both bindings from `wrangler.toml` during Worker deployments, alongside the other rate limits and secrets.
+
+Each vote writes an immutable event under `feedback/<runId>/<eventId>`. For analysis, group by `(runId, feedbackId)` and choose the highest successfully saved `sequence`, so a changed vote or retry is not counted as another independent person. Votes are anonymous and their client-supplied traces are untrusted; inspect and curate them before optimization. Test records must be marked and excluded. There is no automatic optimizer, reward model, weight update, or online learning: this is feedback collection for future experiments. Future training must record which data was used and reserve independent evaluation cases.
+
 ## Evaluation and maintenance
 
 Run:
@@ -53,7 +61,7 @@ node --test ask-worker/*.test.mjs assets/portrait-fire.test.mjs
 npx wrangler deploy --config ask-worker/wrangler.toml --dry-run
 ```
 
-Browser-check each switch, tool-guidance dependency, live workspace updates, tool trace, export, prior workspace previews, another ASCII mode, Restore, and mobile fit. Preserve failures, partial output, unavailable judgments, and unreported costs. Inspect actual prompts to verify that turning a switch off removes that additional context/capability.
+Browser-check each switch, tool-guidance dependency, live workspace updates, full-run export, loading prior results, vote confirmation/failure, another ASCII mode, Restore, and mobile fit. Preserve failures, partial output, unavailable judgments, and unreported costs. Inspect exported prompts to verify that turning a switch off removes that additional context/capability. Vote tests must not call a paid model or acknowledge failed storage as saved.
 
 `evaluate-ascii.mjs` remains the earlier direct-output comparison runner for single drafts, feedback repair and fresh retries. Its randomized order and failure-inclusive metrics do not establish broad superiority. The pilot cases are excluded from GEPA prompt search, but have been reused during development; they are exploratory rather than a blind confirmation set. The GEPA pilot is also small and noisy: use repeated independent held-out runs and matched budgets before making reliability or quality claims. Never tune on held-out cases after examining their results and continue to call them untouched tests.
 

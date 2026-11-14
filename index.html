@@ -136,11 +136,17 @@
     .palette-panel summary, .generation-panel summary { color: var(--link); cursor: pointer; }
     .generation-panel textarea, .generation-panel select { max-width: 100%; border: 1px solid var(--line); background: var(--well); color: var(--link); font: inherit; padding: 0.4rem; }
     .generation-panel textarea { width: 100%; resize: vertical; margin: 0.4rem 0; }
-    .generation-panel pre { max-height: 15rem; overflow: auto; font-size: 0.65rem; white-space: pre; }
     .generation-switches { display: flex; flex-wrap: wrap; gap: 0.45rem 0.8rem; margin: 0.65rem 0; border: 1px solid var(--line); }
     .generation-switches label { display: inline-flex; align-items: center; gap: 0.3rem; }
     .generation-optimization { font-size: 0.68rem; }
-    .generation-evidence { display: block; width: 100%; height: auto; }
+    .generation-result { font-size: 0.7rem; }
+    .generation-feedback { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; margin-bottom: 0.8rem; }
+    .generation-feedback button { min-width: 2.5rem; }
+    .generation-feedback button[aria-pressed="true"] { border-color: var(--phosphor); background: var(--well); }
+    .generation-feedback small { width: 100%; font-size: 0.65rem; }
+    .generation-results { display: grid; gap: 0.4rem; margin: 0.5rem 0; }
+    .generation-history-item { display: flex; align-items: center; gap: 0.6rem; width: 100%; text-align: left; }
+    .generation-history-item canvas { width: 4rem; height: 4rem; flex-shrink: 0; }
     .hero:has(:is([data-experiment="palette"], [data-experiment="generate"])[aria-pressed="true"]) { align-items: start; }
     @media (min-width: 701px) {
       .hero:has(:is([data-experiment="palette"], [data-experiment="generate"])[aria-pressed="true"]) .hero-art { position: sticky; top: 1rem; align-self: start; }
@@ -441,7 +447,7 @@
   </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/tex-chtml.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-  <script type="module" src="assets/portrait.js?v=11"></script>
+  <script type="module" src="assets/portrait.js?v=12"></script>
   <script type="module" src="assets/ask-cameron.js?v=14"></script>
 </head>
 <body>
@@ -547,18 +553,22 @@
             <label><input type="checkbox" class="generation-optimized" disabled /> DSPy prompt · pilot</label>
           </fieldset>
         </form>
-        <p role="status">One grid · up to 8 model turns. Change the harness and compare.</p>
-        <ol class="generation-trace" aria-label="Generation steps"></ol>
-        <div class="generation-results palette-results"></div>
-        <p class="generation-optimization"></p>
-        <details><summary>Run details</summary>
-          <p>Without tools, the model returns the full 75 × 50 grid. With tools, it can create an empty or populated workspace, batch row/column writes, and submit the stored grid. Valid writes persist; rejected writes leave those cells unchanged. Tool workspaces start with spaces. Initial row prefixes and incremental writes change only the supplied cells; oversized or forbidden writes are rejected, not cropped. Direct output still requires all 50 exact-width rows.</p>
-          <p>Error feedback supplies exact validation details; off supplies a generic rejection. Tool guidance adds a short workflow skill beyond the function definitions. The DSPy switch selects a prompt candidate from a recorded GEPA pilot, not a new optimization per visitor. It was tuned on Qwen with a small dataset and a fallible Jev image judge; improvement and transfer to other models are not guaranteed.</p>
-          <p>Every combination gets up to 8 model turns, with a 32,768-token cap per turn and a five-minute run deadline. A tool turn may contain many operations. Successful submission stops the run early. Jev separately judges the submitted rendering on two 0–3 scales. This changes instructions and available actions, not model weights.</p>
-          <p>Prompts and outputs go to OpenRouter and its providers. The rendering and brief go to Jev. Three runs per minute. Download run preserves switches, prompts, tool arguments, observations, feedback, output, errors, and reported usage.</p>
-          <div class="portrait-actions"><button type="button" class="generation-download" disabled>Download run</button></div>
-          <img class="generation-evidence" width="375" height="375" alt="The generated ASCII rendering sent to Jev" hidden />
-          <pre class="generation-details"></pre>
+        <p class="generation-status" role="status">Change the harness and see what happens.</p>
+        <p class="generation-result" hidden></p>
+        <div class="generation-feedback" hidden>
+          <span>Good result?</span>
+          <button type="button" data-vote="1" aria-label="Thumbs up" aria-pressed="false">👍</button>
+          <button type="button" data-vote="-1" aria-label="Thumbs down" aria-pressed="false">👎</button>
+          <span class="generation-vote-status" role="status"></span>
+          <small>Voting saves this run to help improve the demo.</small>
+        </div>
+        <details class="generation-history" hidden><summary>Generated results</summary><div class="generation-results"></div></details>
+        <details><summary>How it works</summary>
+          <p>Each switch changes part of the harness: error feedback, an editable grid, guidance for using it, or a saved DSPy prompt. Runs get up to eight model turns. Tools can write many rows or columns in one call; the drawing stays editable between calls.</p>
+          <p>Code checks the grid format. Jev grades the rendered image against your request. A thumbs-up or down rates the whole run, including its model and settings; saving a vote does not retrain the model.</p>
+          <p class="generation-optimization"></p>
+          <p>Your request goes to OpenRouter and its model providers; the rendering goes to Jev. We keep a private feedback copy of the run and trace only when you vote. Three generations and eight votes per minute.</p>
+          <button type="button" class="generation-download" disabled>Download full run</button>
         </details>
       </div>
       <div class="portrait-actions">
