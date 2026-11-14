@@ -1,6 +1,9 @@
-import { createSimulations, simulationDescriptions } from './portrait-simulations.js';
+import { createSimulations, simulationDescriptions } from './portrait-simulations.js?v=2';
 import { swapCells, sortPass, neighbors, repairPass, quantizeRow } from './portrait-grid.js';
-import { glyphs, sampleImageTones } from './ascii-image.js?v=2';
+import { glyphs, glyphDensity, sampleImageTones } from './ascii-image.js?v=2';
+import { createPalette } from './portrait-palette.js?v=2';
+import { colorCells } from './palette-colors.mjs';
+import { createGeneration } from './portrait-generate.js?v=7';
 
 const portrait = document.querySelector('.portrait-print');
 const terminal = document.querySelector('.portrait-terminal');
@@ -20,10 +23,10 @@ function makeCell(tone) {
 }
 
 function drawTerminal(ctx, cells) {
-  const cellWidth = terminal.width / columns;
-  const cellHeight = terminal.height / rows;
-  ctx.fillStyle = '#031803';
-  ctx.fillRect(0, 0, terminal.width, terminal.height);
+  const cellWidth = ctx.canvas.width / columns;
+  const cellHeight = ctx.canvas.height / rows;
+  ctx.fillStyle = cells.find(cell => cell?.paper)?.paper ?? '#031803';
+  ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
   ctx.font = `${cellHeight * 13 / 12}px ${font}`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
@@ -67,8 +70,15 @@ function enablePortraitExperiments() {
   let seed = null;
   let alphabet = 4;
   let preview = null;
+  let colors;
+  let generation;
 
-  function draw() { drawTerminal(ctx, working); }
+  function draw() {
+    drawTerminal(ctx, working);
+  }
+  function gridChanged() {
+    colors?.gridChanged();
+  }
   function fitCanvas() {
     const scale = window.devicePixelRatio || 1;
     const width = Math.round(terminal.clientWidth * scale);
@@ -91,8 +101,10 @@ function enablePortraitExperiments() {
   }
   function lockControls(locked) {
     rewinding = locked;
-    for (const control of controls.querySelectorAll('button, input')) control.disabled = locked;
+    for (const control of controls.closest('.hero').querySelectorAll('button, input, select, textarea')) control.disabled = locked;
     if (!locked) dither.disabled = alphabet === glyphs.length;
+    colors?.syncControls();
+    generation?.syncControls();
   }
 
   function applyGrid(next) {
@@ -100,7 +112,10 @@ function enablePortraitExperiments() {
     next.forEach((cell, index) => {
       if (cell !== working[index]) changes.push(index, working[index]);
     });
-    if (changes.length) history.push({ changes });
+    if (changes.length) {
+      history.push({ changes });
+      gridChanged();
+    }
     working = next;
   }
 
@@ -110,6 +125,7 @@ function enablePortraitExperiments() {
     } else if (!keepCurrent) {
       working = preview.source.slice();
       history.length = preview.historyStart;
+      gridChanged();
     }
     return preview.source;
   }
@@ -137,7 +153,10 @@ function enablePortraitExperiments() {
         finished.add(lane);
       }
     }
-    if (swaps.length) history.push({ swaps });
+    if (swaps.length) {
+      history.push({ swaps });
+      gridChanged();
+    }
     draw();
     const total = vertical ? columns : rows;
     if (pending.size) {
@@ -189,6 +208,7 @@ function enablePortraitExperiments() {
           }
         }
       }
+      gridChanged();
       draw();
       const counts = `${swapsReversed.toLocaleString()} swaps reversed`
         + (onlySorts ? '' : ` · ${cellsRestored.toLocaleString()} cell edits undone`);
@@ -325,6 +345,8 @@ function enablePortraitExperiments() {
     repair: ['Damage & repair', 'Drag to erase characters. Repair estimates each missing cell from its neighbors, one pass at a time.'],
     trace: ['Trace the ink', 'Click a character to rewrite connected cells of similar tone. Change tolerance to see where the fill stops.'],
     alphabet: ['Shrink the alphabet', 'Try 2, 4, or 8 glyphs with optional dithering. Use 12 to restore the grid you entered with. Colored mechanics marks keep their glyphs and ink.'],
+    palette: ['Color by mood', 'Describe a mood. Three models propose palettes for the same glyphs. Choose your favorite.'],
+    generate: ['Generate a grid', 'The model writes every character. Switch feedback, tools, guidance, and a DSPy prompt to change the harness. Try the ASCII mechanics on any valid grid.'],
   };
 
   for (const button of modeButtons) {
@@ -340,6 +362,8 @@ function enablePortraitExperiments() {
     preview = null;
     seed = null;
     mode = next;
+    colors?.setMode(next);
+    generation?.setMode(next);
     pointer = null;
     for (const button of modeButtons) button.setAttribute('aria-pressed', String(button.dataset.experiment === mode));
     for (const panel of panels) panel.hidden = panel.dataset.controls !== mode;
@@ -371,7 +395,7 @@ function enablePortraitExperiments() {
     const point = pointAt(event);
     if (mode === 'trace') trace(point[1] * columns + point[0]);
     simulations.pick(mode, point);
-    if (!['repair', 'sort', 'life', 'gravity'].includes(mode)) return;
+    if (!['repair', 'sort', 'life', 'gravity', 'fire'].includes(mode)) return;
     terminal.setPointerCapture(event.pointerId);
     pointer = { id: event.pointerId, point };
     stroke(point, point);
@@ -416,6 +440,46 @@ function enablePortraitExperiments() {
   document.getElementById('alphabet-twelve').addEventListener('click', () => shrink(glyphs.length));
   dither.addEventListener('change', () => shrink(alphabet));
 
+  colors = createPalette({
+    controls,
+    current: () => working,
+    locked: () => rewinding,
+    drawPreview(canvas, cells) { drawTerminal(canvas.getContext('2d'), cells); },
+    apply(palette) {
+      if (rewinding) return;
+      stop();
+      simulations.reset();
+      pending.clear();
+      finished.clear();
+      preview = null;
+      const target = colorCells(working, palette);
+      let row = 0;
+      function step() {
+        const next = working.slice();
+        for (let i = row * columns; i < Math.min(rows, row + 2) * columns; i++) next[i] = target[i];
+        row += 2;
+        applyGrid(next);
+        draw();
+        if (row < rows) later(step, 25);
+        else report('Palette applied to the glyphs. Restore portrait rewinds the colors.');
+      }
+      step();
+    },
+  });
+  generation = createGeneration({
+    controls, locked: () => rewinding,
+    renderRows(lines) {
+      const canvas = document.createElement('canvas'); canvas.width = canvas.height = 375;
+      drawTerminal(canvas.getContext('2d'), lines.join('').split('').map(char => makeCell(glyphDensity(char))));
+      return canvas;
+    },
+    applyRows(lines, workspace = false) {
+      if (rewinding) return;
+      stop(); simulations.reset(); pending.clear(); finished.clear(); preview = null; seed = null;
+      applyGrid(lines.join('').split('').map(char => makeCell(glyphDensity(char)))); draw();
+      report(workspace ? 'Model workspace · work in progress, not submitted. Restore rewinds these edits.' : 'Generated 75 × 50 grid loaded. Restore portrait rewinds this replacement and later edits.');
+    },
+  });
   selectMode('sort');
   portrait.hidden = true;
   terminal.hidden = false;
