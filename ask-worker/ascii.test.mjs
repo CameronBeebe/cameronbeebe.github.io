@@ -4,7 +4,7 @@ import worker from './worker.mjs';
 import { checkAscii, asciiRubrics } from '../assets/ascii-contract.mjs';
 
 const rows = Array.from({ length: 50 }, (_, i) => ' '.repeat(5) + (i % 2 ? 'O' : '@').repeat(65) + ' '.repeat(5));
-const input = { brief: 'frog samurai', model: 'qwen/qwen3.6-35b-a3b' };
+const input = { brief: 'frog samurai', model: 'qwen/qwen3.6-35b-a3b', mode: 'single' };
 const env = { OPENROUTER_API_KEY: 'openrouter-test', TYPESAFE_API_KEY: 'jev-test', ASCII_LIMIT: { limit: async () => ({ success: true }) } };
 const image = 'iVBORw0KGgoAAA==';
 function post(value, judge = false, headers = {}) {
@@ -48,7 +48,13 @@ test('direct generation returns exact model-written rows, costs, provider, and p
   });
   const { response, events } = await run(post(input));
   assert.equal(response.status, 200);
-  assert.ok(events.some(e => e.event === 'progress'));
+  const partial = events.find(e => e.event === 'progress');
+  assert.ok(partial.raw.length > 0);
+  assert.ok(JSON.stringify({ rows }).startsWith(partial.raw));
+  const started = events.find(e => e.event === 'draft');
+  assert.equal(started.name, 'Qwen 3.6');
+  assert.equal(started.cost, null);
+  assert.equal(started.prompt.length, 2);
   const result = events.find(e => e.event === 'result');
   assert.equal(result.valid, true);
   assert.deepEqual(result.rows, rows);
@@ -75,18 +81,78 @@ test('invalid or truncated grids remain failed attempts with raw evidence', asyn
   assert.equal(result.cost, 0.003);
 });
 
-test('feedback revision sends previous literal rows and typed scores, retaining model settings', async t => {
+test('validator reports every incorrect width and forbidden character with coordinates', () => {
+  const broken = [...rows]; broken[0] = '@'.repeat(79); broken[4] = '😀' + 'O'.repeat(73);
+  const result = checkAscii({ rows: broken });
+  assert.deepEqual(result.errors.map(e => [e.code, e.row, e.actual]), [
+    ['row_length', 1, 79], ['row_length', 5, 74], ['alphabet', 5, undefined],
+  ]);
+  assert.deepEqual(result.errors[2].invalid, [{ column: 1, character: '😀' }]);
+});
+
+test('repair sends actual failed output and all validator errors back, with immutable lineage', async t => {
+  const broken = [...rows]; broken[0] = '@'.repeat(79); broken[6] = '?'.repeat(75);
+  const prompts = [];
   t.mock.method(globalThis, 'fetch', async (_, options) => {
-    const body = JSON.parse(options.body);
+    const body = JSON.parse(options.body); prompts.push(body.messages);
+    if (prompts.length === 1) return completion({ rows: broken });
     assert.equal(body.reasoning.effort, 'minimal');
-    assert.deepEqual(JSON.parse(body.messages[2].content).rows, rows);
+    assert.deepEqual(JSON.parse(body.messages[2].content), { rows: broken });
     const feedback = JSON.parse(body.messages[3].content);
-    assert.deepEqual(feedback.judgments, { match: 1.2, readability: 0.8 });
-    assert.deepEqual(feedback.rubrics, asciiRubrics);
+    assert.equal(feedback.source, 'Deterministic grid validator');
+    assert.deepEqual(feedback.errors, checkAscii({ rows: broken }).errors);
+    assert.equal(feedback.judgments, undefined);
     return completion({ rows });
   });
-  const result = (await run(post({ ...input, model: 'thinkingmachines/inkling-2-small', previous: rows, feedback: { match: 1.2, readability: 0.8 } }))).events.find(e => e.event === 'result');
-  assert.equal(result.strategy, 'Feedback revision');
+  const { events } = await run(post({ ...input, mode: 'repair', model: 'thinkingmachines/inkling-2-small' }));
+  const drafts = events.filter(e => e.event === 'result');
+  assert.equal(drafts.length, 2);
+  assert.equal(drafts[0].valid, false); assert.equal(drafts[1].valid, true);
+  assert.equal(drafts[1].parentId, drafts[0].id);
+  assert.equal(drafts[1].runId, drafts[0].runId);
+  assert.equal(drafts[0].prompt.length, 2); assert.equal(drafts[1].prompt.length, 4);
+  assert.equal(drafts[0].stopReason, null); assert.equal(drafts[1].stopReason, 'structure_passed');
+  assert.equal(drafts[0].cost, 0.003); assert.equal(drafts[1].cost, 0.003);
+  assert.deepEqual(drafts[1].rows, rows); // No code-side padding, cropping, or substitution.
+  assert.equal(prompts.length, 2);
+});
+
+test('repair can recover invalid JSON and stops at three drafts if it cannot', async t => {
+  t.mock.method(console, 'error', () => {});
+  const fetch = t.mock.method(globalThis, 'fetch', async () => completion('not JSON'));
+  const { events } = await run(post({ ...input, mode: 'repair' }));
+  const drafts = events.filter(e => e.event === 'result');
+  assert.equal(drafts.length, 3); assert.equal(fetch.mock.callCount(), 3);
+  assert.equal(drafts[2].stopReason, 'draft_budget');
+  assert.equal(drafts[2].valid, false); assert.equal(drafts[2].raw, 'not JSON');
+  assert.equal(JSON.parse(drafts[1].prompt[3].content).errors[0].code, 'json');
+  assert.equal(drafts[2].prompt[2].content, 'not JSON');
+  assert.equal(drafts[2].prompt.length, 6);
+});
+
+test('fresh retry control gets the same initial prompt without feedback and the same draft ceiling', async t => {
+  const prompts = [];
+  t.mock.method(globalThis, 'fetch', async (_, options) => {
+    prompts.push(JSON.parse(options.body).messages);
+    return completion({ rows: rows.slice(1) });
+  });
+  const { events } = await run(post({ ...input, mode: 'retry' }));
+  const drafts = events.filter(e => e.event === 'result');
+  assert.equal(drafts.length, 3); assert.equal(drafts[2].stopReason, 'draft_budget');
+  assert.deepEqual(prompts[0], prompts[1]); assert.deepEqual(prompts[1], prompts[2]);
+  assert.equal(drafts[1].strategy, 'Fresh retry');
+});
+
+test('provider errors and exhausted output budgets do not trigger paid repair calls', async t => {
+  t.mock.method(console, 'error', () => {});
+  const fetch = t.mock.method(globalThis, 'fetch', async () => new Response('unavailable', { status: 503 }));
+  let drafts = (await run(post({ ...input, mode: 'repair' }))).events.filter(e => e.event === 'result');
+  assert.equal(drafts.length, 1); assert.equal(drafts[0].stopReason, 'provider_failure');
+  assert.equal(fetch.mock.callCount(), 1);
+  fetch.mock.mockImplementation(async () => completion({ rows }, 'length'));
+  drafts = (await run(post({ ...input, mode: 'repair' }))).events.filter(e => e.event === 'result');
+  assert.equal(drafts.length, 1); assert.equal(drafts[0].stopReason, 'provider_failure');
+  assert.equal(drafts[0].rows, undefined);
 });
 
 test('Jev judges one rendered image with parallel rubric questions, without generator identity', async t => {
@@ -116,7 +182,7 @@ test('invalid scores are surfaced as judge failures, not optimistic defaults', a
 test('bad inputs, origins, configuration, and rate limits do not reach paid services', async t => {
   const fetch = t.mock.method(globalThis, 'fetch', async () => { throw Error('must not call'); });
   for (const value of [{ ...input, model: 'expensive' }, { ...input, brief: '' }, { ...input, brief: 'x'.repeat(301) },
-    { ...input, previous: ['broken'] }, { ...input, previous: rows, feedback: { match: 99, readability: 1 } }]) assert.equal((await run(post(value))).response.status, 400);
+    { ...input, mode: 'infinite' }, { ...input, previous: ['broken'] }, { ...input, previous: rows, feedback: { match: 99, readability: 1 } }]) assert.equal((await run(post(value))).response.status, 400);
   assert.equal((await run(post(input, false, { Origin: 'https://other.example' }))).response.status, 403);
   assert.equal((await run(post(input), {})).response.status, 503);
   const limited = { ...env, ASCII_LIMIT: { limit: async () => ({ success: false }) } };

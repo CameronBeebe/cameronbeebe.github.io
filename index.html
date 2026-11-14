@@ -438,7 +438,7 @@
   </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/tex-chtml.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-  <script type="module" src="assets/portrait.js?v=7"></script>
+  <script type="module" src="assets/portrait.js?v=9"></script>
   <script type="module" src="assets/ask-cameron.js?v=14"></script>
 </head>
 <body>
@@ -536,14 +536,15 @@
           <div class="portrait-actions">
             <select aria-label="ASCII generation model"></select>
             <button type="submit">Generate</button>
-            <button type="button" class="generation-refine" disabled>Refine</button>
           </div>
+          <label><input type="checkbox" class="generation-repair" checked /> Send format errors back to the model · up to 3 drafts</label>
         </form>
-        <p role="status">Text → 75 × 50 characters → Jev judgment.</p>
+        <p role="status">Model draws → code checks → model repairs → Jev judges.</p>
+        <ol class="generation-trace" aria-label="Generation steps"></ol>
         <div class="generation-results palette-results"></div>
         <details><summary>Run details</summary>
-          <p>Each cell comes directly from the model. Code checks the shape and glyph alphabet; it does not repair the drawing. Jev judges a 375 px rendering on two descriptive scales from 0 to 3. Its image judgments are experimental, not objective grades. Refine supplies the previous grid and judgments to the generator; it is feedback prompting, not a DSPy or weight optimization run.</p>
-          <p>Prompts and outputs go to OpenRouter and its providers. Rendered output and the brief go to Jev. Three generations per minute.</p>
+          <p>Each cell comes directly from the model. Code checks all row lengths and the glyph alphabet. With feedback enabled, the model receives its draft and the exact errors, then writes a corrected grid. Code never pads or crops the output. The run stops when the structure passes, after 3 drafts, on a provider failure, or at the five-minute deadline. Turn feedback off for a single draft. Jev separately judges a 375 px rendering on two descriptive scales from 0 to 3; these are fallible visual judgments, not acceptance gates. This repair loop does not use DSPy or change model weights.</p>
+          <p>Prompts and outputs go to OpenRouter and its providers. Rendered output and the brief go to Jev. Three runs per minute; each run can make up to three generation calls. Every draft, prompt, error, and reported cost is preserved in Download run.</p>
           <div class="portrait-actions"><button type="button" class="generation-download" disabled>Download run</button></div>
           <img class="generation-evidence" width="375" height="375" alt="The generated ASCII rendering sent to Jev" hidden />
           <pre class="generation-details"></pre>

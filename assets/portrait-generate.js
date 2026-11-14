@@ -1,5 +1,5 @@
 import { paletteModels } from './palette-colors.mjs';
-import { checkAscii, asciiRubrics } from './ascii-contract.mjs';
+import { checkAscii, asciiRubrics } from './ascii-contract.mjs?v=2';
 
 export function createGeneration({ controls, locked, applyRows, renderRows }) {
   const panel = controls.querySelector('.generation-panel');
@@ -7,14 +7,15 @@ export function createGeneration({ controls, locked, applyRows, renderRows }) {
   const brief = form.querySelector('textarea');
   const model = form.querySelector('select');
   const generate = form.querySelector('[type="submit"]');
-  const refine = panel.querySelector('.generation-refine');
+  const repair = panel.querySelector('.generation-repair');
+  const trace = panel.querySelector('.generation-trace');
   const status = panel.querySelector('[role="status"]');
   const list = panel.querySelector('.generation-results');
   const details = panel.querySelector('.generation-details');
   const evidence = panel.querySelector('.generation-evidence');
   const download = panel.querySelector('.generation-download');
   const attempts = [];
-  let request = null, active = false, selected = null;
+  let request = null, active = false;
   const home = document.createComment('generation controls'); panel.before(home);
   const desktop = matchMedia('(min-width: 701px)');
   function placePanel() {
@@ -26,11 +27,12 @@ export function createGeneration({ controls, locked, applyRows, renderRows }) {
     const option = document.createElement('option'); option.value = entry.id; option.textContent = entry.name;
     option.selected = entry.id === 'thinkingmachines/inkling-2-small'; model.append(option);
   }
-  function previous() { return selected?.valid && selected.brief === brief.value.trim() && selected.judge?.judgments ? selected : null; }
   function updateControls() {
     generate.disabled = Boolean(request) || locked();
     generate.textContent = request ? 'Working…' : 'Generate';
-    refine.disabled = Boolean(request) || locked() || !previous();
+    repair.disabled = Boolean(request);
+    model.disabled = Boolean(request);
+    brief.disabled = Boolean(request);
     download.disabled = !attempts.length;
   }
   brief.addEventListener('input', updateControls);
@@ -45,7 +47,7 @@ export function createGeneration({ controls, locked, applyRows, renderRows }) {
     list.replaceChildren();
     for (const attempt of attempts.slice(-4).reverse()) {
       const button = document.createElement('button'); button.type = 'button'; button.className = 'palette-card';
-      button.disabled = !attempt.valid || locked(); button.setAttribute('aria-label', `Use generated attempt ${attempt.number}`);
+      button.disabled = locked(); button.setAttribute('aria-label', `${attempt.valid ? 'Use' : 'Inspect'} generated attempt ${attempt.number}`);
       const canvas = document.createElement('canvas'); canvas.width = canvas.height = 300;
       canvas.setAttribute('aria-hidden', 'true');
       if (attempt.valid) canvas.getContext('2d').drawImage(renderRows(attempt.rows), 0, 0, 300, 300);
@@ -54,7 +56,9 @@ export function createGeneration({ controls, locked, applyRows, renderRows }) {
       const shape = document.createElement('span'); shape.className = 'palette-state';
       shape.textContent = attempt.valid ? '75 × 50 · structure passed' : attempt.reason ?? 'Generation failed';
       const metrics = document.createElement('span'); metrics.className = 'palette-metrics';
-      const strategy = document.createElement('span'); strategy.textContent = attempt.strategy; metrics.append(strategy);
+      const strategy = document.createElement('span');
+      const parent = attempts.find(a => a.id === attempt.parentId);
+      strategy.textContent = `${attempt.strategy}${parent ? ` · follows draft ${parent.number}` : ''}`; metrics.append(strategy);
       if (attempt.valid) {
         const coverage = document.createElement('span');
         coverage.textContent = `${attempt.rows.join('').split('').filter(c => c !== ' ').length.toLocaleString()} / 3,750 inked cells`;
@@ -76,27 +80,23 @@ export function createGeneration({ controls, locked, applyRows, renderRows }) {
       text.append(heading, shape, metrics); button.append(canvas, text);
       button.addEventListener('click', () => {
         if (locked()) return;
-        selected = attempt; applyRows(attempt.rows); showDetails(attempt); updateControls();
-        status.textContent = `Attempt ${attempt.number} loaded. Its stored judgment describes the generated grid before further edits.`;
+        if (attempt.valid) { applyRows(attempt.rows); }
+        showDetails(attempt); updateControls();
+        status.textContent = attempt.valid ? `Draft ${attempt.number} loaded. Its stored judgment describes the grid before further edits.` : `Draft ${attempt.number} failed validation. Its errors and raw output are available in Run details.`;
       });
       list.append(button);
     }
     updateControls();
   }
-  async function run(revising = false) {
+  async function run() {
     if (request || locked() || !brief.value.trim()) return;
-    const old = revising ? previous() : null;
-    if (revising && !old) return;
     const controller = new AbortController(); request = controller; updateControls();
     const subject = brief.value.trim();
+    trace.replaceChildren();
     status.textContent = 'The model is writing the grid directly…';
-    let attempt;
+    let attempt, partial;
     try {
-      const input = { brief: subject, model: model.value };
-      if (old) {
-        input.previous = old.rows;
-        input.feedback = Object.fromEntries(Object.entries(old.judge.judgments).map(([id, value]) => [id, value.score]));
-      }
+      const input = { brief: subject, model: model.value, mode: repair.checked ? 'repair' : 'single' };
       const response = await fetch(`${panel.dataset.endpoint}/generate`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(input), signal: controller.signal,
       });
@@ -109,21 +109,34 @@ export function createGeneration({ controls, locked, applyRows, renderRows }) {
         while ((end = pending.indexOf('\n')) !== -1) {
           const line = pending.slice(0, end); pending = pending.slice(end + 1); if (!line) continue;
           const value = JSON.parse(line);
-          if (value.event === 'first') writing = true;
+          if (value.event === 'draft') {
+            partial = { ...value, raw: '', partial: true };
+            writing = false;
+            status.textContent = `Draft ${value.step}/${value.maxDrafts} · ${value.step === 1 ? 'writing the grid' : 'repairing validation errors'}…`;
+          }
+          if (value.event === 'first') { writing = true; if (partial) partial.firstMs = value.firstMs; }
           if (value.event === 'waiting' && !writing) status.textContent = `Preparing the grid… ${Math.round(value.elapsedMs / 1000)}s elapsed.`;
-          if (value.event === 'progress') status.textContent = `Writing JSON · ${value.characters.toLocaleString()} characters received…`;
-          if (value.event === 'result') attempt = { ...value, number: attempts.length + 1 };
+          if (value.event === 'progress') {
+            if (partial && typeof value.raw === 'string') partial.raw = value.raw;
+            status.textContent = `Writing JSON · ${value.characters.toLocaleString()} characters received…`;
+          }
+          if (value.event === 'result') {
+            if (value.valid && !checkAscii({ rows: value.rows }).valid) throw new Error('The returned grid failed browser validation.');
+            attempt = { ...value, number: attempts.length + 1 }; attempts.push(attempt); partial = null;
+            const line = document.createElement('li');
+            const failures = value.errors?.length ?? 0;
+            line.textContent = `Draft ${value.step ?? 1}: ${value.valid ? 'structure passed' : value.reason ?? 'generation failed'}${failures > 1 ? ` (${failures} validation errors)` : ''}${value.stopReason === 'draft_budget' ? ' · repair budget reached' : ''}${value.stopReason === null ? ' → sending errors back to the model' : ''}`;
+            trace.append(line); renderAttempts(); showDetails(attempt);
+          }
           if (value.event === 'done') done = true;
         }
         if (chunk.done) break;
       }
       if (!done || !attempt) throw new Error('Generation ended before a complete result.');
-      if (attempt.valid && !checkAscii({ rows: attempt.rows }).valid) throw new Error('The returned grid failed browser validation.');
-      attempts.push(attempt);
-      if (!attempt.valid) { renderAttempts(); showDetails(attempt); status.textContent = attempt.reason; return; }
+      if (!attempt.valid) { status.textContent = `${attempt.reason}${attempt.stopReason === 'draft_budget' ? ' Repair budget reached; all drafts are preserved below.' : ''}`; return; }
       const canvas = renderRows(attempt.rows);
       attempt.image = canvas.toDataURL('image/png').split(',')[1];
-      selected = attempt; applyRows(attempt.rows); renderAttempts(); showDetails(attempt);
+      applyRows(attempt.rows); renderAttempts(); showDetails(attempt);
       status.textContent = 'Grid complete. Jev is judging the rendering…';
       try {
         const response = await fetch(`${panel.dataset.endpoint}/judge`, {
@@ -133,26 +146,31 @@ export function createGeneration({ controls, locked, applyRows, renderRows }) {
         const result = await response.json();
         if (!response.ok) throw new Error(result.error ?? 'Jev could not judge this grid.');
         attempt.judge = result;
-        status.textContent = 'Jev’s judgments are ready. Refine uses the previous grid and scores to request a new drawing.';
+        status.textContent = 'Structure passed. Jev’s visual judgments are ready; they do not control format repair.';
       } catch (error) {
         attempt.judgeError = controller.signal.aborted ? 'Judging stopped' : error.message;
         status.textContent = `Grid generated. ${attempt.judgeError}`;
       }
       renderAttempts(); showDetails(attempt);
     } catch (error) {
+      if (partial) {
+        const reason = controller.signal.aborted ? 'Generation stopped.' : error.message;
+        attempt = { ...partial, event: 'result', number: attempts.length + 1, valid: false, reason, stopReason: 'stream_failure' };
+        attempts.push(attempt); renderAttempts(); showDetails(attempt);
+        const line = document.createElement('li'); line.textContent = `Draft ${attempt.step}: interrupted · available partial output preserved`; trace.append(line);
+      }
       status.textContent = controller.signal.aborted ? 'Generation stopped.' : error.message;
     } finally { request = null; updateControls(); }
   }
   form.addEventListener('submit', event => { event.preventDefault(); void run(); });
-  refine.addEventListener('click', () => { void run(true); });
   download.addEventListener('click', () => {
-    const blob = new Blob([JSON.stringify({ version: 1, rubrics: asciiRubrics, attempts }, null, 2)], { type: 'application/json' });
+    const blob = new Blob([JSON.stringify({ version: 2, rubrics: asciiRubrics, attempts }, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob), link = document.createElement('a'); link.href = url; link.download = 'ascii-generation-run.json'; link.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   });
   updateControls();
   return {
     setMode(mode) { active = mode === 'generate'; placePanel(); if (!active) request?.abort(); },
-    syncControls() { if (locked()) request?.abort(); updateControls(); for (const button of list.querySelectorAll('button')) button.disabled = locked() || !attempts.find(a => button.getAttribute('aria-label') === `Use generated attempt ${a.number}`)?.valid; },
+    syncControls() { if (locked()) request?.abort(); updateControls(); for (const button of list.querySelectorAll('button')) button.disabled = locked(); },
   };
 }

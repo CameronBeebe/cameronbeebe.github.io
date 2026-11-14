@@ -12,30 +12,21 @@ function validateInput(input, judging) {
     if (typeof input.image !== 'string' || input.image.length > 900000 || !/^iVBORw0KGgo[A-Za-z0-9+/=]+$/.test(input.image)) throw new Error('A rendered PNG is required.');
   } else {
     if (!paletteModels.some(m => m.id === input.model)) throw new Error('Choose an available model.');
-    if (input.previous !== undefined && !checkAscii({ rows: input.previous }).valid) throw new Error('The previous grid is invalid.');
-    if (input.feedback !== undefined) {
-      if (!input.previous || Object.keys(input.feedback).sort().join(',') !== 'match,readability'
-        || Object.values(input.feedback).some(v => !Number.isFinite(v) || v < 0 || v > 3)) throw new Error('The previous judgment is invalid.');
-    }
+    if (input.previous !== undefined || input.feedback !== undefined) throw new Error('Reload the page to use the validation repair harness.');
+    input.mode ??= 'repair';
+    if (!['single', 'repair', 'retry'].includes(input.mode)) throw new Error('Choose an available generation mode.');
   }
   return input;
 }
 
-async function generate(input, env, signal, emit) {
+async function draft(input, env, signal, emit, prompt, lineage) {
   const model = paletteModels.find(m => m.id === input.model);
   const thinking = model.id.startsWith('qwen/') ? 'off' : model.id.startsWith('thinkingmachines/') ? 'minimal' : 'low';
-  const prompt = [{ role: 'system', content: asciiInstructions }, { role: 'user', content: JSON.stringify({ brief: input.brief }) }];
-  if (input.previous) {
-    prompt.push({ role: 'assistant', content: JSON.stringify({ rows: input.previous }) });
-    prompt.push({ role: 'user', content: JSON.stringify({
-      task: 'Redraw the entire grid to improve its visible subject and composition. Keep the exact output contract. The following are fallible visual judgments from Jev, not ground truth. Do not place words or ratings in the artwork.',
-      judgments: input.feedback ?? null, rubrics: asciiRubrics,
-    }) });
-  }
-  const result = { model: model.id, name: model.name, brief: input.brief, strategy: input.previous ? 'Feedback revision' : 'Initial prompt', thinking,
+  const result = { model: model.id, name: model.name, brief: input.brief, strategy: lineage.step === 1 ? 'Initial prompt' : input.mode === 'repair' ? 'Validation repair' : 'Fresh retry', thinking, ...lineage,
     firstMs: null, readyMs: null, cost: null, tokens: null, reasoningTokens: null, maxTokens: 32768, provider: null, valid: false, prompt };
   const start = performance.now();
   let text = '';
+  emit({ event: 'draft', ...result });
   try {
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST', signal, redirect: 'manual',
@@ -64,11 +55,14 @@ async function generate(input, env, signal, emit) {
       if (result.firstMs === null) { result.firstMs = Math.round(performance.now() - start); emit({ event: 'first', firstMs: result.firstMs }); }
       text += delta;
       if (text.length > 24000) throw new Error('The output exceeded the grid budget.');
-      if (text.length - progress >= 400) { progress = text.length; emit({ event: 'progress', characters: text.length }); }
+      if (text.length - progress >= 400) { progress = text.length; emit({ event: 'progress', characters: text.length, raw: text }); }
     }
     if (!completed || finish !== 'stop') throw new Error(finish === 'length' ? 'Output limit reached; the grid was not repaired or truncated.' : 'The generation ended early.');
     let value;
-    try { value = JSON.parse(text); } catch { throw new Error('The model returned invalid JSON.'); }
+    try { value = JSON.parse(text); } catch {
+      result.errors = [{ code: 'json', message: 'The response is not valid JSON. Return only the complete rows object, without code fences or commentary.' }];
+      throw new Error('The model returned invalid JSON.');
+    }
     Object.assign(result, checkAscii(value));
     if (result.valid) { result.rows = value.rows; result.readyMs = Math.round(performance.now() - start); }
   } catch (error) {
@@ -76,7 +70,33 @@ async function generate(input, env, signal, emit) {
     console.error(JSON.stringify({ message: 'ASCII generation failed', model: model.id, status: error.status }));
   }
   result.raw = text;
-  emit({ event: 'result', ...result, elapsedMs: Math.round(performance.now() - start) });
+  result.elapsedMs = Math.round(performance.now() - start);
+  return result;
+}
+
+// Identical initial requests and call ceilings isolate feedback from simply sampling again.
+async function generate(input, env, signal, emit) {
+  const base = [{ role: 'system', content: asciiInstructions }, { role: 'user', content: JSON.stringify({ brief: input.brief }) }];
+  const runId = crypto.randomUUID(), maxDrafts = input.mode === 'single' ? 1 : 3;
+  let prompt = base, parentId = null;
+  for (let step = 1; step <= maxDrafts; step++) {
+    const id = crypto.randomUUID();
+    const result = await draft(input, env, signal, emit, prompt, { id, runId, parentId, step, maxDrafts, mode: input.mode });
+    const repairable = !result.valid && Boolean(result.errors?.length) && !signal.aborted;
+    const retry = repairable && step < maxDrafts;
+    result.stopReason = result.valid ? 'structure_passed' : retry ? null : signal.aborted ? 'cancelled' : repairable ? (input.mode === 'single' ? 'single_draft' : 'draft_budget') : 'provider_failure';
+    emit({ event: 'result', ...result });
+    if (!retry) break;
+    parentId = id;
+    // Copy this bounded history: later drafts must not mutate earlier exported prompts.
+    prompt = input.mode === 'retry' ? base : [...prompt,
+      { role: 'assistant', content: result.raw },
+      { role: 'user', content: JSON.stringify({
+        task: 'Repair the structural errors listed by the validator. Preserve the subject, composition, and already valid rows as far as possible. Return the complete JSON object with all 50 rows of 75 characters, using only the allowed glyphs. Every character must still be written by you; no drawing code or commentary.',
+        source: 'Deterministic grid validator', errors: result.errors,
+      }) },
+    ];
+  }
 }
 
 async function judge(input, env, signal) {
@@ -107,7 +127,7 @@ export async function asciiRequest(request, env, json, headers, ctx, judging = f
   catch (error) { return json({ error: error.message }, 400); }
   if (!env.ASCII_LIMIT || !(judging ? env.TYPESAFE_API_KEY : env.OPENROUTER_API_KEY)) return json({ error: 'ASCII generation is awaiting its model connection.' }, 503);
   const { success } = await env.ASCII_LIMIT.limit({ key: `${judging ? 'judge' : 'generate'}:${request.headers.get('CF-Connecting-IP') ?? 'unknown'}` });
-  if (!success) { headers.set('Retry-After', '60'); return json({ error: 'Three attempts per minute. Try again shortly.' }, 429); }
+  if (!success) { headers.set('Retry-After', '60'); return json({ error: 'Three runs per minute. Try again shortly.' }, 429); }
   if (!judging) return modelStream(request, headers, ctx, (signal, emit) => generate(input, env, signal, emit), 300000);
   try {
     const signal = AbortSignal.any([request.signal, AbortSignal.timeout(18000)]);

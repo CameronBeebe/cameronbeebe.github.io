@@ -3,7 +3,7 @@ import { swapCells, sortPass, neighbors, repairPass, quantizeRow } from './portr
 import { glyphs, glyphDensity, sampleImageTones } from './ascii-image.js?v=2';
 import { createPalette } from './portrait-palette.js?v=2';
 import { colorCells } from './palette-colors.mjs';
-import { createGeneration } from './portrait-generate.js?v=3';
+import { createGeneration } from './portrait-generate.js?v=5';
 
 const portrait = document.querySelector('.portrait-print');
 const terminal = document.querySelector('.portrait-terminal');
@@ -346,7 +346,7 @@ function enablePortraitExperiments() {
     trace: ['Trace the ink', 'Click a character to rewrite connected cells of similar tone. Change tolerance to see where the fill stops.'],
     alphabet: ['Shrink the alphabet', 'Try 2, 4, or 8 glyphs with optional dithering. Use 12 to restore the grid you entered with. Colored mechanics marks keep their glyphs and ink.'],
     palette: ['Color by mood', 'Describe a mood. Three models propose palettes for the same glyphs. Choose your favorite.'],
-    generate: ['Generate a grid', 'The model writes every character. Load previous attempts, refine with Jev feedback, or try the ASCII mechanics on the generated grid.'],
+    generate: ['Generate a grid', 'The model writes every character. Code checks the format and can send errors back for repair. Try the ASCII mechanics on any valid grid.'],
   };
 
   for (const button of modeButtons) {
