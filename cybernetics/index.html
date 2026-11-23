@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ashby’s regulator — a requisite-variety demo</title>
+  <meta name="description" content="Watch a Pólya-urn regulator learn against disturbances. A blind regulator is shown next to one that sees the disturbance, so Ashby’s law of requisite variety is visible." />
+  <meta name="author" content="Cameron Beebe" />
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <main class="wrap">
+    <p class="eyebrow">Cybernetic regulation game</p>
+    <h1>Ashby’s regulator</h1>
+    <p class="lede">
+      The environment plays a row (a disturbance). The regulator plays a column.
+      A trial succeeds when the cell is a goal. The 2021 toy keeps
+      <em>one</em> Pólya urn for every situation, so it never sees the row — a
+      <strong>blind</strong> regulator. A regulator that keeps one urn per row
+      can approach the <strong>requisite-variety bound</strong>: the best success
+      rate possible when the disturbance is observed. The gap between the two
+      dashed lines is the law, measured on the game in front of you.
+    </p>
+
+    <noscript><p>This demo needs JavaScript to run the regulators in your browser. Nothing is sent to a server.</p></noscript>
+
+    <div class="toolbar" role="group" aria-label="Game controls">
+      <label class="field">Seed
+        <input id="seed" type="number" inputmode="numeric" value="2021" min="0" step="1" />
+      </label>
+      <label class="field">Size
+        <input id="size" type="number" inputmode="numeric" value="10" min="2" max="16" step="1" />
+      </label>
+      <label class="field">Goals
+        <input id="goals" type="text" value="3" spellcheck="false" />
+      </label>
+      <label class="field">Disturbance
+        <select id="dist">
+          <option value="toy" selected>Dirichlet α = 1…n (2021 toy)</option>
+          <option value="uniform">Uniform</option>
+        </select>
+      </label>
+      <label class="field">Speed
+        <span>
+          <input id="speed" type="range" min="0" max="5" step="1" value="2" />
+          <span class="speed-read" id="speed-read">200/s</span>
+        </span>
+      </label>
+      <button type="button" id="play" class="primary" aria-pressed="false">Play</button>
+      <button type="button" id="step" title="One epoch (or press .)">Step</button>
+      <button type="button" id="reset" title="Replay this game from the start">Reset</button>
+      <button type="button" id="newgame" title="Draw a new game with this seed">New game</button>
+      <button type="button" id="reshuffle" title="Pick a new seed and draw a game">Reshuffle</button>
+    </div>
+
+    <div class="stage">
+      <section class="panel" aria-labelledby="matrix-title">
+        <h2 id="matrix-title">Payoff matrix</h2>
+        <p class="urn-label">Rows are disturbances, columns are actions. Bright cells are goals. The current row is outlined; gold marks the blind play, a dark ring the conditioned play. Bars at the left are the disturbance distribution.</p>
+        <div class="matrix-wrap">
+          <svg id="matrix" xmlns="http://www.w3.org/2000/svg" width="520" height="360"></svg>
+        </div>
+      </section>
+      <section class="panel" aria-labelledby="chart-title">
+        <h2 id="chart-title">Success rate (last 500 trials)</h2>
+        <svg id="chart" xmlns="http://www.w3.org/2000/svg" width="520" height="210"></svg>
+        <ul class="chart-legend">
+          <li class="blind"><i></i>Blind regulator</li>
+          <li class="cond"><i></i>Disturbance-conditioned</li>
+          <li class="bound"><i></i>Dashed lines are the two bounds for this game</li>
+        </ul>
+      </section>
+    </div>
+
+    <div class="learners">
+      <section class="panel learner blind" aria-labelledby="blind-title">
+        <h2 id="blind-title">Blind regulator</h2>
+        <div class="score">
+          <span class="rate" id="blind-rate">0.000</span>
+          <span class="meta" id="blind-meta"></span>
+        </div>
+        <p class="urn-label">One urn, used for every disturbance — the 2021 <code>Ashby</code> class.</p>
+        <div class="urn" id="blind-urn"></div>
+      </section>
+      <section class="panel learner cond" aria-labelledby="cond-title">
+        <h2 id="cond-title">Disturbance-conditioned</h2>
+        <div class="score">
+          <span class="rate" id="cond-rate">0.000</span>
+          <span class="meta" id="cond-meta"></span>
+        </div>
+        <p class="urn-label" id="cond-urn-label">One urn per row.</p>
+        <div class="urn" id="cond-urn"></div>
+        <div class="mini-urns" id="mini-urns" aria-label="One mark per disturbance urn"></div>
+      </section>
+    </div>
+
+    <section class="caption">
+      <p>
+        <strong>How to read the bounds.</strong>
+        The lower dashed line is the <em>blind optimum</em>: the best success rate any single column can get.
+        The upper one is the <em>requisite-variety bound</em>: success if, for each row, the regulator may pick a (possibly different) column that hits a goal, when one exists.
+        Seeing the disturbance is exactly the channel Ashby requires; it is not a cheat.
+        Space toggles play; period steps one epoch.
+      </p>
+      <p>
+        <strong>Reference experiment (PROP-01).</strong>
+        On 10×10 games, goal {3}, 10 seeds, last 5,000 of 20,000 epochs, the current
+        <code>Ashby</code> class averaged <strong>0.249</strong> success against a blind optimum of
+        <strong>0.301</strong>. A disturbance-conditioned urn reached the requisite-variety bound of
+        <strong>0.603</strong> on every seed. Live scores on this page use a different
+        generator, so they will not match those figures exactly; the two bounds above the chart are computed from the game you see.
+      </p>
+    </section>
+
+    <section class="refs">
+      <p>
+        W. R. Ashby, <em>An Introduction to Cybernetics</em>, Chapman &amp; Hall / Wiley, 1956, ch. 11 (“Requisite Variety”).
+        Source and 2021 talk slides:
+        <a href="https://github.com/CameronBeebe/Cybernetics">CameronBeebe/Cybernetics</a>
+        ·
+        <a href="https://github.com/CameronBeebe/Cybernetics/blob/master/Neural_Networks_Cybernetic_Regulators.pdf">Neural Networks as Cybernetic Regulators (PDF)</a>.
+      </p>
+      <p>
+        Canonical files: the <code>docs/</code> folder of that repository.
+        This page is a static, self-contained copy (relative paths, no build step) and can be served from any static host, including a later path on sciphi.pro.
+      </p>
+    </section>
+  </main>
+  <script type="module" src="./demo.js"></script>
+</body>
+</html>

@@ -20,9 +20,14 @@ Click the ASCII landscape to set a goal. Toggle planning, tools, memory, verific
 
 ![ASCII landscape with harness controls enabled, an agent, and a target surrounded by an uncertainty ring](docs/screenshots/agent-harness.jpg)
 
+## Ashby’s regulator
+
+A static demo of Ashby’s regulation game: a blind Pólya-urn regulator and a disturbance-conditioned one learn on the same payoff matrix, so the law of requisite variety is visible. The page at [`cybernetics/`](cybernetics/) is an identical mirror of the canonical source in [CameronBeebe/Cybernetics](https://github.com/CameronBeebe/Cybernetics) (`docs/`).
+
 ## Repository
 
 - [`index.html`](index.html) contains the GitHub Pages site.
+- [`cybernetics/`](cybernetics/) is an identical mirror of the Ashby regulator demo; the canonical source is [`docs/`](https://github.com/CameronBeebe/Cybernetics/tree/master/docs) in CameronBeebe/Cybernetics.
 - [`assets/`](assets/) contains the artwork and browser code for the experiments and Ask panel.
 - [`ask-worker/`](ask-worker/) contains the search backend and PDF indexer.
 - The [portfolio Ask skill](.agents/skills/maintain-portfolio-ask/SKILL.md) explains how to test changes and maintain the deployed Worker.
