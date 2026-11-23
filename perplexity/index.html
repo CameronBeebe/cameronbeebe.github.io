@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Perplexity, cross-entropy, and bits per byte — Cameron Beebe</title>
+  <meta name="description" content="An interactive explainer of language-model perplexity: its link to cross-entropy, log loss, and proper scoring rules, and why bits per byte is the fair comparison across tokenizers." />
+  <meta name="author" content="Cameron Beebe" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #012201;
+      --ink: #a19067;
+      --phosphor: #39ff14;
+      --accent: var(--phosphor);
+      --muted: #a99872;
+      --link: #c4b48a;
+      --line: #54794a;
+      --panel: #0a2e0a;
+      --well: #051e05;
+      --danger: #f0ae88;
+      --ok: var(--phosphor);
+      --gutter: clamp(1rem, 5vw, 3rem);
+      --mono: ui-monospace, Menlo, Consolas, monospace;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0 auto;
+      padding: 0 var(--gutter) 4rem;
+      max-width: 1160px;
+      line-height: 1.65;
+      font-family: var(--mono);
+      font-size: 1rem;
+      color: var(--ink);
+      background: var(--bg);
+    }
+    h1 {
+      margin: 0.4rem 0 1rem;
+      font-size: clamp(1.45rem, 3.1vw, 2.2rem);
+      font-weight: 400;
+      letter-spacing: -0.025em;
+      line-height: 1.25;
+      color: var(--link);
+    }
+    h2 {
+      font-size: 0.95em;
+      font-weight: 500;
+      color: var(--accent);
+      margin: 2.4rem 0 0.7rem;
+      letter-spacing: 0.02em;
+    }
+    h3 {
+      font-size: 0.88em;
+      font-weight: 500;
+      color: var(--link);
+      margin: 1.2rem 0 0.45rem;
+    }
+    .eyebrow {
+      font-size: 0.72rem;
+      letter-spacing: 0.11em;
+      text-transform: uppercase;
+      color: var(--link);
+      margin: 1.75rem 0 0;
+    }
+    .lede, p { margin: 0.75rem 0; max-width: 76ch; }
+    .muted, .note { color: var(--muted); }
+    .note { font-size: 0.88em; }
+    a { color: var(--link); }
+    a:hover, a:focus-visible { color: var(--phosphor); }
+    :focus-visible { outline: 2px solid var(--phosphor); outline-offset: 3px; }
+    .formula {
+      overflow-x: auto;
+      padding: 0.35rem 0;
+      color: var(--link);
+      font-size: 0.95em;
+    }
+    .demo, .panel {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      box-shadow: 4px 4px 0 #001400;
+      padding: 0.9rem 1rem;
+      margin: 0.8rem 0 1.3rem;
+    }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.55rem 1rem;
+      align-items: center;
+      margin: 0.45rem 0 0.7rem;
+      font-size: 0.82em;
+    }
+    .controls label, .slider-row label {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      cursor: pointer;
+    }
+    button, select, textarea, input[type="range"] {
+      font: inherit;
+    }
+    button, select {
+      background: var(--well);
+      color: var(--phosphor);
+      border: 1px solid var(--line);
+      padding: 0.35rem 0.6rem;
+      cursor: pointer;
+      min-height: 2rem;
+    }
+    button:hover, select:hover { border-color: var(--phosphor); }
+    button[aria-pressed="true"] {
+      background: var(--phosphor);
+      color: var(--bg);
+      border-color: var(--phosphor);
+    }
+    textarea {
+      width: 100%;
+      min-height: 7.5rem;
+      background: var(--well);
+      color: var(--link);
+      border: 1px solid var(--line);
+      padding: 0.55rem 0.65rem;
+      resize: vertical;
+    }
+    input[type="range"] { accent-color: var(--phosphor); width: min(22rem, 100%); }
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
+      gap: 0.55rem 0.8rem;
+      margin: 0.6rem 0 0.85rem;
+    }
+    .metric {
+      border: 1px solid var(--line);
+      background: var(--well);
+      padding: 0.45rem 0.55rem;
+    }
+    .metric b {
+      display: block;
+      color: var(--accent);
+      font-weight: 500;
+      font-size: 1.05em;
+    }
+    .metric span { color: var(--muted); font-size: 0.75em; }
+    .compare {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+    @media (max-width: 800px) { .compare { grid-template-columns: 1fr; } }
+    .token-strip {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.2rem;
+      align-items: stretch;
+      max-height: 22rem;
+      overflow: auto;
+      padding: 0.2rem 0;
+    }
+    .tok {
+      position: relative;
+      border: 1px solid var(--line);
+      background: var(--well);
+      color: var(--ink);
+      font-size: 0.8em;
+      line-height: 1.3;
+      padding: 0.18rem 0.28rem;
+      cursor: default;
+      white-space: pre;
+    }
+    .tok.unscored { opacity: 0.55; }
+    .tok:hover, .tok:focus-visible { border-color: var(--phosphor); z-index: 1; }
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem 0.9rem;
+      font-size: 0.75em;
+      color: var(--muted);
+      margin: 0.35rem 0 0.6rem;
+    }
+    .swatch { display: inline-block; width: 0.75rem; height: 0.75rem; border: 1px solid var(--line); vertical-align: -0.1em; margin-right: 0.3rem; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82em;
+      margin: 0.6rem 0 0.9rem;
+    }
+    th, td {
+      text-align: left;
+      border-bottom: 1px solid var(--line);
+      padding: 0.35rem 0.5rem 0.35rem 0;
+      vertical-align: top;
+    }
+    th { color: var(--link); font-weight: 500; }
+    td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+    .tooltip {
+      display: none;
+      position: absolute;
+      left: 0;
+      bottom: calc(100% + 0.25rem);
+      min-width: 14rem;
+      max-width: 22rem;
+      padding: 0.4rem 0.5rem;
+      background: #031803;
+      border: 1px solid var(--phosphor);
+      color: var(--link);
+      font-size: 0.78em;
+      line-height: 1.4;
+      z-index: 3;
+      pointer-events: none;
+      white-space: normal;
+    }
+    .tok:hover .tooltip, .tok:focus-visible .tooltip { display: block; }
+    .readout {
+      font-size: 0.9em;
+      color: var(--link);
+    }
+    .readout b { color: var(--accent); font-weight: 500; }
+    .status { color: var(--muted); font-size: 0.85em; min-height: 1.3em; }
+    .status.error { color: var(--danger); }
+    .foot {
+      margin-top: 2.2rem;
+      font-size: 0.72em;
+      color: var(--muted);
+    }
+    ul { margin: 0.4rem 0 1rem; padding-left: 1.2rem; max-width: 76ch; }
+    li + li { margin-top: 0.3rem; }
+    li::marker { color: var(--muted); }
+    .sr-only {
+      position: absolute;
+      width: 1px; height: 1px;
+      overflow: hidden;
+      clip: rect(0,0,0,0);
+    }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/tex-chtml.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+</head>
+<body>
+  <main>
+    <p class="eyebrow"><a href="../">Cameron Beebe</a> · Evaluation</p>
+    <h1>Perplexity, cross-entropy, and bits per byte</h1>
+    <p class="lede">Perplexity is not a mysterious leaderboard number. It is the exponential of average log loss — the strictly proper scoring rule that rewards an honest probability — written as an effective branching factor. It is also not a fair way to compare language models that cut text into different tokens. Bits per byte is.</p>
+    <p class="note">This page is a v0 explainer. Measured token probabilities below were computed on a CPU with publicly released checkpoints, on short passages, and are labeled as such. They are not full WikiText or C4 benchmark runs. A toy byte-level trigram, trained on WikiText-2 raw train, scores any text you type.</p>
+
+    <section id="aliases" aria-labelledby="aliases-title">
+      <h2 id="aliases-title">One loss, four unit systems</h2>
+      <p>A causal language model assigns a probability \(p(x_t \mid x_{&lt;t})\) to each next token. The logarithmic score of the token that actually arrived is \(\log p\). Average that, change the sign, and you have the usual training objective: cross-entropy, also called log loss or negative log-likelihood.</p>
+      <div class="formula">
+        \[
+          \mathrm{CE}_{\text{nats}} = -\frac{1}{N}\sum_{t=1}^{N}\log p(x_t\mid x_{&lt;t}),
+          \quad
+          \mathrm{PPL} = e^{\mathrm{CE}_{\text{nats}}} = 2^{\mathrm{CE}_{\text{bits}}},
+          \quad
+          \mathrm{CE}_{\text{bits}} = \frac{\mathrm{CE}_{\text{nats}}}{\ln 2}.
+        \]
+      </div>
+      <p>Perplexity is that average surprise, turned back into a count: the size of a uniform distribution that would have the same entropy. A perplexity of 8 means the model is as uncertain, on average, as if it were choosing among 8 equally likely tokens. Bits per token is the same quantity in base 2 — the expected code length if you compressed the tokens with the model’s probabilities.</p>
+      <p>Bits per byte (BPB) keeps the <em>total</em> surprise in the numerator and changes only the denominator, from “how many of this model’s tokens” to “how many UTF-8 bytes in the text”:</p>
+      <div class="formula">
+        \[
+          \mathrm{BPB} = \frac{\sum_t (-\log p(x_t\mid x_{&lt;t}))}{(\ln 2)\, B}
+          = \left(\frac{N}{B}\right)\mathrm{CE}_{\text{bits}}.
+        \]
+      </div>
+      <p>Two models can be compared in BPB even when their tokenizers disagree, because they are being asked how many bits they needed to describe the <em>same bytes</em>. Raw token-level perplexity cannot do that: a tokenizer that makes more, shorter tokens creates more, easier prediction steps, and its perplexity looks better for bookkeeping reasons. The Pile paper adopted BPB for this invariance; Paloma uses it whenever vocabularies must differ. OpenAI’s GPT-2 paper already made the same move in spirit, reporting perplexity per <em>canonical dataset unit</em> (a word, a byte, a character) rather than per BPE token.</p>
+    </section>
+
+    <section id="branching" aria-labelledby="branching-title">
+      <h2 id="branching-title">Effective branching factor</h2>
+      <p>Move the slider to feel the units change together. Nothing here is a trained model: a uniform distribution over \(k\) options has perplexity \(k\), and each prediction costs \(\log_2 k\) bits.</p>
+      <div class="demo">
+        <div class="slider-row">
+          <label>Effective branching factor \(k\)
+            <input type="range" id="k-slider" min="1" max="256" step="1" value="32" />
+          </label>
+          <span class="readout" id="k-readout"></span>
+        </div>
+        <div class="metrics" id="k-metrics"></div>
+        <p class="note" id="k-gloss"></p>
+      </div>
+    </section>
+
+    <section id="scoring" aria-labelledby="scoring-title">
+      <h2 id="scoring-title">Log loss is a strictly proper scoring rule</h2>
+      <p>A scoring rule grades a probabilistic forecast against the event that happened. It is <em>strictly proper</em> when the unique way to optimize your expected score is to report the probabilities you actually believe. The logarithmic score \(S(p,y)=\log p(y)\) is strictly proper; so is the Brier score, which is a squared error. Language-model training minimizes expected log loss, which is why a well-trained model is rewarded for being calibrated, not merely for being peaked.</p>
+      <p>Suppose you believe the next bit is 1 with probability \(q\), and you are allowed to report any \(p\). Your expected log loss under that belief is uniquely minimized at \(p=q\). Reporting a sharper or softer number cannot help you, and it can hurt you.</p>
+      <div class="demo">
+        <div class="controls">
+          <label>Your belief \(q\)
+            <input type="range" id="q-slider" min="0.01" max="0.99" step="0.01" value="0.70" />
+            <output id="q-out" for="q-slider">0.70</output>
+          </label>
+          <label>Your report \(p\)
+            <input type="range" id="p-slider" min="0.01" max="0.99" step="0.01" value="0.70" />
+            <output id="p-out" for="p-slider">0.70</output>
+          </label>
+          <label>Outcome
+            <select id="y-select" aria-label="Observed outcome">
+              <option value="1" selected>event happened (\(y=1\))</option>
+              <option value="0">event did not happen (\(y=0\))</option>
+            </select>
+          </label>
+        </div>
+        <div class="metrics" id="score-metrics"></div>
+        <p class="note" id="score-gloss"></p>
+      </div>
+    </section>
+
+    <section id="tokenizers" aria-labelledby="tokenizers-title">
+      <h2 id="tokenizers-title">Why raw perplexity misleads across tokenizers</h2>
+      <p>Hold the <em>joint</em> surprise of a text fixed and only change the unit you divide by. Perplexity moves; bits per byte does not. That is the bookkeeping artifact, isolated from any difference in how well two models actually fit the text. The joint used here is real: it comes from the toy byte trigram on this page, scoring the text in the box below (or any text you type in the playground).</p>
+      <div class="demo">
+        <p class="note" id="unit-source"></p>
+        <div class="metrics" id="unit-metrics"></div>
+        <table>
+          <thead>
+            <tr>
+              <th>Unit</th>
+              <th class="num">Count</th>
+              <th class="num">Perplexity if you normalize the same joint by this unit</th>
+              <th class="num">Bits per unit</th>
+            </tr>
+          </thead>
+          <tbody id="unit-table"></tbody>
+        </table>
+        <p class="note">Bits per byte stays put because the denominator is the UTF-8 length of the scored bytes, which does not depend on a tokenizer. The GPT-2 column uses the official GPT-2 / <span style="white-space:nowrap">r50k_base</span> BPE when the tokenizer library loads; on the measured passages, the token counts also come from the Hugging Face tokenizers used to score the neural models.</p>
+      </div>
+    </section>
+
+    <section id="playground" aria-labelledby="play-title">
+      <h2 id="play-title">Look at the tokens</h2>
+      <p>Pick a passage, or type your own. For the six measured passages, three small open models were scored on this machine: GPT-2 small and DistilGPT-2 share a tokenizer, so both their perplexities and their bits-per-byte can be compared. SmolLM2-135M uses a different tokenizer; compare it to GPT-2 in BPB, not in raw PPL. The WikiText excerpt is the cleanest illustration: SmolLM2’s token-level perplexity looks far better than GPT-2’s, but much of that gap shrinks once both are written per byte.</p>
+      <p>Custom text is scored live by the toy byte trigram (WikiText-2 raw train, interpolated, clearly weaker than the neural models). Neural per-token probabilities are precomputed; this page does not download a 100&nbsp;MB+ transformer into the browser.</p>
+      <div class="demo">
+        <div class="controls">
+          <label>Passage
+            <select id="text-select" aria-label="Choose a passage"></select>
+          </label>
+          <span>Compare</span>
+          <button type="button" id="mode-same" aria-pressed="true">GPT-2 vs DistilGPT-2</button>
+          <button type="button" id="mode-diff" aria-pressed="false">GPT-2 vs SmolLM2</button>
+          <button type="button" id="mode-toy" aria-pressed="false">Toy byte trigram</button>
+        </div>
+        <textarea id="text-input" aria-label="Text to score" spellcheck="false"></textarea>
+        <p class="status" id="play-status" role="status"></p>
+        <p class="legend" aria-hidden="true">
+          <span><i class="swatch" style="background:#0d3d0d; box-shadow: inset 0 0 0 1px #39ff14;"></i>0–1 bits</span>
+          <span><i class="swatch" style="background:#1a3a12; box-shadow: inset 0 0 0 1px #9dff6a;"></i>1–3</span>
+          <span><i class="swatch" style="background:#2a2a10; box-shadow: inset 0 0 0 1px #c4b48a;"></i>3–6</span>
+          <span><i class="swatch" style="background:#3a2410; box-shadow: inset 0 0 0 1px #e0a15a;"></i>6–10</span>
+          <span><i class="swatch" style="background:#3a1610; box-shadow: inset 0 0 0 1px #f0ae88;"></i>10+ bits (more surprising)</span>
+        </p>
+        <div id="play-panels" class="compare"></div>
+      </div>
+    </section>
+
+    <section id="published" aria-labelledby="published-title">
+      <h2 id="published-title">What published numbers already exist</h2>
+      <p>Credible, comparable perplexity tables for today’s small open models are thinner than the number of blog posts suggests. Official model cards for Llama, Gemma, Qwen, Phi, and SmolLM2 typically report downstream accuracy, not WikiText or C4 perplexity. Community figures often differ in context length, stride, dataset version (WikiText-2 vs WikiText-103, raw vs tokenized), and whether the reported perplexity is per BPE token or per word. The tables below cite a source and a protocol, and they are not a single leaderboard.</p>
+
+      <h3>GPT-2 paper, zero-shot, per canonical dataset unit</h3>
+      <p class="note">Radford et al., 2019, Table 3. The authors compute the log-probability of the dataset under the model and divide by the dataset’s canonical units (a word on WikiText, a byte on enwik8, a character on text8) — not by BPE token count. That is why these WikiText perplexities can be compared across tokenizers in a way that raw token-level PPL cannot.</p>
+      <table>
+        <thead>
+          <tr>
+            <th>Model</th>
+            <th class="num">WikiText-2 PPL</th>
+            <th class="num">WikiText-103 PPL</th>
+            <th class="num">enwik8 BPB</th>
+            <th class="num">text8 BPC</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>GPT-2 117M</td><td class="num">29.41</td><td class="num">37.50</td><td class="num">1.16</td><td class="num">1.17</td></tr>
+          <tr><td>GPT-2 345M</td><td class="num">22.76</td><td class="num">26.37</td><td class="num">1.01</td><td class="num">1.06</td></tr>
+          <tr><td>GPT-2 762M</td><td class="num">19.93</td><td class="num">22.05</td><td class="num">0.97</td><td class="num">1.02</td></tr>
+          <tr><td>GPT-2 1.5B</td><td class="num">18.34</td><td class="num">17.48</td><td class="num">0.93</td><td class="num">0.98</td></tr>
+        </tbody>
+      </table>
+      <p class="note">Source: <a href="https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf">Language Models are Unsupervised Multitask Learners</a> (PDF, HTTP 200).</p>
+
+      <h3>Same-protocol bits per byte on small open models</h3>
+      <p class="note">VidyalAI, 2026: one harness, 1,024-token window, 512-token stride, float32 for the public checkpoints, WikiText-103 raw test (1,290,527 bytes) and a FineWeb-Edu validation slice. Perplexity here is per each model’s own tokens and is <em>not</em> comparable across rows; BPB is.</p>
+      <table>
+        <thead>
+          <tr>
+            <th>Model</th>
+            <th class="num">Parameters</th>
+            <th class="num">FineWeb-Edu BPB</th>
+            <th class="num">WikiText-103 BPB</th>
+            <th class="num">WikiText-103 PPL (own tokenizer)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Pythia-70M</td><td class="num">70.4M</td><td class="num">1.117</td><td class="num">1.218</td><td class="num">44.5</td></tr>
+          <tr><td>GPT-2 small</td><td class="num">124.4M</td><td class="num">0.996</td><td class="num">1.025</td><td class="num">24.6</td></tr>
+          <tr><td>Pythia-160M</td><td class="num">162.3M</td><td class="num">0.992</td><td class="num">1.040</td><td class="num">25.5</td></tr>
+          <tr><td>SmolLM2-135M</td><td class="num">134.5M</td><td class="num">0.853</td><td class="num">0.918</td><td class="num">15.0</td></tr>
+        </tbody>
+      </table>
+      <p class="note">Source: <a href="https://vidyal.ai/blog/evaluate-base-model/">Build an LLM From Scratch: Evaluating a Base Model</a> (HTTP 200). Notice that a naive reading of Pythia-70M’s perplexity (44.5) against the 88M training run in that post (34.1) would rank the smaller public model worse, while BPB ranks it better.</p>
+
+      <h3>A second SmolLM2 protocol, not interchangeable with the last table</h3>
+      <p class="note">Apple’s Core AI port reports WikiText-2 perplexity with EleutherAI’s lm-evaluation-harness on their PyTorch models. This is WikiText-2, not WikiText-103, and a different harness than VidyalAI. The 135M figure (24.99) must not be lined up against VidyalAI’s 15.0.</p>
+      <table>
+        <thead>
+          <tr>
+            <th>SmolLM2 (float16, macOS)</th>
+            <th class="num">WikiText-2 PPL</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>135M</td><td class="num">24.99</td></tr>
+          <tr><td>360M</td><td class="num">18.23</td></tr>
+          <tr><td>1.7B</td><td class="num">12.27</td></tr>
+        </tbody>
+      </table>
+      <p class="note">Source: <a href="https://github.com/apple/coreai-models/blob/main/models/smollm2/README.md">apple/coreai-models, SmolLM2 README</a> (HTTP 200).</p>
+
+      <h3>What I am not treating as a leaderboard</h3>
+      <ul>
+        <li>The official Llama 2 paper does not report WikiText-2 perplexity. Figures around 5.5–5.8 for Llama-2-7B appear in later compression and quantization papers, under varying context lengths, and should not be quoted as an official Meta number.</li>
+        <li>Official Qwen, Gemma, and Phi model cards I checked emphasize downstream benchmarks, not a standard WikiText or C4 perplexity table.</li>
+        <li><a href="https://arxiv.org/abs/2312.10523">Paloma</a> (Magnusson et al., 2023) is the right <em>framework</em> for domain-level fit and for BPB when vocabularies differ. Its public baselines are controlled 1B models trained for the paper, not a ready-made ≤8B Qwen/Llama/Gemma leaderboard. Dataset: <a href="https://paloma.allen.ai/">paloma.allen.ai</a> (redirects to the Hugging Face card, HTTP 200).</li>
+      </ul>
+    </section>
+
+    <section id="gap" aria-labelledby="gap-title">
+      <h2 id="gap-title">What this demo adds</h2>
+      <p>Interactive token visualizations already exist. <a href="https://perplexity.vercel.app/">perplexity.vercel.app</a> and <a href="https://mathpn.com/notes/perplexity-visualizer/">MPN’s Perplexity visualizer</a> run GPT-2 in the browser and color tokens by surprise; <a href="https://tonkotsu-ai.github.io/prism/">Prism</a> does the same for confidence; <a href="https://ruchirtewari.github.io/html/picogpt_js.html">PicoGPT-JS</a> trains a 64-symbol character model in the page. Written explainers — <a href="https://mbrenndoerfer.com/writing/perplexity-language-model-evaluation-metric">mbrenndoerfer</a>, <a href="https://longformexplainers.com/llm-pretraining/02-next-token-objective/">Long Form Explainers</a>, <a href="https://leetml.org/course/c3-02-next.html">LeetML</a>, and the <a href="https://fixtherobot.dev/llm/labs/cross-entropy-and-perplexity/">Fix the Robot lab</a> — cover the algebra, and several warn that perplexity is tokenizer-dependent.</p>
+      <p>What they generally do not do, together, is treat perplexity as a proper scoring rule, keep bits per byte on screen next to token-level perplexity, and show a measured two-tokenizer comparison (GPT-2 BPE vs SmolLM2) on the same passages. That is the gap this page is for: an eval-flavored portfolio piece, not another single-model heatmap.</p>
+    </section>
+
+    <section id="method" aria-labelledby="method-title">
+      <h2 id="method-title">How the numbers on this page were computed</h2>
+      <p>On 23 November 2026, America/Denver, a CPU box ran <code>compute_scores.py</code> with PyTorch 2.15.0+cpu and Transformers 5.24.0. Checkpoints: <code>gpt2</code> (124,439,808 parameters, vocab 50,257), <code>distilgpt2</code> (81,912,576, same tokenizer), and <code>HuggingFaceTB/SmolLM2-135M</code> (134,515,008, vocab 49,152). Each text was encoded with <code>add_special_tokens=False</code> — none of these tokenizers prepends BOS — and scored in one float32 forward pass. The first token is shown but not scored, because it has no context. Bits per byte uses only the UTF-8 bytes of the concatenated scored tokens in the denominator. The scripts are in <a href="scripts/compute_scores.py">scripts/</a>.</p>
+      <p>The toy model is a byte-level interpolated trigram (weights 0.4 / 0.4 / 0.2 on trigram, bigram, and add-1 unigram over a 256-byte alphabet) trained on the Salesforce WikiText-2 raw train split (10,914,845 bytes). Trigrams with count &lt; 3 and bigrams with count &lt; 2 are treated as unseen. The first two bytes of a string are not scored. It is a demonstration model, not a competitor to GPT-2.</p>
+    </section>
+
+    <section id="sources" aria-labelledby="sources-title">
+      <h2 id="sources-title">Sources</h2>
+      <ul>
+        <li>Radford et al., 2019. <a href="https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf">Language Models are Unsupervised Multitask Learners</a>.</li>
+        <li>Gao et al., 2020. <a href="https://arxiv.org/abs/2101.00027">The Pile</a> — BPB as a tokenizer-invariant metric.</li>
+        <li>Magnusson et al., 2023. <a href="https://arxiv.org/abs/2312.10523">Paloma: A Benchmark for Evaluating Language Model Fit</a>. <a href="https://paloma.allen.ai/">Dataset</a>.</li>
+        <li>Merity et al., 2016. WikiText-2 / WikiText-103.</li>
+        <li><a href="https://vidyal.ai/blog/evaluate-base-model/">VidyalAI, Evaluating a Base Model</a> (2026), same-protocol BPB for GPT-2, Pythia, and SmolLM2-135M.</li>
+        <li><a href="https://github.com/apple/coreai-models/blob/main/models/smollm2/README.md">Apple coreai-models, SmolLM2 README</a> — lm-eval WikiText-2 perplexity.</li>
+        <li><a href="https://huggingface.co/HuggingFaceTB/SmolLM2-135M">HuggingFaceTB/SmolLM2-135M</a>.</li>
+        <li><a href="https://neelmishra.github.io/blog/nlp/llm-evaluation-datasets/pretraining-perplexity-and-paloma.html">Neel Mishra on pretraining evaluation, BPB, and Paloma</a>.</li>
+        <li>Interactive predecessors: <a href="https://perplexity.vercel.app/">perplexity.vercel.app</a>, <a href="https://mathpn.com/notes/perplexity-visualizer/">MPN</a>, <a href="https://tonkotsu-ai.github.io/prism/">Prism</a>, <a href="https://ruchirtewari.github.io/html/picogpt_js.html">PicoGPT-JS</a>, <a href="https://fixtherobot.dev/llm/labs/cross-entropy-and-perplexity/">Fix the Robot</a>.</li>
+      </ul>
+    </section>
+
+    <p class="foot"><a href="../">Back to cameronbeebe.github.io</a>. Nothing on this page was merged or deployed by the pull request that added it.</p>
+  </main>
+  <script type="module" src="demo.js"></script>
+</body>
+</html>

@@ -6,6 +6,7 @@
 
 ## Links
 
+- [Perplexity explainer](https://cameronbeebe.github.io/perplexity/)
 - [cv.md](https://cameronbeebe.github.io/cv.md)
 - [Beebe_Resume_SciPhi.pdf](https://cameronbeebe.github.io/Beebe_Resume_SciPhi.pdf)
 - [GitHub](https://github.com/CameronBeebe)

@@ -20,6 +20,10 @@ Click the ASCII landscape to set a goal. Toggle planning, tools, memory, verific
 
 ![ASCII landscape with harness controls enabled, an agent, and a target surrounded by an uncertainty ring](docs/screenshots/agent-harness.jpg)
 
+## Perplexity
+
+An [interactive explainer](https://cameronbeebe.github.io/perplexity/) of language-model perplexity: its relationship to cross-entropy, log loss, bits per byte, and proper scoring rules, with measured token-level scores from GPT-2, DistilGPT-2, and SmolLM2-135M. The page lives at [`perplexity/`](perplexity/).
+
 ## Repository
 
 - [`index.html`](index.html) contains the GitHub Pages site.
