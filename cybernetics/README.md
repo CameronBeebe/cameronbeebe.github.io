@@ -28,3 +28,10 @@ The on-page demo picks a random seed when a game starts and logs it to the conso
 
 - Reinforcement on success is \(+\sqrt{|R|}\), matching `update()` in the 2021 Python. Urns start at weight 1 rather than `randint(0, 100)`, so rare disturbances can reach the bound in a short run.
 - Enabling GitHub Pages from `/docs` on `master` of this repository (so the demo is also at `https://cameronbeebe.github.io/Cybernetics/`) is a separate step and needs an explicit yes; opening a PR does not turn Pages on.
+
+## Model policy eval
+
+A separate, non-UI eval lives in [`eval/`](eval/). It asks a model for one
+frozen per-row action distribution per game and scores it against the urn
+learners and the requisite-variety bound. It does not change this page.
+
