@@ -18,7 +18,7 @@ import {
   uniformPolicy,
   urnCountsMatchCreateWorld,
 } from "./harness.mjs";
-import { mockPolicy } from "./providers.mjs";
+import { boardPrompt, boardState, mockPolicy } from "./providers.mjs";
 import { makeRng } from "../regulator.js";
 
 let failed = 0;
@@ -181,6 +181,34 @@ check("mock dry-run policy validates and can be scored", () => {
   assert.ok(scored.policies.mock.argmaxHit > scored.policies["urn-blind"].argmaxHit);
   assert.ok(scored.policies.mock.kl != null);
   assert.ok(scored.policies.mock.kl > 0);
+});
+
+check("board brief explains the game and does not precompute winners", () => {
+  const game = [
+    [3, 0, 1],
+    [0, 3, 0],
+    [2, 2, 2],
+  ];
+  const goals = new Set([3]);
+  const state = JSON.stringify(boardState(game, goals));
+  const prompt = boardPrompt(game, goals);
+  for (const text of [state, prompt]) {
+    assert.match(text, /disturbance/i);
+    assert.match(text, /column/i);
+    assert.match(text, /outcome/i);
+    assert.match(text, /goal values: 3/);
+    assert.match(text, /sum to 1/);
+    assert.ok(!/goal_response_columns/.test(text));
+    assert.ok(!/goal columns:/.test(text));
+    assert.ok(!/\(no goal\)/.test(text));
+    assert.ok(!/put probability on goal/i.test(text));
+    assert.ok(!/if a row has no goal/i.test(text));
+    assert.ok(!/3\*/.test(text), "goal cells must not be starred");
+    assert.match(text, /3, ?0, ?1/);
+    assert.match(text, /2, ?2, ?2/);
+  }
+  assert.equal("goal_response_columns" in boardState(game, goals), false);
+  assert.ok(!("disturbances" in boardState(game, goals)));
 });
 
 if (failed) {

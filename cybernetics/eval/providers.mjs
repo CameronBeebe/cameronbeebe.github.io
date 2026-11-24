@@ -126,48 +126,58 @@ export function describeProviders() {
   return { listed, skipped };
 }
 
-function boardState(game, goals) {
-  const goalList = [...goals].sort((a, b) => a - b);
+export function goalValueList(goals) {
+  return [...goals].sort((a, b) => a - b);
+}
+
+/** Short rules + board only. No precomputed winning columns or goal markers. */
+export function gameExplanation(goals) {
+  const goalList = goalValueList(goals).join(", ");
+  return (
+    "Ashby's regulation game works as follows. " +
+    "A disturbance (D) picks a row. " +
+    "The regulator (R) picks a column (a response). " +
+    "The cell where that row and column meet is the outcome. " +
+    `R wins if the outcome is one of the goal values: ${goalList}.`
+  );
+}
+
+export function outputRequirement() {
+  return (
+    "For every disturbance row, return a probability distribution over the " +
+    "response columns, like the probabilities object of a TypeSafe/Jev Choice " +
+    "answer: one non-negative number per column, and the numbers in each row " +
+    "must sum to 1."
+  );
+}
+
+export function formatBoard(game) {
+  return game
+    .map((row, d) => `row ${d + 1}: [${row.join(", ")}]`)
+    .join("\n");
+}
+
+export function boardState(game, goals) {
   return {
-    task:
-      "For each disturbance, return a probability distribution over response columns. " +
-      "Each distribution must be non-negative and sum to 1, like a Pólya urn over actions. " +
-      "Put probability on goal_response_columns whenever that list is non-empty; " +
-      "if it is empty, use a uniform distribution.",
-    goal_payoff_values: goalList,
-    disturbances: game.map((row, d) => ({
-      disturbance: d + 1,
-      payoffs: row,
-      goal_response_columns: row
-        .map((v, c) => (goals.has(v) ? c + 1 : null))
-        .filter((c) => c != null),
-    })),
+    explanation: gameExplanation(goals),
+    output: outputRequirement(),
+    goal_values: goalValueList(goals),
+    board: {
+      row_count: game.length,
+      column_count: game[0].length,
+      payoff_matrix: game,
+    },
   };
 }
 
-function boardPrompt(game, goals) {
-  const goalList = [...goals].sort((a, b) => a - b).join(", ");
-  const lines = game.map((row, d) => {
-    const cells = row
-      .map((v, c) => (goals.has(v) ? `${v}*` : String(v)))
-      .join(", ");
-    const wins = row
-      .map((v, c) => (goals.has(v) ? c + 1 : null))
-      .filter((c) => c != null);
-    const winNote = wins.length ? ` goal columns: ${wins.join(", ")}` : " (no goal)";
-    return `disturbance ${d + 1}: [${cells}]${winNote}`;
-  });
+export function boardPrompt(game, goals) {
   return [
-    "This is Ashby's regulation game.",
-    `Goal payoff values: ${goalList}.`,
-    "For every disturbance row, give a probability distribution over the response columns.",
-    "The distribution must be non-negative and sum to 1, like a Pólya urn over actions.",
-    "Put probability on the goal columns listed for that row whenever the list is non-empty.",
-    "If a row has no goal columns, use a uniform distribution.",
+    gameExplanation(goals),
+    outputRequirement(),
     "Return only the structured distribution; do not add commentary.",
     "",
-    "Payoff matrix (row = disturbance, columns = responses 1..N). Goal cells are marked *:",
-    ...lines,
+    "Payoff matrix (each row is a disturbance, each column is a response):",
+    formatBoard(game),
   ].join("\n");
 }
 
@@ -185,8 +195,7 @@ export function jevQuestions(nRows, nCols) {
     questions[`row${d + 1}`] = {
       type: "choice",
       instructions:
-        `Which response column should the regulator pick for disturbance row ${d + 1}? ` +
-        "Prefer columns whose payoff is a goal value when any exist in this row.",
+        `Probability distribution over response columns for disturbance row ${d + 1}.`,
       criteria,
     };
   }

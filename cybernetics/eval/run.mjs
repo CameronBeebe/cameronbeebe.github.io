@@ -115,6 +115,24 @@ export function formatTable(summary, boundsMean) {
   return lines.join("\n");
 }
 
+export function formatValidity(games) {
+  const names = new Set();
+  for (const g of games) {
+    for (const name of Object.keys(g.policies)) names.add(name);
+  }
+  const lines = ["policy\tseed\tvalid\tinvalidRows\trenormalizedRows"];
+  for (const name of names) {
+    for (const g of games) {
+      const pol = g.policies[name];
+      if (!pol || pol.failures === undefined) continue;
+      const invalid = (pol.failures || []).map((f) => f.row + 1).join(",") || "—";
+      const reno = (pol.renormalizedRows || []).map((r) => r + 1).join(",") || "—";
+      lines.push([name, g.seed, pol.valid ? "yes" : "no", invalid, reno].join("\t"));
+    }
+  }
+  return lines.length > 1 ? lines.join("\n") : "";
+}
+
 async function policyFor(id, ctx) {
   if (id === "oracle") {
     return { id, ...oraclePolicy(ctx.game, ctx.goals), costUsd: 0, model: "oracle" };
@@ -331,6 +349,11 @@ async function main() {
   await writeFile(outPath, JSON.stringify(result, null, 2) + "\n");
   console.log("");
   console.log(formatTable(result.summary, result.boundsMean));
+  const validity = formatValidity(result.games);
+  if (validity) {
+    console.log("");
+    console.log(validity);
+  }
   console.log("");
   console.log(`dryRun=${result.dryRun}  spendUsd=${result.spendUsd.toFixed(6)}  cap=${result.config.maxSpendUsd}`);
   console.log(`providersRun=${result.providersRun.join(",") || "(none)"}`);
