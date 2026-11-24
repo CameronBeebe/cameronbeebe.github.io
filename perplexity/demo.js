@@ -168,13 +168,12 @@ function renderK() {
   box.replaceChildren(
     metric("Perplexity", String(k)),
     metric("Bits per prediction", fmt(bits, 3)),
-    metric("Cross-entropy (nats)", fmt(bits * LN2, 3)),
     metric("Average probability", fmt(1 / k, 4)),
   );
   document.getElementById("k-gloss").textContent =
     k === 1
       ? "Perplexity 1 is perfect prediction: the next token is certain, and it costs 0 bits."
-      : `A uniform choice among ${k} tokens costs ${fmt(bits, 2)} bits each time. A language model with this perplexity is as uncertain, on average, as that uniform guess.`;
+      : `Torn between ${k} equally likely options, a correct guess has probability ${fmt(1 / k, 4)} and costs ${fmt(bits, 2)} bits. A language model with this perplexity is, on average, that uncertain.`;
 }
 
 function entropyBinary(q) {
@@ -215,30 +214,26 @@ function renderScores() {
 
   fillPanel(document.getElementById("log-panel"), "Log loss, perplexity, and KL", [
     ["Log loss on the outcome (nats)", fmt(logLossY, 3)],
-    ["Log loss (bits)", fmt(logLossBits, 3)],
+    ["Same loss in bits", fmt(logLossBits, 3)],
     ["Perplexity of this outcome, 1/p(y)", fmt(ppl, 2)],
-    ["KL(one-hot truth ∥ report) (nats)", fmt(klTruth, 3)],
-    ["Uncertainty H(q) (nats)", fmt(entropy, 3)],
-    ["KL(q ∥ report) (nats)", fmt(klQp, 4)],
-    ["Expected log loss = H(q) + KL", fmt(expectedLog, 3)],
+    ["KL to the truth (same as log loss)", fmt(klTruth, 3)],
+    ["Extra expected loss if you misreport (KL)", fmt(klQp, 4)],
   ]);
-  fillPanel(document.getElementById("brier-panel"), "Brier (squared-distance divergence)", [
-    ["Multiclass Brier on the outcome, 2(p−y)²", fmt(brierY, 4)],
-    ["Upper bound (any number of classes)", "2"],
-    ["Uncertainty 1−∥q∥² = 2q(1−q)", fmt(uncertainty, 4)],
-    ["Divergence ∥report−q∥² = 2(p−q)²", fmt(divergence, 4)],
-    ["Expected Brier = uncertainty + divergence", fmt(expectedBrier, 4)],
+  fillPanel(document.getElementById("brier-panel"), "Brier score", [
+    ["Brier score on the outcome, 2(p−y)²", fmt(brierY, 4)],
+    ["Upper bound", "2"],
+    ["Extra expected Brier if you misreport", fmt(divergence, 4)],
   ]);
 
   const honest = Math.abs(p - q) < 1e-9;
   let gloss;
   if (honest) {
-    gloss = "You are reporting your true belief, so both expected scores are as small as they can be for this q: the KL term and the squared-distance term are zero. That is what “strictly proper” means for each rule.";
+    gloss = "You are reporting what you believe, so both expected scores are as good as they can be for this belief. That is what a strictly proper scoring rule means.";
   } else {
-    gloss = `Reporting p = ${p.toFixed(2)} while believing q = ${q.toFixed(2)} adds ${fmt(klQp, 4)} nats of KL to the expected log loss, and ${fmt(divergence, 4)} of squared-distance divergence to the expected Brier.`;
+    gloss = `Reporting p = ${p.toFixed(2)} while believing q = ${q.toFixed(2)} adds ${fmt(klQp, 4)} nats of KL to the expected log loss, and ${fmt(divergence, 4)} of squared distance to the expected Brier.`;
   }
   if (pY <= 0.02) {
-    gloss += ` The realized probability is only ${fmt(pY, 4)}, so log loss is already ${fmt(logLossY, 2)} nats (perplexity ${fmt(ppl, 1)}), while Brier is ${fmt(brierY, 3)} of a maximum of 2 — it has almost no room left to punish a still-smaller p.`;
+    gloss += ` The probability of what actually happened is only ${fmt(pY, 4)}, so log loss is already ${fmt(logLossY, 2)} nats (perplexity ${fmt(ppl, 1)}), while Brier is ${fmt(brierY, 3)} of a maximum of 2 — it barely moves if p gets even smaller.`;
   }
   document.getElementById("score-gloss").textContent = gloss;
 }
@@ -291,7 +286,7 @@ function renderUnits(state) {
 
   const words = wordCount(text);
   document.getElementById("unit-source").textContent = jointOk
-    ? `Joint surprise is ${fmt(total, 3)} nats from the toy byte trigram on ${nBytes} scored bytes of the current text (${fmt(toy.bits_per_byte, 4)} bits per byte). The table only changes the denominator. The large per-token and per-word perplexities are this weak toy joint expressed in fewer units — not GPT-2’s own perplexity.`
+    ? `Joint surprise is ${fmt(total, 3)} nats from the toy byte trigram on ${nBytes} scored bytes of the current playground text (${fmt(toy.bits_per_byte, 4)} bits per byte). Only the denominator changes from row to row.`
     : "Type at least three bytes to obtain a joint probability from the toy trigram.";
 
   const rows = [
@@ -373,10 +368,10 @@ function renderPanel(title, detail, result, disclaimer) {
     metric("Perplexity (per token)", fmt(result.perplexity, 2)),
     metric("Bits per byte", fmt(result.bits_per_byte, 4)),
     metric("Bits per token", fmt(result.bits_per_token, 3)),
-    metric("Cross-entropy / mean log loss (nats)", fmt(result.cross_entropy_nats, 3)),
+    metric("Average log loss (nats)", fmt(result.cross_entropy_nats, 3)),
   ];
   if (Number.isFinite(result.mean_brier)) {
-    metricRows.push(metric("Mean multiclass Brier", fmt(result.mean_brier, 4)));
+    metricRows.push(metric("Mean Brier score", fmt(result.mean_brier, 4)));
   }
   metricRows.push(
     metric("Scored tokens", String(result.n_scored)),
@@ -439,7 +434,7 @@ function renderPlay(state) {
       status.textContent = "Same tokenizer, so both perplexity and bits per byte are comparable. DistilGPT-2 is a distilled, weaker model.";
     }
   } else {
-    status.textContent = "Custom text: neural per-token probabilities were not precomputed. Showing the toy byte trigram, and you can still use the unit-conversion table above.";
+    status.textContent = "Custom text: neural per-token probabilities were not precomputed for this passage. Showing the toy byte trigram. A unit-conversion table for the same joint surprise is in For the math-curious, at the bottom.";
     const result = state.charModel.score(text);
     nodes.push(renderPanel(MODEL_META.toy.label, MODEL_META.toy.detail, result,
       "Switch back to a measured passage to see GPT-2, DistilGPT-2, or SmolLM2-135M."));
