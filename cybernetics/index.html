@@ -45,9 +45,7 @@
       </label>
       <button type="button" id="play" class="primary" aria-pressed="false">Play</button>
       <button type="button" id="step" title="One epoch (or press .)">Step</button>
-      <button type="button" id="reset" title="Start a new random game">Reset</button>
-      <button type="button" id="newgame" title="Draw a new random game">New game</button>
-      <button type="button" id="reshuffle" title="Draw a new random game">Reshuffle</button>
+      <button type="button" id="newgame" title="Start a new random game">New game</button>
     </div>
 
     <div class="stage">
@@ -85,9 +83,9 @@
           <span class="rate" id="cond-rate">0.000</span>
           <span class="meta" id="cond-meta"></span>
         </div>
-        <p class="urn-label" id="cond-urn-label">One urn per row.</p>
+        <p class="urn-label" id="cond-urn-label">One urn per row. Click a square to inspect a disturbance.</p>
         <div class="urn" id="cond-urn"></div>
-        <div class="mini-urns" id="mini-urns" aria-label="One mark per disturbance urn"></div>
+        <div class="mini-urns" id="mini-urns" role="group" aria-label="Select a disturbance urn to inspect"></div>
       </section>
     </div>
 

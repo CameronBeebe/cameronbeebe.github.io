@@ -68,6 +68,7 @@ function newSession() {
 }
 
 let session = null;
+let selectedCondRow = 0;
 let running = false;
 let raf = 0;
 let lastTs = 0;
@@ -234,19 +235,66 @@ function renderChart() {
   `;
 }
 
+function showPickHighlight() {
+  return !running || stepsPerSecond() <= 4;
+}
+
+function defaultCondRow() {
+  const solvable = session?.world?.state?.bounds?.rowSolvable;
+  if (!solvable) return 0;
+  const i = solvable.findIndex(Boolean);
+  return i >= 0 ? i : 0;
+}
+
 function renderUrn(el, urn, pick, nCols) {
   const max = Math.max(...urn, 1e-9);
-  const rows = [];
-  for (let c = 0; c < nCols; c++) {
-    const pct = (urn[c] / max) * 100;
-    rows.push(`
-      <div class="urn-row${c === pick ? " is-pick" : ""}">
+  if (el.children.length !== nCols) {
+    const rows = [];
+    for (let c = 0; c < nCols; c++) {
+      rows.push(`
+      <div class="urn-row">
         <span class="col">${c + 1}</span>
-        <div class="bar" aria-hidden="true"><span style="width:${pct.toFixed(1)}%"></span></div>
-        <span>${fmt(urn[c], 1)}</span>
+        <div class="bar" aria-hidden="true"><span></span></div>
+        <span class="wt">0</span>
       </div>`);
+    }
+    el.innerHTML = rows.join("");
   }
-  el.innerHTML = rows.join("");
+  const highlight = showPickHighlight();
+  for (let c = 0; c < nCols; c++) {
+    const row = el.children[c];
+    const pct = (urn[c] / max) * 100;
+    row.classList.toggle("is-pick", highlight && c === pick);
+    row.querySelector(".bar > span").style.width = `${pct.toFixed(1)}%`;
+    row.querySelector(".wt").textContent = fmt(urn[c], 1);
+  }
+}
+
+function renderMinis() {
+  const st = session.world.state;
+  const el = $("mini-urns");
+  if (selectedCondRow >= st.nRows) selectedCondRow = defaultCondRow();
+  if (el.children.length !== st.nRows) {
+    const parts = [];
+    for (let i = 0; i < st.nRows; i++) {
+      parts.push(`<button type="button" class="mini-urn" data-row="${i}"></button>`);
+    }
+    el.innerHTML = parts.join("");
+  }
+  for (let i = 0; i < st.nRows; i++) {
+    const btn = el.children[i];
+    const solvable = st.bounds.rowSolvable[i];
+    const selected = i === selectedCondRow;
+    btn.className = [
+      "mini-urn",
+      solvable ? "is-solvable" : "is-dead",
+      selected ? "is-selected" : "",
+    ].join(" ");
+    btn.setAttribute("aria-pressed", selected ? "true" : "false");
+    const note = solvable ? "" : ", no goal in this row";
+    btn.setAttribute("aria-label", `Disturbance ${i + 1}${note}`);
+    btn.title = `Row ${i + 1}${solvable ? "" : " (no goal in this row)"}`;
+  }
 }
 
 function renderLearners() {
@@ -263,31 +311,15 @@ function renderLearners() {
     `last ${win.n || st.window} · overall ${fmt(all.cond)} · bound ${fmt(b.requisiteVariety)}`;
 
   const pickB = st.epoch ? st.lastBlindAction : -1;
-  const pickC = st.epoch ? st.lastCondAction : -1;
   renderUrn($("blind-urn"), st.blind.urns[0], pickB, st.nCols);
 
-  const d = st.lastD;
-  $("cond-urn-label").textContent = st.epoch
-    ? (st.bounds.rowSolvable[d]
-        ? `Urn for disturbance ${d + 1} (the current row)`
-        : `Urn for disturbance ${d + 1} — this row has no goal, so it is never reinforced`)
-    : "One urn per row; the current row’s urn is shown after the first play.";
-  renderUrn($("cond-urn"), st.cond.urns[st.epoch ? d : 0], pickC, st.nCols);
-
-  const minis = st.cond.urns
-    .map((urn, i) => {
-      const solvable = st.bounds.rowSolvable[i];
-      const active = st.epoch && i === d;
-      const cls = [
-        "mini-urn",
-        solvable ? "is-solvable" : "is-dead",
-        active ? "is-active" : "",
-      ].join(" ");
-      const title = `Row ${i + 1}${solvable ? "" : " (no goal in this row)"}`;
-      return `<span class="${cls}" title="${title}"></span>`;
-    })
-    .join("");
-  $("mini-urns").innerHTML = minis;
+  const d = selectedCondRow;
+  $("cond-urn-label").textContent = st.bounds.rowSolvable[d]
+    ? `Urn for disturbance ${d + 1}. Click a square to inspect another.`
+    : `Urn for disturbance ${d + 1} — this row has no goal, so it is never reinforced.`;
+  const pickC = st.epoch && st.lastD === d ? st.lastCondAction : -1;
+  renderUrn($("cond-urn"), st.cond.urns[d], pickC, st.nCols);
+  renderMinis();
 }
 
 function renderAll() {
@@ -334,6 +366,7 @@ function tick(ts) {
 
 function startRandomGame() {
   session = newSession();
+  selectedCondRow = defaultCondRow();
   renderAll();
 }
 
@@ -352,6 +385,7 @@ function init() {
   syncSpeedLabel();
 
   session = newSession();
+  selectedCondRow = defaultCondRow();
   renderAll();
 
   $("play").addEventListener("click", () => setRunning(!running));
@@ -359,17 +393,17 @@ function init() {
     setRunning(false);
     stepAndDraw(1);
   });
-  $("reset").addEventListener("click", () => {
-    setRunning(false);
-    startRandomGame();
-  });
   $("newgame").addEventListener("click", () => {
     setRunning(false);
     startRandomGame();
   });
-  $("reshuffle").addEventListener("click", () => {
-    setRunning(false);
-    startRandomGame();
+  $("mini-urns").addEventListener("click", (ev) => {
+    const btn = ev.target.closest("[data-row]");
+    if (!btn) return;
+    const i = Number(btn.dataset.row);
+    if (!Number.isInteger(i)) return;
+    selectedCondRow = i;
+    renderLearners();
   });
   $("speed").addEventListener("input", syncSpeedLabel);
   for (const id of ["size", "goals", "dist"]) {

@@ -246,6 +246,7 @@ h1 {
   height: 100%;
   width: 0%;
   background: var(--ink);
+  transition: width 0.35s ease;
 }
 
 .learner.blind .urn-row .bar > span { background: var(--blind); }
@@ -264,14 +265,20 @@ h1 {
 .mini-urn {
   width: 1.15rem;
   height: 1.15rem;
+  padding: 0;
   border: 1px solid var(--line);
   background: var(--well);
-  cursor: default;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  font: inherit;
 }
 
-.mini-urn.is-active { border-color: var(--cond); box-shadow: 0 0 0 1px var(--cond); }
+.mini-urn.is-selected { border-color: var(--cond); box-shadow: 0 0 0 1px var(--cond); }
 .mini-urn.is-solvable { background: color-mix(in srgb, var(--cond) 28%, var(--well)); }
 .mini-urn.is-dead { opacity: 0.4; }
+.mini-urn:hover { border-color: var(--link); }
+.mini-urn:focus-visible { outline: 2px solid var(--link); outline-offset: 1px; }
 
 .caption, .refs {
   max-width: 78ch;
