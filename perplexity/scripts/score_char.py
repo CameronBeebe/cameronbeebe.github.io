@@ -51,38 +51,57 @@ def p_byte(b1, b2, b3) -> float:
     return LAM_TRI * p_tri + LAM_BI * p_bi + LAM_UNI * p_uni
 
 
+def distribution(b1: int, b2: int) -> list[float]:
+    """Full 256-byte predictive distribution for one context. Sums to 1."""
+    return [p_byte(b1, b2, b) for b in range(256)]
+
+
 def score(text: str) -> dict:
     data = text.encode("utf-8")
     tokens = []
     nlls = []
+    briers = []
     for i, b in enumerate(data):
         entry = {"byte": b, "text": bytes([b]).decode("utf-8", "replace"), "scored": False}
         if i >= 2:
-            p = p_byte(data[i - 2], data[i - 1], b)
-            p = max(p, 1e-15)
+            probs = distribution(data[i - 2], data[i - 1])
+            p = max(probs[b], 1e-15)
             lp = math.log(p)
+            sum_p_sq = sum(x * x for x in probs)
+            brier = 1.0 + sum_p_sq - 2.0 * p
             entry.update(
                 {
                     "scored": True,
                     "p": p,
                     "logp_nats": lp,
                     "surprisal_bits": -lp / math.log(2.0),
+                    "log_loss_nats": -lp,
+                    "sum_p_squared": sum_p_sq,
+                    "brier": brier,
                 }
             )
             nlls.append(-lp)
+            briers.append(brier)
         tokens.append(entry)
     n_bytes = len(data)
+    n_bytes_scored = max(0, n_bytes - 2)
     total = float(sum(nlls))
     n_scored = len(nlls)
     ce = total / n_scored if n_scored else float("nan")
+    total_brier = float(sum(briers))
+    mean_brier = total_brier / n_scored if n_scored else float("nan")
     return {
         "n_bytes": n_bytes,
+        "n_bytes_text": n_bytes,
+        "n_bytes_scored": n_bytes_scored,
         "n_scored": n_scored,
         "total_nll_nats": total,
         "cross_entropy_nats": ce,
         "bits_per_token": ce / math.log(2.0) if n_scored else float("nan"),
         "perplexity": math.exp(ce) if n_scored else float("nan"),
-        "bits_per_byte": total / (math.log(2.0) * n_bytes) if n_bytes and n_scored else float("nan"),
+        "bits_per_byte": total / (math.log(2.0) * n_bytes_scored) if n_bytes_scored and n_scored else float("nan"),
+        "total_brier": total_brier,
+        "mean_brier": mean_brier,
         # Don't ship every byte token in the summary; the live JS rescores.
     }
 
@@ -96,7 +115,7 @@ def main() -> None:
     out = {}
     for tid, text in texts:
         s = score(text)
-        print(f"{tid}: PPL={s['perplexity']:.3f} BPB={s['bits_per_byte']:.4f} bytes={s['n_bytes']} scored={s['n_scored']}")
+        print(f"{tid}: PPL={s['perplexity']:.3f} BPB={s['bits_per_byte']:.4f} Brier={s['mean_brier']:.4f} bytes={s['n_bytes']} scored={s['n_scored']}")
         out[tid] = {k: v for k, v in s.items() if k != "tokens"}
     Path(HERE / "char_scores.json").write_text(json.dumps(out, indent=2))
     print("wrote char_scores.json")

@@ -1,74 +1,80 @@
 {
   "counting": {
     "n_bytes": 48,
+    "n_bytes_text": 48,
+    "n_bytes_scored": 46,
     "n_scored": 46,
     "total_nll_nats": 106.66024463882104,
     "cross_entropy_nats": 2.3187009704091532,
     "bits_per_token": 3.3451783913137128,
     "perplexity": 10.16246438593912,
     "bits_per_byte": 3.3451783913137123,
-    "n_bytes_text": 48,
-    "n_bytes_scored": 46,
-    "bits_per_byte_all_text_bytes": 3.205795958342308
+    "total_brier": 37.73303678208372,
+    "mean_brier": 0.8202834083061679
   },
   "repetition": {
     "n_bytes": 115,
+    "n_bytes_text": 115,
+    "n_bytes_scored": 113,
     "n_scored": 113,
     "total_nll_nats": 250.9645281204109,
     "cross_entropy_nats": 2.2209250276142556,
     "bits_per_token": 3.204117523525271,
     "perplexity": 9.215851841648123,
     "bits_per_byte": 3.2041175235252712,
-    "n_bytes_text": 115,
-    "n_bytes_scored": 113,
-    "bits_per_byte_all_text_bytes": 3.1483937405074403
+    "total_brier": 88.8154748873103,
+    "mean_brier": 0.7859776538700026
   },
   "philosophy": {
     "n_bytes": 188,
+    "n_bytes_text": 188,
+    "n_bytes_scored": 186,
     "n_scored": 186,
     "total_nll_nats": 442.99336823014113,
     "cross_entropy_nats": 2.381684775430866,
     "bits_per_token": 3.436044814474855,
     "perplexity": 10.823122042111644,
     "bits_per_byte": 3.436044814474855,
-    "n_bytes_text": 188,
-    "n_bytes_scored": 186,
-    "bits_per_byte_all_text_bytes": 3.3994911462357607
+    "total_brier": 150.45463165133816,
+    "mean_brier": 0.8088958690932159
   },
   "code": {
     "n_bytes": 96,
+    "n_bytes_text": 96,
+    "n_bytes_scored": 94,
     "n_scored": 94,
     "total_nll_nats": 472.8677699850657,
     "cross_entropy_nats": 5.030508191330486,
     "bits_per_token": 7.257489220783801,
     "perplexity": 153.01075167827716,
     "bits_per_byte": 7.257489220783801,
-    "n_bytes_text": 96,
-    "n_bytes_scored": 94,
-    "bits_per_byte_all_text_bytes": 7.10629152868414
+    "total_brier": 91.92861013543937,
+    "mean_brier": 0.9779639376110572
   },
   "surprise": {
     "n_bytes": 70,
+    "n_bytes_text": 70,
+    "n_bytes_scored": 68,
     "n_scored": 68,
     "total_nll_nats": 164.7937064553421,
     "cross_entropy_nats": 2.4234368596373836,
     "bits_per_token": 3.4962803393063764,
     "perplexity": 11.284576249072686,
     "bits_per_byte": 3.4962803393063764,
-    "n_bytes_text": 70,
-    "n_bytes_scored": 68,
-    "bits_per_byte_all_text_bytes": 3.3963866153261946
+    "total_brier": 53.54456893121317,
+    "mean_brier": 0.7874201313413701
   },
   "wikitext_excerpt": {
     "n_bytes": 598,
+    "n_bytes_text": 598,
+    "n_bytes_scored": 596,
     "n_scored": 596,
     "total_nll_nats": 1307.265129293828,
     "cross_entropy_nats": 2.1933978679426644,
     "bits_per_token": 3.1644042267773074,
     "perplexity": 8.965625428154077,
     "bits_per_byte": 3.164404226777308,
-    "n_bytes_text": 598,
-    "n_bytes_scored": 596,
-    "bits_per_byte_all_text_bytes": 3.1538209350489557
+    "total_brier": 451.104732472631,
+    "mean_brier": 0.756887135021193
   }
 }

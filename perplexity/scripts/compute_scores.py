@@ -120,6 +120,7 @@ def score_text(model, tokenizer, text: str, top_k: int = 5) -> dict:
 
     tokens_out = []
     nlls = []
+    briers = []
     for i, tid in enumerate(ids):
         try:
             shown = tokenizer.decode([tid], skip_special_tokens=False)
@@ -134,13 +135,22 @@ def score_text(model, tokenizer, text: str, top_k: int = 5) -> dict:
         if i >= 1:
             lp_row = log_probs[i - 1]
             lp = float(lp_row[tid])
+            p_y = math.exp(lp)
+            # Multiclass Brier = ||p - e_y||^2 = ||p||^2 + 1 - 2 p_y, using the
+            # full softmax. This is in [0, 2] and needs the whole distribution,
+            # not just the realized-token probability.
+            sum_p_sq = float(torch.exp(lp_row).square().sum())
+            brier = 1.0 + sum_p_sq - 2.0 * p_y
             top = torch.topk(lp_row, k=top_k)
             entry.update(
                 {
                     "scored": True,
                     "logp_nats": lp,
-                    "p": math.exp(lp),
+                    "p": p_y,
                     "surprisal_bits": -lp / math.log(2.0),
+                    "log_loss_nats": -lp,
+                    "sum_p_squared": sum_p_sq,
+                    "brier": brier,
                     "top": [
                         {
                             "id": int(j),
@@ -152,6 +162,7 @@ def score_text(model, tokenizer, text: str, top_k: int = 5) -> dict:
                 }
             )
             nlls.append(-lp)
+            briers.append(brier)
         tokens_out.append(entry)
 
     n_bytes = len(text.encode("utf-8"))
@@ -160,6 +171,8 @@ def score_text(model, tokenizer, text: str, top_k: int = 5) -> dict:
     total_nll = float(sum(nlls))
     n_scored = len(nlls)
     ce = total_nll / n_scored if n_scored else float("nan")
+    total_brier = float(sum(briers))
+    mean_brier = total_brier / n_scored if n_scored else float("nan")
     return {
         "n_tokens": len(ids),
         "n_scored": n_scored,
@@ -171,6 +184,8 @@ def score_text(model, tokenizer, text: str, top_k: int = 5) -> dict:
         "bits_per_token": ce / math.log(2.0) if n_scored else float("nan"),
         "perplexity": math.exp(ce) if n_scored else float("nan"),
         "bits_per_byte": (total_nll / (math.log(2.0) * n_bytes_scored)) if n_bytes_scored and n_scored else float("nan"),
+        "total_brier": total_brier,
+        "mean_brier": mean_brier,
         "tokens": tokens_out,
     }
 
@@ -197,10 +212,10 @@ def main() -> None:
                 "Encoding uses add_special_tokens=False (none of these three "
                 "tokenizers prepends BOS). The first token is shown but not scored. "
                 "Log-probabilities come from a float32 softmax of the logits. "
-                "Bytes are the UTF-8 length of the raw text. "
+                "n_bytes_text is the UTF-8 length of the raw text; ""n_bytes_scored is the UTF-8 length of the concatenated scored tokens. "
                 "cross_entropy_nats is the mean negative log-likelihood over scored "
                 "tokens; perplexity is exp of that mean (token-level); "
-                "bits_per_byte is total NLL in nats / (ln(2) * n_bytes_scored)."
+                "bits_per_byte is total NLL in nats / (ln(2) * n_bytes_scored). ""Per-token multiclass Brier is ||p - onehot||^2 = ||p||^2 + 1 - 2 p_y, ""computed from the full float32 softmax (not from the top-k list). ""mean_brier is the average of those token Brier scores."
             )
         },
         "models": {},
@@ -236,6 +251,7 @@ def main() -> None:
             report["scores"][mid][t["id"]] = result
             print(
                 f"    PPL={result['perplexity']:.3f}  BPB={result['bits_per_byte']:.4f}  "
+                f"Brier={result['mean_brier']:.4f}  "
                 f"tokens={result['n_tokens']} scored={result['n_scored']}  {result['score_seconds']}s",
                 flush=True,
             )

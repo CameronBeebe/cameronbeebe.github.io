@@ -279,9 +279,18 @@
     </section>
 
     <section id="scoring" aria-labelledby="scoring-title">
-      <h2 id="scoring-title">Log loss is a strictly proper scoring rule</h2>
-      <p>A scoring rule grades a probabilistic forecast against the event that happened. It is <em>strictly proper</em> when the unique way to optimize your expected score is to report the probabilities you actually believe. The logarithmic score \(S(p,y)=\log p(y)\) is strictly proper; so is the Brier score, which is a squared error. Language-model training minimizes expected log loss, which is why a well-trained model is rewarded for being calibrated, not merely for being peaked.</p>
-      <p>Suppose you believe the next bit is 1 with probability \(q\), and you are allowed to report any \(p\). Your expected log loss under that belief is uniquely minimized at \(p=q\). Reporting a sharper or softer number cannot help you, and it can hurt you.</p>
+      <h2 id="scoring-title">Log loss and Brier, side by side</h2>
+      <p>A scoring rule grades a probabilistic forecast against the event that happened. It is <em>strictly proper</em> when the unique way to optimize your expected score is to report the probabilities you actually believe. The logarithmic score and the Brier score are both strictly proper. They are not interchangeable units.</p>
+      <p>Log loss is <em>local</em>: it depends only on the probability assigned to the outcome that occurred. That is why it converts cleanly into bits, cross-entropy, perplexity, and — when the truth is a point mass — Kullback–Leibler divergence. A forecast that puts nearly zero probability on the realized token is punished without bound. Brier is a squared Euclidean distance between the forecast and a one-hot truth, \(\|p-e_y\|^2=\sum_k(p_k-y_k)^2\). It is bounded (at most 2, for any number of classes) and barely moves once the realized probability is already near zero: going from \(p_y=10^{-2}\) to \(p_y=10^{-12}\) barely changes Brier, while log loss jumps by about 23 nats.</p>
+      <p>Under a believed distribution \(q\), the two expected scores decompose in the same shape — an uncertainty term that depends only on \(q\), plus a divergence that is zero only when the report equals the belief:</p>
+      <div class="formula">
+        \[
+          \mathbb{E}_q[-\log p(Y)] = H(q) + D_{\mathrm{KL}}(q\|p),
+          \qquad
+          \mathbb{E}_q[\|p-e_Y\|^2] = \big(1-\|q\|^2\big) + \|p-q\|^2.
+        \]
+      </div>
+      <p>The slider below is a binary event, scored both ways on the same \(q\), \(p\), and outcome \(y\). Brier is the two-class multiclass form \(\|p-e_y\|^2=2(p-y)^2\), so it is the same formula used later for the language-model tokens (just with two classes instead of a 50k-wide softmax). Both expected scores are uniquely minimized at \(p=q\).</p>
       <div class="demo">
         <div class="controls">
           <label>Your belief \(q\)
@@ -299,7 +308,10 @@
             </select>
           </label>
         </div>
-        <div class="metrics" id="score-metrics"></div>
+        <div class="compare" id="score-panels">
+          <div class="panel" id="log-panel" style="box-shadow:none;margin:0"></div>
+          <div class="panel" id="brier-panel" style="box-shadow:none;margin:0"></div>
+        </div>
         <p class="note" id="score-gloss"></p>
       </div>
     </section>
@@ -328,7 +340,7 @@
     <section id="playground" aria-labelledby="play-title">
       <h2 id="play-title">Look at the tokens</h2>
       <p>Pick a passage, or type your own. For the six measured passages, three small open models were scored on this machine: GPT-2 small and DistilGPT-2 share a tokenizer, so both their perplexities and their bits-per-byte can be compared. SmolLM2-135M uses a different tokenizer; compare it to GPT-2 in BPB, not in raw PPL. The WikiText excerpt is the cleanest illustration: SmolLM2’s token-level perplexity looks far better than GPT-2’s, but much of that gap shrinks once both are written per byte.</p>
-      <p>Custom text is scored live by the toy byte trigram (WikiText-2 raw train, interpolated, clearly weaker than the neural models). Neural per-token probabilities are precomputed; this page does not download a 100&nbsp;MB+ transformer into the browser.</p>
+      <p>Custom text is scored live by the toy byte trigram (WikiText-2 raw train, interpolated, clearly weaker than the neural models). On the six measured passages, each neural model’s per-token log loss <em>and</em> multiclass Brier were computed from the full softmax and shipped in <code>scores.json</code>. This page does not download a 100&nbsp;MB+ transformer into the browser.</p>
       <div class="demo">
         <div class="controls">
           <label>Passage
@@ -426,12 +438,12 @@
     <section id="gap" aria-labelledby="gap-title">
       <h2 id="gap-title">What this demo adds</h2>
       <p>Interactive token visualizations already exist. <a href="https://perplexity.vercel.app/">perplexity.vercel.app</a> and <a href="https://mathpn.com/notes/perplexity-visualizer/">MPN’s Perplexity visualizer</a> run GPT-2 in the browser and color tokens by surprise; <a href="https://tonkotsu-ai.github.io/prism/">Prism</a> does the same for confidence; <a href="https://ruchirtewari.github.io/html/picogpt_js.html">PicoGPT-JS</a> trains a 64-symbol character model in the page. Written explainers — <a href="https://mbrenndoerfer.com/writing/perplexity-language-model-evaluation-metric">mbrenndoerfer</a>, <a href="https://longformexplainers.com/llm-pretraining/02-next-token-objective/">Long Form Explainers</a>, <a href="https://leetml.org/course/c3-02-next.html">LeetML</a>, and the <a href="https://fixtherobot.dev/llm/labs/cross-entropy-and-perplexity/">Fix the Robot lab</a> — cover the algebra, and several warn that perplexity is tokenizer-dependent.</p>
-      <p>What they generally do not do, together, is treat perplexity as a proper scoring rule, keep bits per byte on screen next to token-level perplexity, and show a measured two-tokenizer comparison (GPT-2 BPE vs SmolLM2) on the same passages. That is the gap this page is for: an eval-flavored portfolio piece, not another single-model heatmap.</p>
+      <p>What they generally do not do, together, is treat perplexity as a proper scoring rule, put Brier next to log loss and KL with the same decomposition shape, keep bits per byte on screen next to token-level perplexity, and show a measured two-tokenizer comparison (GPT-2 BPE vs SmolLM2) on the same passages. That is the gap this page is for: an eval-flavored portfolio piece, not another single-model heatmap.</p>
     </section>
 
     <section id="method" aria-labelledby="method-title">
       <h2 id="method-title">How the numbers on this page were computed</h2>
-      <p>On 23 November 2026, America/Denver, a CPU box ran <code>compute_scores.py</code> with PyTorch 2.15.0+cpu and Transformers 5.24.0. Checkpoints: <code>gpt2</code> (124,439,808 parameters, vocab 50,257), <code>distilgpt2</code> (81,912,576, same tokenizer), and <code>HuggingFaceTB/SmolLM2-135M</code> (134,515,008, vocab 49,152). Each text was encoded with <code>add_special_tokens=False</code> — none of these tokenizers prepends BOS — and scored in one float32 forward pass. The first token is shown but not scored, because it has no context. Bits per byte uses only the UTF-8 bytes of the concatenated scored tokens in the denominator. The scripts are in <a href="scripts/compute_scores.py">scripts/</a>.</p>
+      <p>On 23 November 2026, America/Denver, a CPU box ran <code>compute_scores.py</code> with PyTorch 2.15.0+cpu and Transformers 5.24.0. Checkpoints: <code>gpt2</code> (124,439,808 parameters, vocab 50,257), <code>distilgpt2</code> (81,912,576, same tokenizer), and <code>HuggingFaceTB/SmolLM2-135M</code> (134,515,008, vocab 49,152). Each text was encoded with <code>add_special_tokens=False</code> — none of these tokenizers prepends BOS — and scored in one float32 forward pass. The first token is shown but not scored, because it has no context. Bits per byte uses only the UTF-8 bytes of the concatenated scored tokens in the denominator. Per-token multiclass Brier is \(\|p-e_y\|^2=\|p\|^2+1-2p_y\), computed from the full float32 softmax (not from the top-5 list). The toy trigram’s Brier uses its full 256-byte distribution, computed live in the browser and checked against <code>char_scores.json</code>. The scripts are in <a href="scripts/compute_scores.py">scripts/</a>.</p>
       <p>The toy model is a byte-level interpolated trigram (weights 0.4 / 0.4 / 0.2 on trigram, bigram, and add-1 unigram over a 256-byte alphabet) trained on the Salesforce WikiText-2 raw train split (10,914,845 bytes). Trigrams with count &lt; 3 and bigrams with count &lt; 2 are treated as unseen. The first two bytes of a string are not scored. It is a demonstration model, not a competitor to GPT-2.</p>
     </section>
 

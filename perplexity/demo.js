@@ -101,22 +101,37 @@ function buildCharModel(raw) {
     return lamTri * pTri + lamBi * pBi + lamUni * pUni;
   }
 
+  function distribution(b1, b2) {
+    const probs = new Float64Array(256);
+    for (let b = 0; b < 256; b += 1) probs[b] = pByte(b1, b2, b);
+    return probs;
+  }
+
   function score(text) {
     const data = new TextEncoder().encode(text);
     const tokens = [];
     const nlls = [];
+    const briers = [];
     for (let i = 0; i < data.length; i += 1) {
       const b = data[i];
-      const ch = new TextDecoder("utf-8", { fatal: false }).decode(data.slice(i, i + 1));
+      const ch = b >= 32 && b < 127 ? String.fromCharCode(b) : ('\\x' + b.toString(16).padStart(2, '0'));
       const entry = { text: ch, byte: b, scored: false };
       if (i >= 2) {
-        const p = Math.max(pByte(data[i - 2], data[i - 1], b), 1e-15);
+        const probs = distribution(data[i - 2], data[i - 1]);
+        const p = Math.max(probs[b], 1e-15);
         const logp = Math.log(p);
+        let sumSq = 0;
+        for (let k = 0; k < 256; k += 1) sumSq += probs[k] * probs[k];
+        const brier = 1 + sumSq - 2 * p;
         entry.scored = true;
         entry.p = p;
         entry.logp_nats = logp;
+        entry.log_loss_nats = -logp;
         entry.surprisal_bits = -logp / LN2;
+        entry.sum_p_squared = sumSq;
+        entry.brier = brier;
         nlls.push(-logp);
+        briers.push(brier);
       }
       tokens.push(entry);
     }
@@ -124,6 +139,7 @@ function buildCharModel(raw) {
     const nScored = nlls.length;
     const nBytesScored = Math.max(0, nBytes - 2);
     const total = nlls.reduce((a, b) => a + b, 0);
+    const totalBrier = briers.reduce((a, b) => a + b, 0);
     const ce = nScored ? total / nScored : NaN;
     return {
       n_tokens: nBytes,
@@ -135,6 +151,8 @@ function buildCharModel(raw) {
       bits_per_token: nScored ? ce / LN2 : NaN,
       perplexity: nScored ? Math.exp(ce) : NaN,
       bits_per_byte: nScored && nBytesScored ? total / (LN2 * nBytesScored) : NaN,
+      total_brier: totalBrier,
+      mean_brier: nScored ? totalBrier / nScored : NaN,
       tokens,
     };
   }
@@ -159,30 +177,70 @@ function renderK() {
       : `A uniform choice among ${k} tokens costs ${fmt(bits, 2)} bits each time. A language model with this perplexity is as uncertain, on average, as that uniform guess.`;
 }
 
+function entropyBinary(q) {
+  return -q * Math.log(q) - (1 - q) * Math.log(1 - q);
+}
+
+function klBinary(q, p) {
+  return q * Math.log(q / p) + (1 - q) * Math.log((1 - q) / (1 - p));
+}
+
+function fillPanel(root, title, rows) {
+  root.replaceChildren(
+    el("h3", { text: title, style: "margin-top:0" }),
+    el("div", { class: "metrics" }, rows.map(([label, value]) => metric(label, value))),
+  );
+}
+
 function renderScores() {
   const q = Number(document.getElementById("q-slider").value);
   const p = Number(document.getElementById("p-slider").value);
   const y = Number(document.getElementById("y-select").value);
   document.getElementById("q-out").textContent = q.toFixed(2);
   document.getElementById("p-out").textContent = p.toFixed(2);
-  const logLossY = y === 1 ? -Math.log(p) : -Math.log(1 - p);
+  const pY = y === 1 ? p : 1 - p;
+  const logLossY = -Math.log(pY);
   const logLossBits = logLossY / LN2;
-  const brier = (p - y) ** 2;
-  const expectedLog = -q * Math.log(p) - (1 - q) * Math.log(1 - p);
-  const expectedHonest = -q * Math.log(q) - (1 - q) * Math.log(1 - q);
-  const regret = expectedLog - expectedHonest;
-  document.getElementById("score-metrics").replaceChildren(
-    metric("Log loss on the outcome (nats)", fmt(logLossY, 3)),
-    metric("Log loss (bits)", fmt(logLossBits, 3)),
-    metric("Brier score", fmt(brier, 4)),
-    metric("Expected log loss if q is true", fmt(expectedLog, 3)),
-    metric("Expected log loss if you report q", fmt(expectedHonest, 3)),
-    metric("Regret for reporting p ≠ q", fmt(regret, 4)),
-  );
+  const ppl = 1 / pY;
+  const entropy = entropyBinary(q);
+  const klQp = klBinary(q, p);
+  const expectedLog = entropy + klQp;
+  // One-hot truth e_y: KL(e_y || report) equals log loss.
+  const klTruth = logLossY;
+  // Two-class multiclass Brier, same formula as the language-model tokens.
+  const brierY = 2 * (p - y) ** 2;
+  const uncertainty = 2 * q * (1 - q); // 1 - ||q||^2
+  const divergence = 2 * (p - q) ** 2; // ||p - q||^2
+  const expectedBrier = uncertainty + divergence;
+
+  fillPanel(document.getElementById("log-panel"), "Log loss, perplexity, and KL", [
+    ["Log loss on the outcome (nats)", fmt(logLossY, 3)],
+    ["Log loss (bits)", fmt(logLossBits, 3)],
+    ["Perplexity of this outcome, 1/p(y)", fmt(ppl, 2)],
+    ["KL(one-hot truth ∥ report) (nats)", fmt(klTruth, 3)],
+    ["Uncertainty H(q) (nats)", fmt(entropy, 3)],
+    ["KL(q ∥ report) (nats)", fmt(klQp, 4)],
+    ["Expected log loss = H(q) + KL", fmt(expectedLog, 3)],
+  ]);
+  fillPanel(document.getElementById("brier-panel"), "Brier (squared-distance divergence)", [
+    ["Multiclass Brier on the outcome, 2(p−y)²", fmt(brierY, 4)],
+    ["Upper bound (any number of classes)", "2"],
+    ["Uncertainty 1−∥q∥² = 2q(1−q)", fmt(uncertainty, 4)],
+    ["Divergence ∥report−q∥² = 2(p−q)²", fmt(divergence, 4)],
+    ["Expected Brier = uncertainty + divergence", fmt(expectedBrier, 4)],
+  ]);
+
   const honest = Math.abs(p - q) < 1e-9;
-  document.getElementById("score-gloss").textContent = honest
-    ? "You are reporting your true belief, so the expected log loss is as small as it can be for this q. That is what “strictly proper” means."
-    : `Reporting p = ${p.toFixed(2)} while believing q = ${q.toFixed(2)} raises your expected log loss by ${fmt(regret, 4)} nats. A sharper report is not automatically better: if the event goes the other way, log loss punishes overconfidence hard.`;
+  let gloss;
+  if (honest) {
+    gloss = "You are reporting your true belief, so both expected scores are as small as they can be for this q: the KL term and the squared-distance term are zero. That is what “strictly proper” means for each rule.";
+  } else {
+    gloss = `Reporting p = ${p.toFixed(2)} while believing q = ${q.toFixed(2)} adds ${fmt(klQp, 4)} nats of KL to the expected log loss, and ${fmt(divergence, 4)} of squared-distance divergence to the expected Brier.`;
+  }
+  if (pY <= 0.02) {
+    gloss += ` The realized probability is only ${fmt(pY, 4)}, so log loss is already ${fmt(logLossY, 2)} nats (perplexity ${fmt(ppl, 1)}), while Brier is ${fmt(brierY, 3)} of a maximum of 2 — it has almost no room left to punish a still-smaller p.`;
+  }
+  document.getElementById("score-gloss").textContent = gloss;
 }
 
 async function loadGptTokenizer() {
@@ -277,9 +335,15 @@ function tokenChip(tok) {
   chip.style.background = style.background;
   chip.style.borderColor = style.border;
   const lines = [];
-  lines.push(tok.scored
-    ? `p = ${fmt(tok.p, 4)} · ${fmt(tok.surprisal_bits, 2)} bits`
-    : "Not scored (no context)");
+  if (!tok.scored) {
+    lines.push("Not scored (no context)");
+  } else {
+    const logLoss = Number.isFinite(tok.log_loss_nats) ? tok.log_loss_nats : -tok.logp_nats;
+    const brierLine = Number.isFinite(tok.brier)
+      ? ` · Brier ${fmt(tok.brier, 4)}`
+      : "";
+    lines.push(`p = ${fmt(tok.p, 4)} · log loss ${fmt(logLoss, 3)} nats (${fmt(tok.surprisal_bits, 2)} bits)${brierLine}`);
+  }
   if (tok.top && tok.top.length) {
     lines.push("Model’s top alternatives:");
     for (const alt of tok.top) {
@@ -305,14 +369,20 @@ function renderPanel(title, detail, result, disclaimer) {
     panel.append(el("p", { class: "note", text: disclaimer || "No precomputed neural scores for this text. Choose a measured passage, or use the toy byte trigram." }));
     return panel;
   }
-  panel.append(el("div", { class: "metrics" }, [
+  const metricRows = [
     metric("Perplexity (per token)", fmt(result.perplexity, 2)),
     metric("Bits per byte", fmt(result.bits_per_byte, 4)),
     metric("Bits per token", fmt(result.bits_per_token, 3)),
-    metric("Cross-entropy (nats)", fmt(result.cross_entropy_nats, 3)),
+    metric("Cross-entropy / mean log loss (nats)", fmt(result.cross_entropy_nats, 3)),
+  ];
+  if (Number.isFinite(result.mean_brier)) {
+    metricRows.push(metric("Mean multiclass Brier", fmt(result.mean_brier, 4)));
+  }
+  metricRows.push(
     metric("Scored tokens", String(result.n_scored)),
     metric("Scored UTF-8 bytes", String(result.n_bytes_scored)),
-  ]));
+  );
+  panel.append(el("div", { class: "metrics" }, metricRows));
   const strip = el("div", { class: "token-strip" });
   for (const tok of result.tokens) strip.append(tokenChip(tok));
   panel.append(strip);
@@ -408,7 +478,8 @@ async function main() {
     const py = charScores[t.id];
     const dPpl = Math.abs(js.perplexity - py.perplexity);
     const dBpb = Math.abs(js.bits_per_byte - py.bits_per_byte);
-    TEST.charChecks.push({ id: t.id, dPpl, dBpb, ok: dPpl < 1e-6 && dBpb < 1e-6 });
+    const dBrier = (py.mean_brier == null) ? 0 : Math.abs(js.mean_brier - py.mean_brier);
+    TEST.charChecks.push({ id: t.id, dPpl, dBpb, dBrier, ok: dPpl < 1e-6 && dBpb < 1e-6 && dBrier < 1e-6 });
   }
 
   const state = {
