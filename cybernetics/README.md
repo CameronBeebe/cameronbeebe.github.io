@@ -22,7 +22,7 @@ node test-regulator.mjs
 
 The checks include a hand-crafted game and ten seeded 10×10 runs in the PROP-01 regime (goal `{3}`, last 5,000 of 20,000 epochs). The conditioned regulator should approach the requisite-variety bound; the blind regulator should stay at or below the blind optimum.
 
-Default demo seed `2021` is one such game, with a large gap between the two bounds.
+The on-page demo picks a random seed when a game starts and logs it to the console. Seed `2021` is one such game, with a large gap between the two bounds.
 
 ## Notes
 

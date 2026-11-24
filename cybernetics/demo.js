@@ -30,14 +30,22 @@ function fmt(x, digits = 3) {
   return x.toFixed(digits);
 }
 
-function settingsFromForm() {
-  const seed = Number($("seed").value);
+function randomSeed() {
+  if (globalThis.crypto?.getRandomValues) {
+    const buf = new Uint32Array(1);
+    crypto.getRandomValues(buf);
+    return buf[0] >>> 0;
+  }
+  return Math.floor(Math.random() * 0x100000000) >>> 0;
+}
+
+function settingsFromForm(seed) {
   const size = Math.max(2, Math.min(16, Number($("size").value) || 10));
   const goals = parseGoals($("goals").value);
   if (goals.size === 0) goals.add(3);
   const alphaMode = $("dist").value === "uniform" ? "uniform" : "toy";
   return {
-    seed: Number.isFinite(seed) ? seed >>> 0 : 2021,
+    seed: seed >>> 0,
     nRows: size,
     nCols: size,
     range: 10,
@@ -47,8 +55,8 @@ function settingsFromForm() {
 }
 
 function newSession() {
-  const cfg = settingsFromForm();
-  $("seed").value = String(cfg.seed);
+  const cfg = settingsFromForm(randomSeed());
+  console.log("Ashby demo seed:", cfg.seed);
   $("size").value = String(cfg.nRows);
   $("goals").value = [...cfg.goals].sort((a, b) => a - b).join(", ");
   const world = createWorld(cfg);
@@ -60,6 +68,7 @@ function newSession() {
 }
 
 let session = null;
+let selectedCondRow = 0;
 let running = false;
 let raf = 0;
 let lastTs = 0;
@@ -226,19 +235,66 @@ function renderChart() {
   `;
 }
 
+function showPickHighlight() {
+  return !running || stepsPerSecond() <= 4;
+}
+
+function defaultCondRow() {
+  const solvable = session?.world?.state?.bounds?.rowSolvable;
+  if (!solvable) return 0;
+  const i = solvable.findIndex(Boolean);
+  return i >= 0 ? i : 0;
+}
+
 function renderUrn(el, urn, pick, nCols) {
   const max = Math.max(...urn, 1e-9);
-  const rows = [];
-  for (let c = 0; c < nCols; c++) {
-    const pct = (urn[c] / max) * 100;
-    rows.push(`
-      <div class="urn-row${c === pick ? " is-pick" : ""}">
+  if (el.children.length !== nCols) {
+    const rows = [];
+    for (let c = 0; c < nCols; c++) {
+      rows.push(`
+      <div class="urn-row">
         <span class="col">${c + 1}</span>
-        <div class="bar" aria-hidden="true"><span style="width:${pct.toFixed(1)}%"></span></div>
-        <span>${fmt(urn[c], 1)}</span>
+        <div class="bar" aria-hidden="true"><span></span></div>
+        <span class="wt">0</span>
       </div>`);
+    }
+    el.innerHTML = rows.join("");
   }
-  el.innerHTML = rows.join("");
+  const highlight = showPickHighlight();
+  for (let c = 0; c < nCols; c++) {
+    const row = el.children[c];
+    const pct = (urn[c] / max) * 100;
+    row.classList.toggle("is-pick", highlight && c === pick);
+    row.querySelector(".bar > span").style.width = `${pct.toFixed(1)}%`;
+    row.querySelector(".wt").textContent = fmt(urn[c], 1);
+  }
+}
+
+function renderMinis() {
+  const st = session.world.state;
+  const el = $("mini-urns");
+  if (selectedCondRow >= st.nRows) selectedCondRow = defaultCondRow();
+  if (el.children.length !== st.nRows) {
+    const parts = [];
+    for (let i = 0; i < st.nRows; i++) {
+      parts.push(`<button type="button" class="mini-urn" data-row="${i}"></button>`);
+    }
+    el.innerHTML = parts.join("");
+  }
+  for (let i = 0; i < st.nRows; i++) {
+    const btn = el.children[i];
+    const solvable = st.bounds.rowSolvable[i];
+    const selected = i === selectedCondRow;
+    btn.className = [
+      "mini-urn",
+      solvable ? "is-solvable" : "is-dead",
+      selected ? "is-selected" : "",
+    ].join(" ");
+    btn.setAttribute("aria-pressed", selected ? "true" : "false");
+    const note = solvable ? "" : ", no goal in this row";
+    btn.setAttribute("aria-label", `Disturbance ${i + 1}${note}`);
+    btn.title = `Row ${i + 1}${solvable ? "" : " (no goal in this row)"}`;
+  }
 }
 
 function renderLearners() {
@@ -255,31 +311,15 @@ function renderLearners() {
     `last ${win.n || st.window} · overall ${fmt(all.cond)} · bound ${fmt(b.requisiteVariety)}`;
 
   const pickB = st.epoch ? st.lastBlindAction : -1;
-  const pickC = st.epoch ? st.lastCondAction : -1;
   renderUrn($("blind-urn"), st.blind.urns[0], pickB, st.nCols);
 
-  const d = st.lastD;
-  $("cond-urn-label").textContent = st.epoch
-    ? (st.bounds.rowSolvable[d]
-        ? `Urn for disturbance ${d + 1} (the current row)`
-        : `Urn for disturbance ${d + 1} — this row has no goal, so it is never reinforced`)
-    : "One urn per row; the current row’s urn is shown after the first play.";
-  renderUrn($("cond-urn"), st.cond.urns[st.epoch ? d : 0], pickC, st.nCols);
-
-  const minis = st.cond.urns
-    .map((urn, i) => {
-      const solvable = st.bounds.rowSolvable[i];
-      const active = st.epoch && i === d;
-      const cls = [
-        "mini-urn",
-        solvable ? "is-solvable" : "is-dead",
-        active ? "is-active" : "",
-      ].join(" ");
-      const title = `Row ${i + 1}${solvable ? "" : " (no goal in this row)"}`;
-      return `<span class="${cls}" title="${title}"></span>`;
-    })
-    .join("");
-  $("mini-urns").innerHTML = minis;
+  const d = selectedCondRow;
+  $("cond-urn-label").textContent = st.bounds.rowSolvable[d]
+    ? `Urn for disturbance ${d + 1}. Click a square to inspect another.`
+    : `Urn for disturbance ${d + 1} — this row has no goal, so it is never reinforced.`;
+  const pickC = st.epoch && st.lastD === d ? st.lastCondAction : -1;
+  renderUrn($("cond-urn"), st.cond.urns[d], pickC, st.nCols);
+  renderMinis();
 }
 
 function renderAll() {
@@ -324,21 +364,9 @@ function tick(ts) {
   }
 }
 
-function resetSameGame() {
-  const cfg = settingsFromForm();
-  // Keep the seed currently in the session so "Reset" replays the same game.
-  cfg.seed = session.world.state.seed;
-  $("seed").value = String(cfg.seed);
-  session = { world: createWorld(cfg), history: [], lastRecorded: 0 };
-  renderAll();
-}
-
-function newGame(randomizeSeed) {
-  if (randomizeSeed) {
-    const next = (Math.floor(Math.random() * 0xffffff) + 1) >>> 0;
-    $("seed").value = String(next);
-  }
+function startRandomGame() {
   session = newSession();
+  selectedCondRow = defaultCondRow();
   renderAll();
 }
 
@@ -349,7 +377,6 @@ function syncSpeedLabel() {
 }
 
 function init() {
-  $("seed").value = "2021";
   $("size").value = "10";
   $("goals").value = "3";
   $("dist").value = "toy";
@@ -358,6 +385,7 @@ function init() {
   syncSpeedLabel();
 
   session = newSession();
+  selectedCondRow = defaultCondRow();
   renderAll();
 
   $("play").addEventListener("click", () => setRunning(!running));
@@ -365,24 +393,23 @@ function init() {
     setRunning(false);
     stepAndDraw(1);
   });
-  $("reset").addEventListener("click", () => {
-    setRunning(false);
-    resetSameGame();
-  });
   $("newgame").addEventListener("click", () => {
     setRunning(false);
-    newGame(false);
+    startRandomGame();
   });
-  $("reshuffle").addEventListener("click", () => {
-    setRunning(false);
-    newGame(true);
+  $("mini-urns").addEventListener("click", (ev) => {
+    const btn = ev.target.closest("[data-row]");
+    if (!btn) return;
+    const i = Number(btn.dataset.row);
+    if (!Number.isInteger(i)) return;
+    selectedCondRow = i;
+    renderLearners();
   });
   $("speed").addEventListener("input", syncSpeedLabel);
-  for (const id of ["seed", "size", "goals", "dist"]) {
+  for (const id of ["size", "goals", "dist"]) {
     $(id).addEventListener("change", () => {
       setRunning(false);
-      session = newSession();
-      renderAll();
+      startRandomGame();
     });
   }
 
