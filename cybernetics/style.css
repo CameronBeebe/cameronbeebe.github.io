@@ -60,6 +60,41 @@ h1 {
   color: var(--muted);
 }
 
+.quote {
+  margin: 0 0 1.15rem;
+  max-width: 72ch;
+}
+
+.quote blockquote {
+  margin: 0;
+  padding: 0 0 0 0.9rem;
+  border-left: 2px solid var(--line);
+}
+
+.quote blockquote p {
+  margin: 0;
+  color: var(--ink);
+}
+
+.quote figcaption,
+.quote cite {
+  color: var(--muted);
+  font-style: italic;
+  font-size: 0.82rem;
+}
+
+.quote figcaption {
+  margin: 0.4rem 0 0;
+  padding-left: 0.9rem;
+  font-style: normal;
+}
+
+.hint {
+  margin: -0.35rem 0 1.1rem;
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
 .toolbar {
   display: flex;
   flex-wrap: wrap;

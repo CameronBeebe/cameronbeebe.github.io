@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Ashby’s regulator — a requisite-variety demo</title>
-  <meta name="description" content="Watch a Pólya-urn regulator learn against disturbances. A blind regulator is shown next to one that sees the disturbance, so Ashby’s law of requisite variety is visible." />
+  <meta name="description" content="A live Ashby regulation game: a blind Pólya-urn regulator and a disturbance-conditioned one play the same table." />
   <meta name="author" content="Cameron Beebe" />
   <link rel="stylesheet" href="./style.css" />
 </head>
@@ -12,15 +12,20 @@
   <main class="wrap">
     <p class="eyebrow">Cybernetic regulation game</p>
     <h1>Ashby’s regulator</h1>
-    <p class="lede">
-      The environment plays a row (a disturbance). The regulator plays a column.
-      A trial succeeds when the cell is a goal. The 2021 toy keeps
-      <em>one</em> Pólya urn for every situation, so it never sees the row — a
-      <strong>blind</strong> regulator. A regulator that keeps one urn per row
-      can approach the <strong>requisite-variety bound</strong>: the best success
-      rate possible when the disturbance is observed. The gap between the two
-      dashed lines is the law, measured on the game in front of you.
-    </p>
+
+    <figure class="quote">
+      <blockquote>
+        <p><i>D</i> must play first, by selecting a number, and thus a particular row. <i>R</i>, knowing this number, then selects a Greek letter, and thus a particular column. The italic letter specified by the intersection of the row and column is the outcome. If it is an <i>a</i>, <i>R</i> wins; if not, <i>R</i> loses.</p>
+      </blockquote>
+      <figcaption>W. Ross Ashby, <cite>An Introduction to Cybernetics</cite>, Chapman &amp; Hall, London, 1956, p.&nbsp;203.</figcaption>
+    </figure>
+
+    <figure class="quote">
+      <blockquote>
+        <p>A cybernetic regulator is part of, or interacts with, a complex system. It controls environmental disturbances by appropriate actions, resulting in a state of the world aligning with a regulatory goal.</p>
+      </blockquote>
+      <figcaption>Cameron Beebe, <cite>Knowledge Transfer in Cognitive Systems Theory: Models, Computation, and Explanation</cite>, PhD diss., LMU Munich, 2021, p.&nbsp;55.</figcaption>
+    </figure>
 
     <noscript><p>This demo needs JavaScript to run the regulators in your browser. Nothing is sent to a server.</p></noscript>
 
@@ -47,6 +52,7 @@
       <button type="button" id="step" title="One epoch (or press .)">Step</button>
       <button type="button" id="newgame" title="Start a new random game">New game</button>
     </div>
+    <p class="hint">Space toggles play; period steps one epoch.</p>
 
     <div class="stage">
       <section class="panel" aria-labelledby="matrix-title">
@@ -74,7 +80,7 @@
           <span class="rate" id="blind-rate">0.000</span>
           <span class="meta" id="blind-meta"></span>
         </div>
-        <p class="urn-label">One urn, used for every disturbance — the 2021 <code>Ashby</code> class.</p>
+        <p class="urn-label">One urn, used for every disturbance.</p>
         <div class="urn" id="blind-urn"></div>
       </section>
       <section class="panel learner cond" aria-labelledby="cond-title">
@@ -89,35 +95,32 @@
       </section>
     </div>
 
-    <section class="caption">
-      <p>
-        <strong>How to read the bounds.</strong>
-        The lower dashed line is the <em>blind optimum</em>: the best success rate any single column can get.
-        The upper one is the <em>requisite-variety bound</em>: success if, for each row, the regulator may pick a (possibly different) column that hits a goal, when one exists.
-        Seeing the disturbance is exactly the channel Ashby requires; it is not a cheat.
-        Space toggles play; period steps one epoch.
-      </p>
-      <p>
-        <strong>Reference experiment (PROP-01).</strong>
-        On 10×10 games, goal {3}, 10 seeds, last 5,000 of 20,000 epochs, the current
-        <code>Ashby</code> class averaged <strong>0.249</strong> success against a blind optimum of
-        <strong>0.301</strong>. A disturbance-conditioned urn reached the requisite-variety bound of
-        <strong>0.603</strong> on every seed. Live scores on this page use a different
-        generator, so they will not match those figures exactly; the two bounds above the chart are computed from the game you see.
-      </p>
-    </section>
+    <figure class="quote">
+      <blockquote>
+        <p>This is the law of Requisite Variety. To put it more picturesquely: only variety in <i>R</i> can force down the variety due to <i>D</i>; variety can destroy variety.</p>
+      </blockquote>
+      <figcaption>Ashby, <cite>An Introduction to Cybernetics</cite>, 1956, p.&nbsp;207.</figcaption>
+    </figure>
+
+    <figure class="quote">
+      <blockquote>
+        <p>A simple example of reinforcement learning treats the distribution as a bag of colored marbles. We choose plays by picking marbles at random from the bag.</p>
+      </blockquote>
+      <figcaption>Beebe, <cite>Knowledge Transfer in Cognitive Systems Theory</cite>, 2021, p.&nbsp;57.</figcaption>
+    </figure>
 
     <section class="refs">
       <p>
-        W. R. Ashby, <em>An Introduction to Cybernetics</em>, Chapman &amp; Hall / Wiley, 1956, ch. 11 (“Requisite Variety”).
-        Source and 2021 talk slides:
-        <a href="https://github.com/CameronBeebe/Cybernetics">CameronBeebe/Cybernetics</a>
-        ·
-        <a href="https://github.com/CameronBeebe/Cybernetics/blob/master/Neural_Networks_Cybernetic_Regulators.pdf">Neural Networks as Cybernetic Regulators (PDF)</a>.
+        W. Ross Ashby, <cite>An Introduction to Cybernetics</cite>, Chapman &amp; Hall, London, 1956, ch.&nbsp;11. Full text:
+        <a href="https://pespmc1.vub.ac.be/books/IntroCyb.pdf">Principia Cybernetica PDF</a>.
       </p>
       <p>
-        Canonical files: the <code>docs/</code> folder of that repository.
-        This page is a static, self-contained copy (relative paths, no build step) and can be served from any static host, including a later path on sciphi.pro.
+        Cameron Beebe, <cite>Knowledge Transfer in Cognitive Systems Theory: Models, Computation, and Explanation</cite>, PhD diss., LMU Munich, 2021, ch.&nbsp;4:
+        <a href="https://edoc.ub.uni-muenchen.de/28655/">edoc.ub.uni-muenchen.de/28655</a>.
+        12 November 2021 talk slides:
+        <a href="https://github.com/CameronBeebe/Cybernetics/blob/master/Neural_Networks_Cybernetic_Regulators.pdf">Neural Networks as Cybernetic Regulators (PDF)</a>.
+        Canonical demo source:
+        <a href="https://github.com/CameronBeebe/Cybernetics">CameronBeebe/Cybernetics</a>.
       </p>
     </section>
   </main>
