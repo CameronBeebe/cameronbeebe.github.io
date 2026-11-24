@@ -1,0 +1,16 @@
+{
+  "practice": [
+    {"brief":"A close-up owl with two large eyes and a pointed beak.","tools":false,"guidance":false,"feedback":true},
+    {"brief":"A windswept pine tree on a rocky hill.","tools":true,"guidance":true,"feedback":true},
+    {"brief":"A sleeping cat curled into a circle, with ears and a tail.","tools":true,"guidance":false,"feedback":false},
+    {"brief":"A mountain reflected in a lake, with clear negative space.","tools":false,"guidance":false,"feedback":false}
+  ],
+  "validation": [
+    {"brief":"A close-up frog samurai with prominent eyes and layered armor.","tools":false,"guidance":false,"feedback":true},
+    {"brief":"A hanging paper lantern beneath a tree branch.","tools":true,"guidance":true,"feedback":true}
+  ],
+  "heldOut": [
+    {"brief":"A butterfly with four distinct wings and a thin central body.","tools":false,"guidance":false,"feedback":true},
+    {"brief":"A three-tier pagoda with a curved roof on each tier.","tools":true,"guidance":false,"feedback":true}
+  ]
+}

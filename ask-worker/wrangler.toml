@@ -17,3 +17,22 @@ head_sampling_rate = 0.01
 name = "ASK_LIMIT"
 namespace_id = "74101"
 simple = { limit = 8, period = 60 }
+
+[[ratelimits]]
+name = "PALETTE_LIMIT"
+namespace_id = "74102"
+simple = { limit = 3, period = 60 }
+
+[[ratelimits]]
+name = "ASCII_LIMIT"
+namespace_id = "74103"
+simple = { limit = 3, period = 60 }
+
+[[ratelimits]]
+name = "FEEDBACK_LIMIT"
+namespace_id = "74104"
+simple = { limit = 8, period = 60 }
+
+[[kv_namespaces]]
+binding = "ASCII_FEEDBACK"
+id = "ae7f839bfe7f4ad0bfc34ac7d100be86"

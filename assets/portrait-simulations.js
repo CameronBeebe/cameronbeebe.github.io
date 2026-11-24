@@ -1,5 +1,6 @@
 import { descentPath, gravityStep, lifeStep, neighbors, sobelTone } from './portrait-grid.js';
 import { glyphDensity } from './ascii-image.js';
+import { fireStep, igniteCell } from './portrait-fire.mjs';
 
 export const simulationDescriptions = {
   life: ['Conway’s Game of Life', 'Dense characters seed living cells. A cell is born with three live neighbors and survives with two or three. Drag to plant or erase cells.'],
@@ -7,6 +8,7 @@ export const simulationDescriptions = {
   descent: ['Gradient descent', 'Click a starting glyph. Each character has a fixed density. Gold arrows step downhill or cross a flat patch to reach a lower character. A star marks the endpoint.'],
   edges: ['Sobel edge detection', 'Replace each glyph with the strength of the contrast around it. Sharp outlines become bright, and even shading fades.'],
   flow: ['Ink percolation', 'Can ink get from left to right? Release it at the left edge or click a starting cell. It spreads through connected glyphs at or below the maximum density.'],
+  fire: ['Glyph fire', 'Drag to ignite characters. Denser glyphs hold more fuel and burn longer. Heat spreads to neighbors, then the spent glyphs leave ash. Restore rewinds the burn.'],
 };
 
 export function createSimulations(ui) {
@@ -15,6 +17,7 @@ export function createSimulations(ui) {
   const gravityButton = document.getElementById('gravity-run');
   const eraseWalls = document.getElementById('gravity-erase');
   const threshold = document.getElementById('flow-threshold');
+  const fireButton = document.getElementById('fire-run');
   let running = null;
   let generation = 0;
   let turn = 0;
@@ -38,6 +41,18 @@ export function createSimulations(ui) {
     flowSeed = null;
     lifeButton.textContent = 'Run Life';
     gravityButton.textContent = 'Run gravity';
+    fireButton.textContent = 'Resume fire';
+  }
+
+  function fireTick() {
+    const { next, burning, ash, warm } = fireStep(ui.current(), columns, rows, turn++);
+    ui.apply(next);
+    ui.report(`${burning ? 'Burning' : warm ? 'Cooling' : 'Fire out'} · ${burning.toLocaleString()} burning · ${ash.toLocaleString()} ash cells.`);
+    if (running === 'fire' && (burning || warm)) ui.later(fireTick, 90);
+    else {
+      running = null;
+      fireButton.textContent = 'Resume fire';
+    }
   }
 
   function lifeState() {
@@ -165,16 +180,26 @@ export function createSimulations(ui) {
   }
 
   function stroke(mode, [x, y], [nx, ny]) {
-    if (mode !== 'life' && mode !== 'gravity') return;
+    if (!['life', 'gravity', 'fire'].includes(mode)) return;
     const grid = ui.current().slice();
     const steps = Math.max(1, Math.abs(nx - x), Math.abs(ny - y));
     for (let i = 0; i <= steps; i++) {
       const index = indexAt([Math.round(x + (nx - x) * i / steps), Math.round(y + (ny - y) * i / steps)]);
       if (mode === 'life') grid[index] = lifeCells[paintAlive ? 4 : 0];
+      else if (mode === 'fire') grid[index] = igniteCell(grid[index]);
       else if (!eraseWalls.checked) grid[index] = wall;
       else if (grid[index]?.wall) grid[index] = lifeCells[0];
     }
     ui.apply(grid);
+    if (mode === 'fire') {
+      if (running !== 'fire') {
+        ui.stop();
+        running = 'fire';
+        fireButton.textContent = 'Pause fire';
+        fireTick();
+      }
+      return;
+    }
     if (mode === 'life') ui.report(paintAlive ? 'Live cells planted.' : 'Cells erased.');
     else ui.report(eraseWalls.checked ? 'Wall cells cleared.' : 'Wall drawn. Run gravity to test it.');
   }
@@ -208,6 +233,18 @@ export function createSimulations(ui) {
     running = 'gravity';
     gravityButton.textContent = 'Pause gravity';
     gravityTick();
+  });
+  fireButton.addEventListener('click', () => {
+    ui.stop();
+    if (running === 'fire') {
+      running = null;
+      fireButton.textContent = 'Resume fire';
+      ui.report('Fire paused.');
+    } else {
+      running = 'fire';
+      fireButton.textContent = 'Pause fire';
+      fireTick();
+    }
   });
   document.getElementById('descent-run').addEventListener('click', () => descent(indexAt([32, 18])));
   document.getElementById('edges-run').addEventListener('click', edges);

@@ -48,6 +48,7 @@
       letter-spacing: 0.11em;
       text-transform: uppercase;
     }
+    .hero-statement { margin: 0.75rem 0 0; font-size: 0.85rem; color: var(--link); }
     .hero {
       display: grid;
       grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
@@ -107,6 +108,49 @@
     .portrait-actions button:disabled { opacity: 0.55; cursor: default; }
     #trace-tolerance, #flow-threshold { width: 5rem; }
     #portrait-status { min-height: 2.9em; color: var(--ink); }
+    .palette-panel, .generation-panel { border-top: 1px solid var(--line); padding-top: 0.65rem; }
+    .hero-copy > :is(.palette-panel, .generation-panel) { margin-top: 1.5rem; font: 0.74rem/1.45 var(--mono); }
+    .palette-panel [hidden], .generation-panel [hidden] { display: none; }
+    .palette-form { display: flex; gap: 0.5rem; margin: 0.45rem 0; }
+    .palette-form input {
+      flex: 1; min-width: 0; border: 1px solid var(--line); padding: 0.4rem;
+      background: var(--well); color: var(--link); font: inherit;
+    }
+    .palette-results { display: grid; gap: 0.5rem; margin: 0.8rem 0; }
+    .palette-card {
+      display: grid; grid-template-columns: minmax(4rem, 32%) 1fr; gap: 0.65rem; align-items: center;
+      width: 100%; text-align: left; border: 1px solid var(--line); padding: 0.4rem;
+      font: inherit; background: var(--well); color: var(--link); cursor: pointer;
+    }
+    .palette-card:disabled { cursor: default; }
+    .palette-card:not(:disabled):hover, .palette-card[aria-pressed="true"] { border-color: var(--phosphor); }
+    .palette-card:focus-visible { outline: 2px solid var(--phosphor); outline-offset: 3px; }
+    .palette-card canvas { display: block; width: 100%; height: auto; aspect-ratio: 1; }
+    .palette-card strong { color: var(--link); }
+    .palette-card > span, .palette-metrics { display: grid; gap: 0.2rem; }
+    .palette-state { font-size: 0.68rem; color: var(--phosphor); }
+    .palette-metrics { font-size: 0.63rem; color: var(--muted); }
+    .palette-track { display: block; height: 3px; background: var(--line); margin-top: 2px; }
+    .palette-track > span { display: block; height: 100%; background: var(--phosphor); transition: width 0.2s; }
+    .palette-timing + .palette-timing .palette-track > span { background: var(--link); }
+    .palette-panel summary, .generation-panel summary { color: var(--link); cursor: pointer; }
+    .generation-panel textarea, .generation-panel select { max-width: 100%; border: 1px solid var(--line); background: var(--well); color: var(--link); font: inherit; padding: 0.4rem; }
+    .generation-panel textarea { width: 100%; resize: vertical; margin: 0.4rem 0; }
+    .generation-switches { display: flex; flex-wrap: wrap; gap: 0.45rem 0.8rem; margin: 0.65rem 0; border: 1px solid var(--line); }
+    .generation-switches label { display: inline-flex; align-items: center; gap: 0.3rem; }
+    .generation-optimization { font-size: 0.68rem; }
+    .generation-result { font-size: 0.7rem; }
+    .generation-feedback { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; margin-bottom: 0.8rem; }
+    .generation-feedback button { min-width: 2.5rem; }
+    .generation-feedback button[aria-pressed="true"] { border-color: var(--phosphor); background: var(--well); }
+    .generation-feedback small { width: 100%; font-size: 0.65rem; }
+    .generation-results { display: grid; gap: 0.4rem; margin: 0.5rem 0; }
+    .generation-history-item { display: flex; align-items: center; gap: 0.6rem; width: 100%; text-align: left; }
+    .generation-history-item canvas { width: 4rem; height: 4rem; flex-shrink: 0; }
+    .hero:has(:is([data-experiment="palette"], [data-experiment="generate"])[aria-pressed="true"]) { align-items: start; }
+    @media (min-width: 701px) {
+      .hero:has(:is([data-experiment="palette"], [data-experiment="generate"])[aria-pressed="true"]) .hero-art { position: sticky; top: 1rem; align-self: start; }
+    }
     .eyebrow { color: var(--link); margin: 0; }
     .hero .icons { display: flex; flex-wrap: wrap; gap: 0.45rem; margin-top: 1.5rem; }
     .hero .icons a {
@@ -403,15 +447,16 @@
   </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/tex-chtml.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-  <script type="module" src="assets/portrait.js?v=2"></script>
+  <script type="module" src="assets/portrait.js?v=12"></script>
   <script type="module" src="assets/ask-cameron.js?v=14"></script>
 </head>
 <body>
   <main>
   <header class="hero">
   <div class="hero-copy">
-  <p class="eyebrow">Philosophy of science · Agent engineering</p>
   <h1>Cameron Beebe, Ph.D.</h1>
+  <p class="eyebrow">Agentic Engineer · Philosopher of Science</p>
+  <p class="hero-statement">AGI = Automating Machine Epistemology</p>
   <p class="icons">
     <a href="https://github.com/CameronBeebe" target="_blank" rel="noopener" aria-label="GitHub"><i class="fa-brands fa-github"></i></a>
     <a href="https://www.linkedin.com/in/cameronbeebe/" target="_blank" rel="noopener" aria-label="LinkedIn"><i class="fa-brands fa-linkedin"></i></a>
@@ -423,7 +468,7 @@
   </div>
   <figure class="hero-art">
     <img class="portrait-print" src="assets/pine-ronin.webp" width="1254" height="1254" alt="Pixel woodblock portrait of a stern frog samurai under a pine, one hand on his sheathed sword." fetchpriority="high" />
-    <canvas class="portrait-terminal" width="600" height="600" role="img" aria-label="Hacker-green ASCII portrait of a frog samurai under a pine." aria-describedby="portrait-instructions" hidden></canvas>
+    <canvas class="portrait-terminal" width="600" height="600" role="img" aria-label="Interactive ASCII portrait of a frog samurai under a pine." aria-describedby="portrait-instructions" hidden></canvas>
     <figcaption class="portrait-controls" hidden>
       <div class="portrait-actions portrait-modes" role="group" aria-label="ASCII experiments">
         <div class="portrait-mode-row">
@@ -438,6 +483,9 @@
           <button type="button" data-experiment="descent" aria-pressed="false">Descent</button>
           <button type="button" data-experiment="edges" aria-pressed="false">Edges</button>
           <button type="button" data-experiment="flow" aria-pressed="false">Percolation</button>
+          <button type="button" data-experiment="fire" aria-pressed="false">Fire</button>
+          <button type="button" data-experiment="palette" aria-pressed="false">Color</button>
+          <button type="button" data-experiment="generate" aria-pressed="false">Generate</button>
         </div>
       </div>
       <strong class="portrait-title" id="portrait-title"></strong>
@@ -477,10 +525,57 @@
         <button type="button" id="flow-run">Release ink</button>
         <label>Max density <input type="range" id="flow-threshold" min="0" max="100" value="40" /> <output id="flow-level" for="flow-threshold">40</output></label>
       </div>
+      <div class="portrait-actions" data-controls="fire" hidden>
+        <button type="button" id="fire-run">Resume fire</button>
+      </div>
+      <div class="palette-panel" data-controls="palette" data-endpoint="https://cameron-portfolio-ask.cameronbeebe.workers.dev/palette" hidden>
+        <form class="palette-form portrait-actions">
+          <input type="text" value="moss after rain" maxlength="120" list="palette-moods" aria-label="A mood for the portrait" required />
+          <datalist id="palette-moods"><option value="moss after rain"></option><option value="lantern-lit"></option><option value="cold steel"></option><option value="autumn at dusk"></option></datalist>
+          <button type="submit">Compare</button>
+        </form>
+        <p role="status">One mood, three interpretations. Select a preview to apply it.</p>
+        <div class="palette-results" hidden></div>
+        <details><summary>What is measured?</summary><p>First token: time from the Worker's request to the first nonempty JSON token. Usable JSON: time until a complete palette passes format checks and is adjusted for readable contrast. The models choose the hues; code adjusts lightness. Bars share a scale within this round. Cost and token counts come from OpenRouter; missing usage is shown as unreported.</p><p>These are individual live requests, including provider queuing and network time. Your mood is sent to OpenRouter and its model providers. Three comparisons per minute.</p></details>
+      </div>
+      <div class="generation-panel" data-controls="generate" data-endpoint="https://cameron-portfolio-ask.cameronbeebe.workers.dev/ascii" hidden>
+        <form>
+          <label for="generation-brief">What should the model draw?</label>
+          <textarea id="generation-brief" rows="3" maxlength="300" required>Close-up portrait of a stern frog samurai beneath a pine branch, with prominent eyes and layered armor.</textarea>
+          <div class="portrait-actions">
+            <select aria-label="ASCII generation model"></select>
+            <button type="submit">Generate</button>
+          </div>
+          <fieldset class="generation-switches"><legend>Harness</legend>
+            <label><input type="checkbox" class="generation-repair" checked /> Error feedback</label>
+            <label><input type="checkbox" class="generation-tools" /> ASCII tools</label>
+            <label><input type="checkbox" class="generation-guidance" disabled /> Tool guidance</label>
+            <label><input type="checkbox" class="generation-optimized" disabled /> DSPy prompt · pilot</label>
+          </fieldset>
+        </form>
+        <p class="generation-status" role="status">Change the harness and see what happens.</p>
+        <p class="generation-result" hidden></p>
+        <div class="generation-feedback" hidden>
+          <span>Good result?</span>
+          <button type="button" data-vote="1" aria-label="Thumbs up" aria-pressed="false">👍</button>
+          <button type="button" data-vote="-1" aria-label="Thumbs down" aria-pressed="false">👎</button>
+          <span class="generation-vote-status" role="status"></span>
+          <small>Voting saves this run to help improve the demo.</small>
+        </div>
+        <details class="generation-history" hidden><summary>Generated results</summary><div class="generation-results"></div></details>
+        <details><summary>How it works</summary>
+          <p>Each switch changes part of the harness: error feedback, an editable grid, guidance for using it, or a saved DSPy prompt. Runs get up to eight model turns. Tools can write many rows or columns in one call; the drawing stays editable between calls.</p>
+          <p>Code checks the grid format. Jev grades the rendered image against your request. A thumbs-up or down rates the whole run, including its model and settings; saving a vote does not retrain the model.</p>
+          <p class="generation-optimization"></p>
+          <p>Your request goes to OpenRouter and its model providers; the rendering goes to Jev. We keep a private feedback copy of the run and trace only when you vote. Three generations and eight votes per minute.</p>
+          <button type="button" class="generation-download" disabled>Download full run</button>
+        </details>
+      </div>
       <div class="portrait-actions">
         <button type="button" id="portrait-restore">Restore portrait</button>
       </div>
       <p id="portrait-status" role="status"></p>
+
     </figcaption>
   </figure>
   </header>
