@@ -2,8 +2,17 @@ import { createWorld } from "./regulator.js";
 
 const $ = (id) => document.getElementById(id);
 
-const SPEED_STEPS = [20, 60, 200, 800, 3000, 12000];
-const SPEED_LABELS = ["20/s", "60/s", "200/s", "800/s", "3k/s", "12k/s"];
+const SPEED_STEPS = [1, 2, 4, 20, 200, 2000, 12000];
+const SPEED_LABELS = [
+  "1 step/sec",
+  "2 steps/sec",
+  "4 steps/sec",
+  "20 steps/sec",
+  "200 steps/sec",
+  "2k steps/sec",
+  "12k steps/sec",
+];
+const DEFAULT_SPEED_INDEX = 1; // 2 steps/sec
 const CHART_MAX_POINTS = 360;
 
 function parseGoals(text) {
@@ -57,9 +66,14 @@ let raf = 0;
 let lastTs = 0;
 let carry = 0;
 
+function speedIndex() {
+  const i = Number($("speed").value);
+  if (!Number.isInteger(i)) return DEFAULT_SPEED_INDEX;
+  return Math.max(0, Math.min(SPEED_STEPS.length - 1, i));
+}
+
 function stepsPerSecond() {
-  const i = Number($("speed").value) || 2;
-  return SPEED_STEPS[Math.max(0, Math.min(SPEED_STEPS.length - 1, i))];
+  return SPEED_STEPS[speedIndex()];
 }
 
 function recordHistory() {
@@ -330,8 +344,9 @@ function newGame(randomizeSeed) {
 }
 
 function syncSpeedLabel() {
-  const i = Number($("speed").value) || 2;
-  $("speed-read").textContent = SPEED_LABELS[i] ?? SPEED_STEPS[i] + "/s";
+  const label = SPEED_LABELS[speedIndex()];
+  $("speed-read").textContent = label;
+  $("speed").setAttribute("aria-valuetext", label);
 }
 
 function init() {
@@ -339,7 +354,7 @@ function init() {
   $("size").value = "10";
   $("goals").value = "3";
   $("dist").value = "toy";
-  $("speed").value = "2";
+  $("speed").value = String(DEFAULT_SPEED_INDEX);
   $("speed").max = String(SPEED_STEPS.length - 1);
   syncSpeedLabel();
 
