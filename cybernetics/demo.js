@@ -2,17 +2,16 @@ import { createWorld } from "./regulator.js";
 
 const $ = (id) => document.getElementById(id);
 
-const SPEED_STEPS = [1, 2, 4, 20, 200, 2000, 12000];
+const SPEED_STEPS = [0.5, 1, 2, 5, 10, 20];
 const SPEED_LABELS = [
+  "0.5 steps/sec",
   "1 step/sec",
   "2 steps/sec",
-  "4 steps/sec",
+  "5 steps/sec",
+  "10 steps/sec",
   "20 steps/sec",
-  "200 steps/sec",
-  "2k steps/sec",
-  "12k steps/sec",
 ];
-const DEFAULT_SPEED_INDEX = 1; // 2 steps/sec
+const DEFAULT_SPEED_INDEX = 2; // 2 steps/sec
 const CHART_MAX_POINTS = 360;
 
 function parseGoals(text) {
