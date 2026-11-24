@@ -30,14 +30,22 @@ function fmt(x, digits = 3) {
   return x.toFixed(digits);
 }
 
-function settingsFromForm() {
-  const seed = Number($("seed").value);
+function randomSeed() {
+  if (globalThis.crypto?.getRandomValues) {
+    const buf = new Uint32Array(1);
+    crypto.getRandomValues(buf);
+    return buf[0] >>> 0;
+  }
+  return Math.floor(Math.random() * 0x100000000) >>> 0;
+}
+
+function settingsFromForm(seed) {
   const size = Math.max(2, Math.min(16, Number($("size").value) || 10));
   const goals = parseGoals($("goals").value);
   if (goals.size === 0) goals.add(3);
   const alphaMode = $("dist").value === "uniform" ? "uniform" : "toy";
   return {
-    seed: Number.isFinite(seed) ? seed >>> 0 : 2021,
+    seed: seed >>> 0,
     nRows: size,
     nCols: size,
     range: 10,
@@ -47,8 +55,8 @@ function settingsFromForm() {
 }
 
 function newSession() {
-  const cfg = settingsFromForm();
-  $("seed").value = String(cfg.seed);
+  const cfg = settingsFromForm(randomSeed());
+  console.log("Ashby demo seed:", cfg.seed);
   $("size").value = String(cfg.nRows);
   $("goals").value = [...cfg.goals].sort((a, b) => a - b).join(", ");
   const world = createWorld(cfg);
@@ -324,20 +332,7 @@ function tick(ts) {
   }
 }
 
-function resetSameGame() {
-  const cfg = settingsFromForm();
-  // Keep the seed currently in the session so "Reset" replays the same game.
-  cfg.seed = session.world.state.seed;
-  $("seed").value = String(cfg.seed);
-  session = { world: createWorld(cfg), history: [], lastRecorded: 0 };
-  renderAll();
-}
-
-function newGame(randomizeSeed) {
-  if (randomizeSeed) {
-    const next = (Math.floor(Math.random() * 0xffffff) + 1) >>> 0;
-    $("seed").value = String(next);
-  }
+function startRandomGame() {
   session = newSession();
   renderAll();
 }
@@ -349,7 +344,6 @@ function syncSpeedLabel() {
 }
 
 function init() {
-  $("seed").value = "2021";
   $("size").value = "10";
   $("goals").value = "3";
   $("dist").value = "toy";
@@ -367,22 +361,21 @@ function init() {
   });
   $("reset").addEventListener("click", () => {
     setRunning(false);
-    resetSameGame();
+    startRandomGame();
   });
   $("newgame").addEventListener("click", () => {
     setRunning(false);
-    newGame(false);
+    startRandomGame();
   });
   $("reshuffle").addEventListener("click", () => {
     setRunning(false);
-    newGame(true);
+    startRandomGame();
   });
   $("speed").addEventListener("input", syncSpeedLabel);
-  for (const id of ["seed", "size", "goals", "dist"]) {
+  for (const id of ["size", "goals", "dist"]) {
     $(id).addEventListener("change", () => {
       setRunning(false);
-      session = newSession();
-      renderAll();
+      startRandomGame();
     });
   }
 

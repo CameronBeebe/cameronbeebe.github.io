@@ -25,9 +25,6 @@
     <noscript><p>This demo needs JavaScript to run the regulators in your browser. Nothing is sent to a server.</p></noscript>
 
     <div class="toolbar" role="group" aria-label="Game controls">
-      <label class="field">Seed
-        <input id="seed" type="number" inputmode="numeric" value="2021" min="0" step="1" />
-      </label>
       <label class="field">Size
         <input id="size" type="number" inputmode="numeric" value="10" min="2" max="16" step="1" />
       </label>
@@ -48,9 +45,9 @@
       </label>
       <button type="button" id="play" class="primary" aria-pressed="false">Play</button>
       <button type="button" id="step" title="One epoch (or press .)">Step</button>
-      <button type="button" id="reset" title="Replay this game from the start">Reset</button>
-      <button type="button" id="newgame" title="Draw a new game with this seed">New game</button>
-      <button type="button" id="reshuffle" title="Pick a new seed and draw a game">Reshuffle</button>
+      <button type="button" id="reset" title="Start a new random game">Reset</button>
+      <button type="button" id="newgame" title="Draw a new random game">New game</button>
+      <button type="button" id="reshuffle" title="Draw a new random game">Reshuffle</button>
     </div>
 
     <div class="stage">
